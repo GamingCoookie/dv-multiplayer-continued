@@ -6,8 +6,11 @@ using DVMultiplayer.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
-using UnityEngine;
+
 
 namespace PlayerPlugin
 {
@@ -15,9 +18,10 @@ namespace PlayerPlugin
     {
         private readonly Dictionary<IClient, Player> players = new Dictionary<IClient, Player>();
         private SetSpawn playerSpawn;
-        private IClient playerConnecting = null;
+        private long PlayerConnectLock = -1;
         private readonly BufferQueue buffer = new BufferQueue();
-        Timer pingSendTimer;
+        System.Timers.Timer pingSendTimer;
+        private ushort CurrentHostClientID = ushort.MaxValue;
 
         public IEnumerable<IClient> GetPlayers()
         {
@@ -32,24 +36,31 @@ namespace PlayerPlugin
         {
             ClientManager.ClientConnected += ClientConnected;
             ClientManager.ClientDisconnected += ClientDisconnected;
-            pingSendTimer = new Timer(250);
+            pingSendTimer = new System.Timers.Timer(250);
             pingSendTimer.Elapsed += PingSendMessage;
             pingSendTimer.AutoReset = true;
             pingSendTimer.Start();
+
         }
 
         private void PingSendMessage(object sender, ElapsedEventArgs e)
         {
-            foreach(IClient client in players.Keys)
+            if (Interlocked.Read(ref PlayerConnectLock) >= 0)
+                return;
+            foreach (IClient client in players.Keys)
             {
-                if (playerConnecting != null)
-                    break;
+                if (Interlocked.Read(ref PlayerConnectLock) >= 0)
+                    return;
 
-                using (Message ping = Message.Create((ushort)NetworkTags.PING, DarkRiftWriter.Create()))
+                using (Message ping = Message.CreateEmpty((ushort)NetworkTags.PING))
                 {
                     ping.MakePingMessage();
                     client.SendMessage(ping, SendMode.Reliable);
                 }
+            }
+            if (Interlocked.Read(ref PlayerConnectLock) < 0 && !buffer.IsEmpty)
+            {
+                Task.Run(() => buffer.RunNext());
             }
         }
 
@@ -57,21 +68,21 @@ namespace PlayerPlugin
         {
             using (DarkRiftWriter writer = DarkRiftWriter.Create())
             {
-                players.Remove(e.Client);
-                if (e.Client == playerConnecting)
+                if (players.Remove(e.Client)) // he was connected
                 {
-                    playerConnecting = null;
-                    buffer.RunNext();
+                    writer.Write<Disconnect>(new Disconnect()
+                    {
+                        PlayerId = e.Client.ID
+                    });
+
+                    using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_DISCONNECT, writer))
+                        foreach (IClient client in ClientManager.GetAllClients().Where(client => client != e.Client))
+                            client.SendMessage(outMessage, SendMode.Reliable);
                 }
-
-                writer.Write<Disconnect>(new Disconnect()
-                {
-                    PlayerId = e.Client.ID
-                });
-
-                using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_DISCONNECT, writer))
-                    foreach (IClient client in ClientManager.GetAllClients().Where(client => client != e.Client))
-                        client.SendMessage(outMessage, SendMode.Reliable);
+                if (Interlocked.Read(ref PlayerConnectLock) == e.Client.ID)
+                    Interlocked.Exchange(ref PlayerConnectLock, -1);
+                if (e.Client.ID == CurrentHostClientID)
+                    SelectNewHostPlayer(); // Select a new Host
             }
         }
 
@@ -122,10 +133,8 @@ namespace PlayerPlugin
             }
             else
                 Logger.Error($"Client with ID {sender.ID} not found");
-
-            pingSendTimer.Start();
-            playerConnecting = null;
-            buffer.RunNext();
+            if (Interlocked.Read(ref PlayerConnectLock) == sender.ID)
+                Interlocked.Exchange(ref PlayerConnectLock, -1);
         }
 
         private void ServerPlayerInitializer(Message message, IClient sender)
@@ -133,23 +142,24 @@ namespace PlayerPlugin
             using (DarkRiftReader reader = message.GetReader())
             {
                 NPlayer player = reader.ReadSerializable<NPlayer>();
-                if (playerConnecting != null)
+                if (Interlocked.Read(ref PlayerConnectLock) >= 0)
                 {
+                    Logger.Info($"Queueing {player.Username} {Interlocked.Read(ref PlayerConnectLock)}");
                     buffer.AddToBuffer(InitializePlayer, player, sender);
                     return;
                 }
-
-                pingSendTimer.Stop();
+                Logger.Info($"Processing {player.Username}");
                 InitializePlayer(player, sender);
             }
         }
 
         private void InitializePlayer(NPlayer player, IClient sender)
         {
-            playerConnecting = sender;
-            bool succesfullyConnected = true;
+            Interlocked.Exchange(ref PlayerConnectLock, sender.ID);
+            bool newClientIsHost = true;
             if (players.Count > 0)
             {
+                /* Disabled for now 
                 Player host = players.Values.First();
                 List<string> missingMods = GetMissingMods(host.mods, player.Mods);
                 List<string> extraMods = GetMissingMods(player.Mods, host.mods);
@@ -164,69 +174,74 @@ namespace PlayerPlugin
                         using (Message msg = Message.Create((ushort)NetworkTags.PLAYER_MODS_MISMATCH, writer))
                             sender.SendMessage(msg, SendMode.Reliable);
                     }
+                    
+                    IClient clientToDisconnect = sender;
+                    Task.Delay(2000).ContinueWith((t) => {
+                        if (clientToDisconnect.ConnectionState != ConnectionState.Disconnected)
+                            clientToDisconnect.Disconnect();
+                            });
+
+                    return;
                 }
-                else
+                */
+
+                // Annoucne Player to other clients
+                using (DarkRiftWriter writer = DarkRiftWriter.Create())
                 {
-                    if (playerSpawn != null)
+                    writer.Write(new NPlayer()
                     {
-                        using (DarkRiftWriter writer = DarkRiftWriter.Create())
-                        {
-                            writer.Write(playerSpawn);
+                        Id = player.Id,
+                        Username = player.Username,
+                        Mods = player.Mods
+                    });
 
-                            using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN_SET, writer))
-                                sender.SendMessage(outMessage, SendMode.Reliable);
-                        }
-
-                        using (DarkRiftWriter writer = DarkRiftWriter.Create())
-                        {
-                            writer.Write(new NPlayer()
-                            {
-                                Id = player.Id,
-                                Username = player.Username,
-                                Mods = player.Mods
-                            });
-
-                            writer.Write(new Location()
-                            {
-                                Position = playerSpawn.Position
-                            });
-
-                            using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN, writer))
-                                foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
-                                    client.SendMessage(outMessage, SendMode.Reliable);
-                        }
-                    }
-
-                    foreach (Player p in players.Values)
+                    writer.Write(new Location()
                     {
-                        using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                        Position = player.Position
+                    });
+
+                    using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN, writer))
+                        foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
+                            client.SendMessage(outMessage, SendMode.Reliable);
+                }
+
+                // Anounce other Players to new Player
+                foreach (Player p in players.Values)
+                {
+                    using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                    {
+                        writer.Write(new NPlayer()
                         {
-                            writer.Write(new NPlayer()
-                            {
-                                Id = p.id,
-                                Username = p.username,
-                                Mods = p.mods,
-                                IsLoaded = p.isLoaded
-                            });
+                            Id = p.id,
+                            Username = p.username,
+                            Mods = p.mods,
+                            IsLoaded = p.isLoaded
+                        });
 
-                            writer.Write(new Location()
-                            {
-                                Position = p.position,
-                                Rotation = p.rotation
-                            });
+                        writer.Write(new Location()
+                        {
+                            Position = p.position,
+                            Rotation = p.rotation
+                        });
 
-                            using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN, writer))
-                                sender.SendMessage(outMessage, SendMode.Reliable);
-                        }
+                        using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN, writer))
+                            sender.SendMessage(outMessage, SendMode.Reliable);
                     }
                 }
+                newClientIsHost = false;
             }
-            if (succesfullyConnected)
+            if (players.ContainsKey(sender))
+                sender.Disconnect();
+            else
             {
-                if (players.ContainsKey(sender))
-                    sender.Disconnect();
-                else
-                    players.Add(sender, new Player(player.Id, player.Username, player.Mods));
+                players.Add(sender, new Player(player.Id, player.Username, player.Mods));
+                using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                {
+                    writer.Write(newClientIsHost);
+                    using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SET_ROLE, writer))
+                        sender.SendMessage(outMessage, SendMode.Reliable);
+                }
+                Logger.Info($"Client with ID {sender.ID} accepted {newClientIsHost}");
             }
         }
 
@@ -260,6 +275,7 @@ namespace PlayerPlugin
                         foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
                             client.SendMessage(outMessage, SendMode.Unreliable);
                 }
+                
             }
         }
 
@@ -273,6 +289,33 @@ namespace PlayerPlugin
             }
             return missingMods;
         }
+
+        public void SelectNewHostPlayer()
+        {
+            if (players.Count == 0)
+                return;
+            var minValue = players.Where(x => x.Value.isLoaded).Min(x => x.Key.RoundTripTime.SmoothedRtt);
+            var result = players.FirstOrDefault(x => x.Key.RoundTripTime.SmoothedRtt <= minValue);
+            if (result.Key == null)
+            {
+                Logger.Error($"Could not find a Client as new host?!");
+                return;
+            }
+            Logger.Info($"{result.Value.id} is the new HOST");
+            result.Value.isHost = true;
+            PlayerSetRole(result.Key, true);
+        }
+
+        public void PlayerSetRole(IClient client, bool isHost)
+        {
+            using (DarkRiftWriter writer = DarkRiftWriter.Create())
+            {
+                writer.Write(isHost);
+                using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SET_ROLE, writer))
+                    client.SendMessage(outMessage, SendMode.Reliable);
+            }
+        }
+
     }
 
     internal class Player
@@ -283,6 +326,7 @@ namespace PlayerPlugin
         public Vector3 position;
         public Quaternion rotation;
         internal bool isLoaded;
+        internal bool isHost;
 
         public Player(ushort id, string username, string[] mods)
         {

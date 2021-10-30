@@ -13,10 +13,10 @@ namespace DVMultiplayer.Networking
     public static class NetworkManager
     {
         public static UnityClient client;
-        public static XmlUnityServer server;
+//        public static XmlUnityServer server;
         private static NetworkingUI UI;
         private static GameObject networkManager;
-        private static bool isHost;
+        private static bool _isHost;
         private static bool isClient;
         private static bool isConnecting;
         private static string host;
@@ -34,20 +34,20 @@ namespace DVMultiplayer.Networking
         public static void Initialize()
         {
             Main.Log("Initializing NetworkManager");
-            isHost = false;
+            _isHost = false;
             isClient = false;
             if (!UGameObject.Exists("NetworkManager"))
             {
                 networkManager = Object.Instantiate(new GameObject(), Vector3.zero, Quaternion.identity);
                 networkManager.name = "NetworkManager";
-                server = networkManager.AddComponent<XmlUnityServer>();
+              //  server = networkManager.AddComponent<XmlUnityServer>();
                 client = networkManager.AddComponent<UnityClient>();
 
                 client.Disconnected += OnClientDisconnected;
 
                 Object.DontDestroyOnLoad(networkManager);
 
-                server.configuration = new TextAsset(File.ReadAllText("./Mods/DVMultiplayer/Resources/config.xml"));
+               // server.configuration = new TextAsset(File.ReadAllText("./Mods/DVMultiplayer/Resources/config.xml"));
             }
 
             if (UI == null)
@@ -137,62 +137,13 @@ namespace DVMultiplayer.Networking
         /// <summary>
         /// Starts up the game server and connects to it automatically
         /// </summary>
-        public static void StartServer(string username, ushort port)
-        {
-            if (isHost)
-                return;
+        
 
-            NetworkManager.username = username;
-            Main.Log("Start hosting server");
-            server.port = port;
-            NetworkManager.port = port;
-            try
-            {
-                SingletonBehaviour<CoroutineManager>.Instance.Run(StartHosting());
-            }
-            catch (Exception ex)
-            {
-                Main.mod.Logger.Error(ex.Message);
-            }
-        }
-
-        private static IEnumerator StartHosting()
-        {
-            server.Create();
-            yield return new WaitUntil(() => server.CheckTCPSocketReady());
-            Main.Log($"Server should be started connecting client now");
-            isHost = true;
-            host = "127.0.0.1";
-            ClientConnect();
-        }
 
         /// <summary>
         /// Stops the hosted server and disconnects from it
         /// </summary>
-        public static void StopServer()
-        {
-            if (!isHost)
-                return;
-
-            Main.Log("Stop hosting server");
-            SingletonBehaviour<CoroutineManager>.Instance.Run(StopHosting());
-        }
-
-        private static IEnumerator StopHosting()
-        {
-            Disconnect();
-            yield return new WaitUntil(() => !isClient);
-            try
-            {
-                server.Close();
-                isHost = false;
-                TutorialController.movementAllowed = true;
-            }
-            catch (Exception ex)
-            {
-                Main.Log($"[ERROR] {ex.Message}");
-            }
-        }
+        
 
         private static void OnConnected(Exception ex)
         {
@@ -223,7 +174,7 @@ namespace DVMultiplayer.Networking
                 if (!scriptsInitialized)
                 {
                     Main.Log($"Client connected loading required unity scripts");
-                    InitializeUnityScripts();
+                    InitializeUnityScripts(); 
                     scriptsInitialized = true;
                 }
 
@@ -237,6 +188,12 @@ namespace DVMultiplayer.Networking
                 SingletonBehaviour<NetworkPlayerManager>.Instance.PlayerConnect();
                 Main.Log($"Connecting finished");
             }
+        }
+
+        internal static void SetIsHost(bool isHost)
+        {
+            Main.Log("[CLIENT] Set Role "+(isHost ? "HOST":"CLIENT"));
+            _isHost = isHost;
         }
 
         private static void InitializeUnityScripts()
@@ -300,7 +257,7 @@ namespace DVMultiplayer.Networking
         /// <returns>If the user is hosting a server</returns>
         public static bool IsHost()
         {
-            return isHost;
+            return _isHost;
         }
     }
 }

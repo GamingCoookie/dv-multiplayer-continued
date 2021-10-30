@@ -32,9 +32,7 @@ internal class NetworkJunctionManager : SingletonBehaviour<NetworkJunctionManage
 
 
         SingletonBehaviour<UnityClient>.Instance.MessageReceived += MessageReceived;
-
-        if (NetworkManager.IsHost())
-            HostSentJunctions();
+        
     }
 
     protected override void OnDestroy()

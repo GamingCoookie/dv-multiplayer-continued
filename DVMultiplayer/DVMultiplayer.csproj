@@ -300,7 +300,7 @@
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
-    <PreBuildEvent>SET BUILDFOLDER=$(SolutionDir)Build
+    <PreBuildEvent>SET BUILDFOLDER="$(SolutionDir)Build"
 
 if not exist %25BUILDFOLDER%25 (
   mkdir %25BUILDFOLDER%25
@@ -314,9 +314,9 @@ if not exist %25BUILDFOLDER%25 (
 mkdir %25BUILDFOLDER%25\Plugins</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>SET BUILDFOLDER=$(SolutionDir)Build
-xcopy $(TargetDir)*.dll %25BUILDFOLDER%25 /Y /I
-xcopy $(TargetDir)info.json %25BUILDFOLDER%25
-xcopy $(TargetDir)Resources\* %25BUILDFOLDER%25\Resources /Y /I /E</PostBuildEvent>
+    <PostBuildEvent>SET BUILDFOLDER="$(SolutionDir)Build"
+xcopy "$(TargetDir)*.dll" %25BUILDFOLDER%25 /Y /I
+xcopy "$(TargetDir)info.json" %25BUILDFOLDER%25
+xcopy "$(TargetDir)Resources\*" %25BUILDFOLDER%25\Resources /Y /I /E</PostBuildEvent>
   </PropertyGroup>
 </Project>

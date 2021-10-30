@@ -89,7 +89,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
 
     private void TrainCar_TrainsetChanged(Trainset set)
     {
-        if (isBeingDestroyed || set == null || set.firstCar == null || trainCar.logicCar == null || !trainCar)
+        if (isBeingDestroyed || set == null || set.firstCar == null || !trainCar || trainCar.logicCar == null )
             return;
         //Issue with trainset being detatched in the middle positioning not updating correctly.
         if (set.locoIndices.Count == 0 && set.firstCar == trainCar)

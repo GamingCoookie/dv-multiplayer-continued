@@ -57,9 +57,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DVMultiplayer\DVMultiplayer.csproj">
-      <Project>{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}</Project>
-      <Name>DVMultiplayer</Name>
+    <ProjectReference Include="..\DVServer\DVServer.csproj">
+      <Project>{0d7b6b8c-2092-4894-b3a1-f61170086d8c}</Project>
+      <Name>DVServer</Name>
       <Private>False</Private>
     </ProjectReference>
   </ItemGroup>

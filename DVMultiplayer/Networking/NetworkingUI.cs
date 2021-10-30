@@ -17,7 +17,6 @@ namespace DVMultiplayer.Networking
         private MenuScreen SaveFavoriteUI;
         private MenuScreen FavoritesListUI;
         private MenuScreen RequestUsernameUI;
-        private MenuScreen HostConnectedMenuUI;
         private MenuScreen ClientConnectedMenuUI;
 
         internal void Setup()
@@ -35,7 +34,7 @@ namespace DVMultiplayer.Networking
             SaveFavoriteUI = CustomUI.SaveFavoriteMenuUI;
             FavoritesListUI = CustomUI.FavoriteConnectMenuUI;
             RequestUsernameUI = CustomUI.UsernameRequestMenuUI;
-            HostConnectedMenuUI = CustomUI.HostConnectedMenuUI;
+            //HostConnectedMenuUI = CustomUI.HostConnectedMenuUI;
             ClientConnectedMenuUI = CustomUI.ClientConnectedMenuUI;
             int pagination = 0;
             Favorite selectedFav = null;
@@ -188,7 +187,7 @@ namespace DVMultiplayer.Networking
                 HostUI.transform.Find("TextField Username").GetComponentInChildren<TextMeshProUGUI>().text = "";
                 CustomUI.Open(HostUI);
             });
-
+            /*
             HostUI.transform.Find("Button Host").GetComponent<Button>().onClick.AddListener(() =>
             {
                 string portString = HostUI.transform.Find("TextField Port").GetComponentInChildren<TextMeshProUGUI>().text;
@@ -204,7 +203,7 @@ namespace DVMultiplayer.Networking
                     HideUI();
                 }
             });
-
+            */
             UI.transform.Find("Button Close").GetComponent<Button>().onClick.AddListener(() =>
             {
                 CustomUI.Open();
@@ -213,17 +212,6 @@ namespace DVMultiplayer.Networking
             ClientConnectedMenuUI.transform.Find("Button Close").GetComponent<Button>().onClick.AddListener(() =>
             {
                 CustomUI.Open();
-            });
-
-            HostConnectedMenuUI.transform.Find("Button Close").GetComponent<Button>().onClick.AddListener(() =>
-            {
-                CustomUI.Open();
-            });
-
-            HostConnectedMenuUI.transform.Find("Button Stop Server").GetComponent<Button>().onClick.AddListener(() =>
-            {
-                NetworkManager.StopServer();
-                HideUI();
             });
 
             ClientConnectedMenuUI.transform.Find("Button Disconnect").GetComponent<Button>().onClick.AddListener(() =>
@@ -254,13 +242,9 @@ namespace DVMultiplayer.Networking
                 UI.transform.Find("Button Connect").GetComponent<UIElementTooltip>().TooltipNonInteractableText = TutorialController.tutorialPartOneInProgress || TutorialController.tutorialPartTwoInProgress ? "Finish the tutorial first" : "";
                 UI.transform.Find("Button Host").GetComponent<Button>().interactable = !(TutorialController.tutorialPartOneInProgress || TutorialController.tutorialPartTwoInProgress);
                 UI.transform.Find("Button Host").GetComponent<UIElementTooltip>().TooltipNonInteractableText = TutorialController.tutorialPartOneInProgress || TutorialController.tutorialPartTwoInProgress ? "Finish the tutorial first" : "";
-
-                if (NetworkManager.IsClient() && NetworkManager.IsHost())
-                {
-                    HostConnectedMenuUI.transform.Find("Label Username").GetComponent<TextMeshProUGUI>().text = $"Connected as: {NetworkManager.username}";
-                    CustomUI.Open(HostConnectedMenuUI);
-                }
-                else if (NetworkManager.IsClient() && !NetworkManager.IsHost())
+                
+                
+                if (NetworkManager.IsClient() && !NetworkManager.IsHost())
                 {
                     ClientConnectedMenuUI.transform.Find("Label Username").GetComponent<TextMeshProUGUI>().text = $"Connected as: {NetworkManager.username}";
                     CustomUI.Open(ClientConnectedMenuUI);

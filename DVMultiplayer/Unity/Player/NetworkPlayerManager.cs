@@ -24,6 +24,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     private Coroutine playersLoaded;
     private bool modMismatched = false;
     public bool newPlayerConnecting;
+    private bool _RoleHasBeenSet = false;
 
     public bool IsSynced { get; private set; }
 
@@ -34,7 +35,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
         SingletonBehaviour<UnityClient>.Instance.MessageReceived += MessageReceived;
     }
-   
+
 
     private GameObject GetNewPlayerObject(Vector3 pos, Quaternion rotation, string username)
     {
@@ -149,8 +150,21 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 case NetworkTags.PLAYER_LOADED:
                     SetPlayerLoaded(message);
                     break;
+                case NetworkTags.PLAYER_SET_ROLE:
+                    SetPlayerRole(message);
+                    break;
             }
         }
+    }
+
+    private void SetPlayerRole(Message message)
+    {
+        using (DarkRiftReader reader = message.GetReader())
+        {
+            NetworkManager.SetIsHost(reader.ReadBoolean());
+                
+        }
+       _RoleHasBeenSet = true;
     }
 
     private void SetPlayerLoaded(Message message)
@@ -206,7 +220,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 {
                     screen.transform.Find("Label Mismatched").GetComponent<TextMeshProUGUI>().text += "[MISMATCH] " + mismatches[i] + "\n";
                 }
-                if(mismatches.Count > 10)
+                if (mismatches.Count > 10)
                     screen.transform.Find("Label Mismatched").GetComponent<TextMeshProUGUI>().text += $"And {mismatches.Count - 10} more mismatches.";
 
                 if (missingMods.Length > 0)
@@ -231,7 +245,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 if (disconnectedPlayer.PlayerId != SingletonBehaviour<UnityClient>.Instance.ID && networkPlayers.ContainsKey(disconnectedPlayer.PlayerId))
                 {
                     Main.Log($"[CLIENT] < PLAYER_DISCONNECT: Username: {networkPlayers[disconnectedPlayer.PlayerId].GetComponent<NetworkPlayerSync>().Username}");
-                    if(networkPlayers[disconnectedPlayer.PlayerId])
+                    if (networkPlayers[disconnectedPlayer.PlayerId])
                         Destroy(networkPlayers[disconnectedPlayer.PlayerId]);
 
                     allPlayers.Remove(disconnectedPlayer.PlayerId);
@@ -249,31 +263,34 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         newPlayerConnecting = true;
         allPlayers.Add(SingletonBehaviour<UnityClient>.Instance.ID, PlayerManager.PlayerTransform.gameObject);
         Vector3 pos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
-        if (NetworkManager.IsHost())
-        {
-            Main.Log("[CLIENT] > PLAYER_SPAWN_SET");
-            using (DarkRiftWriter writer = DarkRiftWriter.Create())
-            {
-                KeyValuePair<string, Vector3> closestStation = SavedPositions.Stations.Where(pair => pair.Value == SavedPositions.Stations.Values.OrderBy(x => Vector3.Distance(x, pos)).First()).FirstOrDefault();
-                Main.Log($"Setting spawn at: {closestStation.Key}");
-                writer.Write(new SetSpawn()
-                {
-                    Position = closestStation.Value
-                });
 
-                using (Message message = Message.Create((ushort)NetworkTags.PLAYER_SPAWN_SET, writer))
-                    SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
-            }
+        /*
+        Main.Log("[CLIENT] > PLAYER_SPAWN_SET");
+        using (DarkRiftWriter writer = DarkRiftWriter.Create())
+        {
+            KeyValuePair<string, Vector3> closestStation = SavedPositions.Stations.Where(pair => pair.Value == SavedPositions.Stations.Values.OrderBy(x => Vector3.Distance(x, pos)).First()).FirstOrDefault();
+            Main.Log($"Requesting spawn at: {closestStation.Key}");
+            writer.Write(new SetSpawn()
+            {
+                Position = closestStation.Value
+            });
+
+            using (Message message = Message.Create((ushort)NetworkTags.PLAYER_SPAWN_SET, writer))
+                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
         }
+        */
 
         Main.Log("[CLIENT] > PLAYER_INIT");
         using (DarkRiftWriter writer = DarkRiftWriter.Create())
         {
+            KeyValuePair<string, Vector3> closestStation = SavedPositions.Stations.Where(pair => pair.Value == SavedPositions.Stations.Values.OrderBy(x => Vector3.Distance(x, pos)).First()).FirstOrDefault();
+            
             writer.Write<NPlayer>(new NPlayer()
             {
                 Id = SingletonBehaviour<UnityClient>.Instance.ID,
                 Username = PlayerManager.PlayerTransform.GetComponent<NetworkPlayerSync>().Username,
-                Mods = Main.GetEnabledMods()
+                Mods = Main.GetEnabledMods(),
+                Position = pos
             });
 
             using (Message message = Message.Create((ushort)NetworkTags.PLAYER_INIT, writer))
@@ -291,36 +308,46 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
         GamePreferences.Set(Preferences.CommsRadioSpawnMode, false);
         GamePreferences.RegisterToPreferenceUpdated(Preferences.CommsRadioSpawnMode, DisableSpawnMode);
+        
+        CustomUI.OpenPopup("Connecting", "Syncing with Server");
+        DateTime waitStart = DateTime.Now;
+
+        yield return new WaitUntil(() => _RoleHasBeenSet || modMismatched || waitStart - DateTime.Now > TimeSpan.FromSeconds(30) );
+
+        if (modMismatched)
+        {
+            UUI.UnlockMouse(false);
+            TutorialController.movementAllowed = true;
+            Main.Log($"Mods Mismatched so disconnecting player");
+            CustomUI.Open(CustomUI.ModMismatchScreen, false, false);
+            NetworkManager.Disconnect();
+            yield break;
+        }
+        if (!_RoleHasBeenSet)
+        {
+            UUI.UnlockMouse(false);
+            TutorialController.movementAllowed = true;
+            Main.Log($"Timeout");
+            CustomUI.Open(CustomUI.ModMismatchScreen, false, false);
+            NetworkManager.Disconnect();
+            yield break;
+        }
 
         if (!NetworkManager.IsHost())
         {
             // Create offline save
             Main.Log($"[CLIENT] Creating offline save");
             SingletonBehaviour<NetworkSaveGameManager>.Instance.CreateOfflineBackup();
-
-            CustomUI.OpenPopup("Connecting", "Loading savegame");
+            
             Main.Log($"[CLIENT] Receiving savegame");
             AppUtil.Instance.PauseGame();
-            // Check if host is connected if so the savegame should be available to receive
-            SingletonBehaviour<NetworkJobsManager>.Instance.PlayerConnect();
-            yield return new WaitUntil(() => networkPlayers.ContainsKey(0) || modMismatched);
-            if (modMismatched)
-            {
-                UUI.UnlockMouse(false);
-                TutorialController.movementAllowed = true;
-                Main.Log($"Mods Mismatched so disconnecting player");
-                CustomUI.Open(CustomUI.ModMismatchScreen, false, false);
-                NetworkManager.Disconnect();
-                yield break;
-            }
-
-            // Wait till spawn is set
-            yield return new WaitUntil(() => spawnData != null);
-
+            // Clear Singleplayer Jobs
+            SingletonBehaviour<NetworkJobsManager>.Instance.PlayerConnect();                       
+            
             AppUtil.Instance.UnpauseGame();
             yield return new WaitUntil(() => !AppUtil.IsPaused);
             yield return new WaitForEndOfFrame();
-            PlayerManager.TeleportPlayer(spawnData.Position + WorldMover.currentMove, PlayerManager.PlayerTransform.rotation, null, false);
+            // PlayerManager.TeleportPlayer(spawnData.Position + WorldMover.currentMove, PlayerManager.PlayerTransform.rotation, null, false);
             UUI.UnlockMouse(true);
 
             // Wait till world is loaded
@@ -355,11 +382,15 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
             AppUtil.Instance.UnpauseGame();
             yield return new WaitUntil(() => !AppUtil.IsPaused);
-            yield return new WaitForEndOfFrame();
-            CustomUI.Close();
+            yield return new WaitForEndOfFrame();            
         }
         else
         {
+            SingletonBehaviour<NetworkJunctionManager>.Instance.HostSentJunctions();
+            yield return new WaitUntil(() => SingletonBehaviour<NetworkJunctionManager>.Instance.IsSynced);
+            SingletonBehaviour<NetworkTurntableManager>.Instance.HostSyncTurntables();
+            yield return new WaitUntil(() => SingletonBehaviour<NetworkTurntableManager>.Instance.IsSynced);
+
             Main.Log($"Save should be loaded. Run OnFinishedLoading in NetworkTrainManager");
             SingletonBehaviour<NetworkTrainManager>.Instance.OnFinishedLoading();
             yield return new WaitUntil(() => SingletonBehaviour<NetworkTrainManager>.Instance.SaveCarsLoaded);
@@ -367,7 +398,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
             Main.Log($"Run OnFinishedLoading in NetworkJobsManager");
             SingletonBehaviour<NetworkJobsManager>.Instance.OnFinishLoading();
         }
-
+        CustomUI.Close();
         SendIsLoaded();
         Main.Log($"Finished loading everything. Unlocking mouse and allow movement");
         UUI.UnlockMouse(false);
@@ -599,9 +630,9 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     internal GameObject[] GetPlayersInTrainSet(Trainset trainset)
     {
         List<GameObject> players = new List<GameObject>();
-        foreach(TrainCar car in trainset.cars)
+        foreach (TrainCar car in trainset.cars)
         {
-            if(car)
+            if (car)
                 players.AddRange(GetPlayersInTrain(car));
         }
         return players.ToArray();

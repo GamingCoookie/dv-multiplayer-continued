@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0D7B6B8C-2092-4894-B3A1-F61170086D8C}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>DVServer</RootNamespace>
+    <AssemblyName>DVServer</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DarkRift, Version=2.10.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\DarkRift.dll</HintPath>
+    </Reference>
+    <Reference Include="DarkRift.Server, Version=2.10.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\DarkRift.Server.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\DVMultiplayer\Networking\NetworkTags.cs">
+      <Link>Darkrift\NetworkTags.cs</Link>
+    </Compile>
+    <Compile Include="Darkrift\BufferQueue.cs" />
+    <Compile Include="Darkrift\WriterExtends.cs" />
+    <Compile Include="DTO\Debt\DebtPaid.cs" />
+    <Compile Include="DTO\Enums.cs" />
+    <Compile Include="DTO\Job\Chain.cs" />
+    <Compile Include="DTO\Job\Job.cs" />
+    <Compile Include="DTO\Junction\Switch.cs" />
+    <Compile Include="DTO\Player\Disconnect.cs" />
+    <Compile Include="DTO\Player\Location.cs" />
+    <Compile Include="DTO\Player\NPlayer.cs" />
+    <Compile Include="DTO\Player\PlayerLoaded.cs" />
+    <Compile Include="DTO\Player\SetSpawn.cs" />
+    <Compile Include="DTO\Train\CarDamage.cs" />
+    <Compile Include="DTO\Train\CarMUChange.cs" />
+    <Compile Include="DTO\Train\CarRemoval.cs" />
+    <Compile Include="DTO\Train\CarsAuthChange.cs" />
+    <Compile Include="DTO\Train\MultipleUnit.cs" />
+    <Compile Include="DTO\Train\Shunter.cs" />
+    <Compile Include="DTO\Train\TrainCarChange.cs" />
+    <Compile Include="DTO\Train\TrainCargoChanged.cs" />
+    <Compile Include="DTO\Train\TrainCouplerCockChange.cs" />
+    <Compile Include="DTO\Train\TrainCouplerHoseChange.cs" />
+    <Compile Include="DTO\Train\TrainCouplingChange.cs" />
+    <Compile Include="DTO\Train\TrainDerail.cs" />
+    <Compile Include="DTO\Train\TrainLever.cs" />
+    <Compile Include="DTO\Train\TrainLocation.cs" />
+    <Compile Include="DTO\Train\TrainRerail.cs" />
+    <Compile Include="DTO\Train\WorldTrain.cs" />
+    <Compile Include="DTO\Turntable\ReleaseAuthority.cs" />
+    <Compile Include="DTO\Turntable\RequestAuthority.cs" />
+    <Compile Include="DTO\Turntable\Turntable.cs" />
+    <Compile Include="DVServerMain.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DTO\Savegame\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

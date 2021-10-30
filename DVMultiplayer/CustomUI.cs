@@ -128,13 +128,13 @@ namespace DVMultiplayer
 
             ButtonBuilder connectButtonBuilder = new ButtonBuilder("Connect", "Connect Manually", menuBuilder.transform, new Rect(0f, -177.5f, 448, 76), RectTransformAnchoring.TopCenter, new Vector2(.5f, .5f), TextAlignmentOptions.Center, "Connect to an existing server");
             ButtonBuilder connectFavButtonBuilder = new ButtonBuilder("Connect to Favorite", "Connect to Favorite", menuBuilder.transform, new Rect(0f, -257.5f, 448, 76), RectTransformAnchoring.TopCenter, new Vector2(.5f, .5f), TextAlignmentOptions.Center, "Connect to an favorited server");
-            ButtonBuilder hostButtonBuilder = new ButtonBuilder("Host", "Host server", menuBuilder.transform, new Rect(0f, -377.5f, 448, 76), RectTransformAnchoring.TopCenter, new Vector2(.5f, .5f), TextAlignmentOptions.Center, "Host a new server");
+            //ButtonBuilder hostButtonBuilder = new ButtonBuilder("Host", "Host server", menuBuilder.transform, new Rect(0f, -377.5f, 448, 76), RectTransformAnchoring.TopCenter, new Vector2(.5f, .5f), TextAlignmentOptions.Center, "Host a new server");
 
             CreateSection(new Rect(0f, -218, 458, 168), RectTransformAnchoring.TopCenter, menuBuilder.transform);
             CreateButton(connectButtonBuilder);
             CreateButton(connectFavButtonBuilder);
             CreateSection(new Rect(0f, -377, 458, 91f), RectTransformAnchoring.TopCenter, menuBuilder.transform);
-            CreateButton(hostButtonBuilder);
+            //CreateButton(hostButtonBuilder);
 
             GameObject menu = Object.Instantiate(menuBuilder, canvas.transform);
             Object.DestroyImmediate(menuBuilder);

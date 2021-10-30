@@ -11,6 +11,7 @@
         PLAYER_SPAWN_SET,
         PLAYER_INIT,
         PLAYER_LOADED,
+        PLAYER_SET_ROLE, // Set Player Role (Host or Client)
         TRAIN_LEVER,
         TRAIN_SWITCH,
         TRAIN_LOCATION_UPDATE,

@@ -1,6 +1,6 @@
 ﻿using DarkRift;
 using DVMultiplayer.Darkrift;
-using UnityEngine;
+using System.Numerics;
 
 namespace DVMultiplayer.DTO.Player
 {
@@ -11,7 +11,7 @@ namespace DVMultiplayer.DTO.Player
         public string[] Mods { get; set; }
         public bool IsLoaded { get; set; }
         public Vector3 Position { get; set; }
-
+        
         public void Deserialize(DeserializeEvent e)
         {
             Id = e.Reader.ReadUInt16();

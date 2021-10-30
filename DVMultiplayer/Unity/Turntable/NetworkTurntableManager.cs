@@ -33,8 +33,7 @@ internal class NetworkTurntableManager : SingletonBehaviour<NetworkTurntableMana
 
         SingletonBehaviour<UnityClient>.Instance.MessageReceived += MessageReceived;
 
-        if (NetworkManager.IsHost())
-            HostSyncTurntables();
+        
     }
 
     internal void SyncTurntables()
