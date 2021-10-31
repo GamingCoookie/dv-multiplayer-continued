@@ -13,7 +13,6 @@ namespace DVMultiplayer.Networking
     {
         private MenuScreen UI;
         private MenuScreen ConnectUI;
-        private MenuScreen HostUI;
         private MenuScreen SaveFavoriteUI;
         private MenuScreen FavoritesListUI;
         private MenuScreen RequestUsernameUI;
@@ -30,11 +29,9 @@ namespace DVMultiplayer.Networking
 
             UI = CustomUI.NetworkUI;
             ConnectUI = CustomUI.ConnectMenuUI;
-            HostUI = CustomUI.HostMenuUI;
             SaveFavoriteUI = CustomUI.SaveFavoriteMenuUI;
             FavoritesListUI = CustomUI.FavoriteConnectMenuUI;
             RequestUsernameUI = CustomUI.UsernameRequestMenuUI;
-            //HostConnectedMenuUI = CustomUI.HostConnectedMenuUI;
             ClientConnectedMenuUI = CustomUI.ClientConnectedMenuUI;
             int pagination = 0;
             Favorite selectedFav = null;
@@ -181,29 +178,6 @@ namespace DVMultiplayer.Networking
                 }
             });
 
-            UI.transform.Find("Button Host").GetComponent<Button>().onClick.AddListener(() =>
-            {
-                HostUI.transform.Find("TextField Port").GetComponentInChildren<TextMeshProUGUI>().text = "4296";
-                HostUI.transform.Find("TextField Username").GetComponentInChildren<TextMeshProUGUI>().text = "";
-                CustomUI.Open(HostUI);
-            });
-            /*
-            HostUI.transform.Find("Button Host").GetComponent<Button>().onClick.AddListener(() =>
-            {
-                string portString = HostUI.transform.Find("TextField Port").GetComponentInChildren<TextMeshProUGUI>().text;
-                string username = HostUI.transform.Find("TextField Username").GetComponentInChildren<TextMeshProUGUI>().text;
-
-                bool portValid = ushort.TryParse(portString, out ushort port) && port < 65535 && port > 0;
-                if (!portValid)
-                    port = 4296;
-
-                if (!string.IsNullOrWhiteSpace(username))
-                {
-                    NetworkManager.StartServer(username, port);
-                    HideUI();
-                }
-            });
-            */
             UI.transform.Find("Button Close").GetComponent<Button>().onClick.AddListener(() =>
             {
                 CustomUI.Open();
@@ -230,20 +204,14 @@ namespace DVMultiplayer.Networking
                 CustomUI.Open(UI);
             });
 
-            HostUI.transform.Find("Button Close").GetComponent<Button>().onClick.AddListener(() =>
-            {
-                CustomUI.Open(UI);
-            });
 
             Object.DestroyImmediate(SingletonBehaviour<CanvasSpawner>.Instance.CanvasGO.transform.Find("Main Menu").Find("Button Multiplayer").GetComponent<MenuSocial>());
             SingletonBehaviour<CanvasSpawner>.Instance.CanvasGO.transform.Find("Main Menu").Find("Button Multiplayer").GetComponent<Button>().onClick.AddListener(() =>
             {
                 UI.transform.Find("Button Connect").GetComponent<Button>().interactable = !(TutorialController.tutorialPartOneInProgress || TutorialController.tutorialPartTwoInProgress);
                 UI.transform.Find("Button Connect").GetComponent<UIElementTooltip>().TooltipNonInteractableText = TutorialController.tutorialPartOneInProgress || TutorialController.tutorialPartTwoInProgress ? "Finish the tutorial first" : "";
-                UI.transform.Find("Button Host").GetComponent<Button>().interactable = !(TutorialController.tutorialPartOneInProgress || TutorialController.tutorialPartTwoInProgress);
-                UI.transform.Find("Button Host").GetComponent<UIElementTooltip>().TooltipNonInteractableText = TutorialController.tutorialPartOneInProgress || TutorialController.tutorialPartTwoInProgress ? "Finish the tutorial first" : "";
-                
-                
+
+
                 if (NetworkManager.IsClient() && !NetworkManager.IsHost())
                 {
                     ClientConnectedMenuUI.transform.Find("Label Username").GetComponent<TextMeshProUGUI>().text = $"Connected as: {NetworkManager.username}";

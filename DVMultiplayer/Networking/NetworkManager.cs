@@ -1,6 +1,6 @@
+using DarkRift;
 using DarkRift.Client;
 using DarkRift.Client.Unity;
-using DarkRift.Server.Unity;
 using DVMultiplayer.Utils;
 using System;
 using System.Collections;
@@ -13,7 +13,6 @@ namespace DVMultiplayer.Networking
     public static class NetworkManager
     {
         public static UnityClient client;
-//        public static XmlUnityServer server;
         private static NetworkingUI UI;
         private static GameObject networkManager;
         private static bool _isHost;
@@ -40,14 +39,12 @@ namespace DVMultiplayer.Networking
             {
                 networkManager = Object.Instantiate(new GameObject(), Vector3.zero, Quaternion.identity);
                 networkManager.name = "NetworkManager";
-              //  server = networkManager.AddComponent<XmlUnityServer>();
                 client = networkManager.AddComponent<UnityClient>();
 
                 client.Disconnected += OnClientDisconnected;
 
                 Object.DontDestroyOnLoad(networkManager);
 
-               // server.configuration = new TextAsset(File.ReadAllText("./Mods/DVMultiplayer/Resources/config.xml"));
             }
 
             if (UI == null)

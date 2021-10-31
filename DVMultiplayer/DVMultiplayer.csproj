@@ -54,10 +54,6 @@
       <HintPath>lib\DarkRift.Client.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="DarkRift.Server">
-      <HintPath>lib\DarkRift.Server.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="DV.BrakeSystem">
       <HintPath>lib\DV.BrakeSystem.dll</HintPath>
       <Private>False</Private>
@@ -165,11 +161,6 @@
     <Compile Include="Darkrift\BufferQueue.cs" />
     <Compile Include="Darkrift\Client\SerializableObjectCacheSettings.cs" />
     <Compile Include="Darkrift\Client\UnityClient.cs" />
-    <Compile Include="Darkrift\Server\UnityModManagerWriter.cs" />
-    <Compile Include="Darkrift\Server\UnityConsoleWriter.cs" />
-    <Compile Include="Darkrift\Server\UnityServer.cs" />
-    <Compile Include="Darkrift\Server\UnityServerHelper.cs" />
-    <Compile Include="Darkrift\Server\XmlUnityServer.cs" />
     <Compile Include="Darkrift\WriterExtends.cs" />
     <Compile Include="DebugUI.cs" />
     <Compile Include="DTO\Debt\DebtPaid.cs" />
@@ -316,6 +307,7 @@ mkdir %25BUILDFOLDER%25\Plugins</PreBuildEvent>
   <PropertyGroup>
     <PostBuildEvent>SET BUILDFOLDER="$(SolutionDir)Build"
 xcopy "$(TargetDir)*.dll" %25BUILDFOLDER%25 /Y /I
+xcopy "$(TargetDir)*.pdb" %25BUILDFOLDER%25 /Y /I
 xcopy "$(TargetDir)info.json" %25BUILDFOLDER%25
 xcopy "$(TargetDir)Resources\*" %25BUILDFOLDER%25\Resources /Y /I /E</PostBuildEvent>
   </PropertyGroup>

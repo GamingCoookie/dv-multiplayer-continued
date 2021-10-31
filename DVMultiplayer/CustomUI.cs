@@ -35,7 +35,6 @@ namespace DVMultiplayer
                 GenerateNetworkUI();
                 GenerateConnectUI();
                 GenerateInputScreenUI();
-                GenerateHostUI();
                 GenerateFavoriteUI();
                 GenerateFavoriteListUI();
                 GenerateRequestUsernameUI();
@@ -278,29 +277,6 @@ namespace DVMultiplayer
             UsernameRequestMenuUI = menu.GetComponent<MenuScreen>();
         }
 
-        private static void GenerateHostUI()
-        {
-            GameObject canvas = SingletonBehaviour<CanvasSpawner>.Instance.CanvasGO;
-            GameObject menuBuilder = CreateMenu(new MenuBuilder("DVMultiplayer Host", "Host", 975, 440f, false, false));
-
-            TextFieldBuilder inputPortField = new TextFieldBuilder("Port", menuBuilder.transform, new Rect(-32f, -215, 695, 76), TextAlignmentOptions.MidlineLeft, RectTransformAnchoring.TopRight, new Vector2(1f, 0f), true);
-            TextFieldBuilder inputUsernameField = new TextFieldBuilder("Username", menuBuilder.transform, new Rect(-32f, -315, 695, 76), TextAlignmentOptions.MidlineLeft, RectTransformAnchoring.TopRight, new Vector2(1f, 0f));
-            ButtonBuilder connectButtonBuilder = new ButtonBuilder("Host", "Host", menuBuilder.transform, new Rect(0f, -415, 448, 76), RectTransformAnchoring.TopCenter, new Vector2(.5f, 0f), TextAlignmentOptions.Center);
-
-            CreateSection(new Rect(0f, -177, 925, 91.14999f), RectTransformAnchoring.TopCenter, menuBuilder.transform);
-            CreateLabel("Port", "Port:", menuBuilder.transform, new Rect(32, -215, 218, 76), FontStyles.UpperCase, TextAlignmentOptions.MidlineLeft, RectTransformAnchoring.TopLeft, new Vector2(0f, 0f));
-            CreateTextField(inputPortField);
-
-            CreateSection(new Rect(0f, -277, 925, 91.14999f), RectTransformAnchoring.TopCenter, menuBuilder.transform);
-            CreateLabel("Username", "Username:", menuBuilder.transform, new Rect(32, -315, 218, 76), FontStyles.UpperCase, TextAlignmentOptions.MidlineLeft, RectTransformAnchoring.TopLeft, new Vector2(0f, 0f));
-            CreateTextField(inputUsernameField);
-
-            CreateButton(connectButtonBuilder);
-
-            GameObject menu = Object.Instantiate(menuBuilder, canvas.transform);
-            Object.DestroyImmediate(menuBuilder);
-            HostMenuUI = menu.GetComponent<MenuScreen>();
-        }
 
         private static void GenerateInputScreenUI()
         {
