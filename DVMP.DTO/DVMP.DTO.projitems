@@ -14,6 +14,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Job\Chain.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Job\Job.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Junction\Switch.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)NetworkTags.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\Disconnect.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\Location.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\NPlayer.cs" />

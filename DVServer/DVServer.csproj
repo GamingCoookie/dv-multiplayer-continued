@@ -56,9 +56,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\DVMultiplayer\Networking\NetworkTags.cs">
-      <Link>Darkrift\NetworkTags.cs</Link>
-    </Compile>
     <Compile Include="Darkrift\BufferQueue.cs" />
     <Compile Include="Darkrift\WriterExtends.cs" />
     <Compile Include="DVServerMain.cs" />
