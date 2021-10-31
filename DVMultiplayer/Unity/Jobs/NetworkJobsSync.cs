@@ -1,5 +1,6 @@
 ﻿using DV.Logic.Job;
 using DVMultiplayer;
+using DVMultiplayer.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -74,7 +75,7 @@ class NetworkJobsSync : MonoBehaviour
 
         Main.Log("Generation is finished Length = " + newChains.Count);
         List<TrainCar> newJobTrains = new List<TrainCar>();
-        foreach(JobChainController job in newChains)
+        foreach (JobChainController job in newChains)
         {
             newJobTrains.AddRange(job.trainCarsForJobChain);
         }
