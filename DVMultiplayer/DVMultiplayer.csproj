@@ -21,7 +21,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DVCLIENT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -163,35 +163,7 @@
     <Compile Include="Darkrift\Client\UnityClient.cs" />
     <Compile Include="Darkrift\WriterExtends.cs" />
     <Compile Include="DebugUI.cs" />
-    <Compile Include="DTO\Debt\DebtPaid.cs" />
-    <Compile Include="DTO\Job\Chain.cs" />
-    <Compile Include="DTO\Job\Job.cs" />
-    <Compile Include="DTO\Junction\Switch.cs" />
-    <Compile Include="DTO\Player\Disconnect.cs" />
-    <Compile Include="DTO\Player\Location.cs" />
-    <Compile Include="DTO\Player\PlayerLoaded.cs" />
-    <Compile Include="DTO\Player\NPlayer.cs" />
-    <Compile Include="DTO\Player\SetSpawn.cs" />
     <Compile Include="DTO\Savegame\OfflineSave.cs" />
-    <Compile Include="DTO\Train\CarDamage.cs" />
-    <Compile Include="DTO\Train\CarMUChange.cs" />
-    <Compile Include="DTO\Train\CarsAuthChange.cs" />
-    <Compile Include="DTO\Train\CarRemoval.cs" />
-    <Compile Include="DTO\Train\MultipleUnit.cs" />
-    <Compile Include="DTO\Train\Shunter.cs" />
-    <Compile Include="DTO\Train\TrainCargoChanged.cs" />
-    <Compile Include="DTO\Train\TrainCouplerCockChange.cs" />
-    <Compile Include="DTO\Train\TrainCouplerHoseChange.cs" />
-    <Compile Include="DTO\Train\TrainCouplingChange.cs" />
-    <Compile Include="DTO\Train\TrainCarChange.cs" />
-    <Compile Include="DTO\Train\TrainRerail.cs" />
-    <Compile Include="DTO\Train\TrainLever.cs" />
-    <Compile Include="DTO\Train\TrainDerail.cs" />
-    <Compile Include="DTO\Train\TrainLocation.cs" />
-    <Compile Include="DTO\Train\WorldTrain.cs" />
-    <Compile Include="DTO\Turntable\RequestAuthority.cs" />
-    <Compile Include="DTO\Turntable\ReleaseAuthority.cs" />
-    <Compile Include="DTO\Turntable\Turntable.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Networking\FavoritesManager.cs" />
     <Compile Include="Networking\NetworkingUI.cs" />
@@ -284,6 +256,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup />
+  <Import Project="..\DVMP.DTO\DVMP.DTO.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>

@@ -1,5 +1,8 @@
 ﻿using DarkRift;
 using DVMultiplayer.Darkrift;
+#if DVSERVER
+using System.Numerics;
+#endif
 using UnityEngine;
 
 namespace DVMultiplayer.DTO.Turntable

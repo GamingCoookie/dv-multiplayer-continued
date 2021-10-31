@@ -1,6 +1,9 @@
 ﻿using DarkRift;
 using DV.Logic.Job;
 using DVMultiplayer.Darkrift;
+#if DVSERVER
+using System.Numerics;
+#endif
 using UnityEngine;
 
 namespace DVMultiplayer.DTO.Train
@@ -55,7 +58,9 @@ namespace DVMultiplayer.DTO.Train
 
         //Data specific
         public long updatedAt { get; set; }
-
+#if DVSERVER
+        public long tUpdates { get; set; } // performance Tracking
+#endif
         public void Deserialize(DeserializeEvent e)
         {
             Guid = e.Reader.ReadString();
