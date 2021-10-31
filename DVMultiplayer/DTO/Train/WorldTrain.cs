@@ -16,7 +16,7 @@ namespace DVMultiplayer.DTO.Train
 
         // Player
         public bool IsPlayerSpawned { get; set; }
-        public ushort AuthorityPlayerId { get; set; } = 0;
+        public ushort AuthorityPlayerId { get; set; } = 0xffff;
 
         // Position and physics
         public Vector3 Position { get; set; }
