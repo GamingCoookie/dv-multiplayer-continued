@@ -3,6 +3,7 @@ using DarkRift.Server;
 using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Player;
 using DVMultiplayer.Networking;
+using DVServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,20 @@ namespace PlayerPlugin
         {
             return players.Keys;
         }
+        public ushort GetHostPlayerID()
+        {
+            var pHost = players.Values.FirstOrDefault(p => p.isHost);
+            if (pHost != null)
+                return pHost.id;
+            return 0xffff;
+        }
+
+        Player GetPlayer(IClient client)
+        {
+            if (players.TryGetValue(client, out var p))
+                return p;
+            return null;
+        }
 
         public override bool ThreadSafe => true;
 
@@ -36,7 +51,7 @@ namespace PlayerPlugin
         {
             ClientManager.ClientConnected += ClientConnected;
             ClientManager.ClientDisconnected += ClientDisconnected;
-            pingSendTimer = new System.Timers.Timer(250);
+            pingSendTimer = new System.Timers.Timer(1000);
             pingSendTimer.Elapsed += PingSendMessage;
             pingSendTimer.AutoReset = true;
             pingSendTimer.Start();
@@ -47,15 +62,17 @@ namespace PlayerPlugin
         {
             if (Interlocked.Read(ref PlayerConnectLock) >= 0)
                 return;
-            foreach (IClient client in players.Keys)
+            foreach (var pMap in players)
             {
                 if (Interlocked.Read(ref PlayerConnectLock) >= 0)
                     return;
-
-                using (Message ping = Message.CreateEmpty((ushort)NetworkTags.PING))
+                if (DateTime.Now - pMap.Value.LastMessage > TimeSpan.FromSeconds(3))
                 {
-                    ping.MakePingMessage();
-                    client.SendMessage(ping, SendMode.Reliable);
+                    using (Message ping = Message.CreateEmpty((ushort)NetworkTags.PING))
+                    {
+                        ping.MakePingMessage();
+                        pMap.Key.SendMessage(ping, SendMode.Reliable);
+                    }
                 }
             }
             if (Interlocked.Read(ref PlayerConnectLock) < 0 && !buffer.IsEmpty)
@@ -88,14 +105,24 @@ namespace PlayerPlugin
 
         private void ClientConnected(object sender, ClientConnectedEventArgs e)
         {
+            if (!ServerManager.ServerIsReady())
+            {
+                e.Client.Disconnect();
+                return;
+            }
             e.Client.MessageReceived += MessageReceived;
         }
 
         private void MessageReceived(object sender, MessageReceivedEventArgs e)
         {
+            var p = GetPlayer(e.Client);
+            if (p != null)
+                p.LastMessage = DateTime.Now;
             using (Message message = e.GetMessage() as Message)
             {
                 NetworkTags tag = (NetworkTags)message.Tag;
+                if (tag != NetworkTags.PLAYER_LOCATION_UPDATE && tag != NetworkTags.TRAIN_LOCATION_UPDATE)
+                    Logger.Info($"{tag} '{p?.username}' {e.Client.ID}");
                 if (!tag.ToString().StartsWith("PLAYER_"))
                     return;
 
@@ -135,6 +162,9 @@ namespace PlayerPlugin
                 Logger.Error($"Client with ID {sender.ID} not found");
             if (Interlocked.Read(ref PlayerConnectLock) == sender.ID)
                 Interlocked.Exchange(ref PlayerConnectLock, -1);
+            Logger.Info("{player} is loaded. Current host is " + CurrentHostClientID);
+            if (CurrentHostClientID == ushort.MaxValue)
+                SelectNewHostPlayer();
         }
 
         private void ServerPlayerInitializer(Message message, IClient sender)
@@ -156,7 +186,7 @@ namespace PlayerPlugin
         private void InitializePlayer(NPlayer player, IClient sender)
         {
             Interlocked.Exchange(ref PlayerConnectLock, sender.ID);
-            bool newClientIsHost = true;
+            bool newClientIsHost = false;
             if (players.Count > 0)
             {
                 /* Disabled for now 
@@ -273,7 +303,7 @@ namespace PlayerPlugin
 
                     using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_LOCATION_UPDATE, writer))
                         foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
-                            client.SendMessage(outMessage, SendMode.Unreliable);
+                            client.SendMessage(outMessage, ServerManager.Unreliable);
                 }
                 
             }
@@ -301,8 +331,9 @@ namespace PlayerPlugin
                 Logger.Error($"Could not find a Client as new host?!");
                 return;
             }
-            Logger.Info($"{result.Value.id} is the new HOST");
+            Logger.Info($"{result.Value} is the new HOST");
             result.Value.isHost = true;
+            CurrentHostClientID = result.Value.id;
             PlayerSetRole(result.Key, true);
         }
 
@@ -327,7 +358,7 @@ namespace PlayerPlugin
         public Quaternion rotation;
         internal bool isLoaded;
         internal bool isHost;
-
+        internal DateTime LastMessage = DateTime.MinValue;
         public Player(ushort id, string username, string[] mods)
         {
             this.id = id;
@@ -337,6 +368,11 @@ namespace PlayerPlugin
             isLoaded = false;
             position = new Vector3();
             rotation = new Quaternion();
+        }
+
+        public override string ToString()
+        {
+            return $"Player '{username}'/{id} {(isHost ? "HOST" : "CLIENT")}";
         }
     }
 }
