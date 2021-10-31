@@ -75,10 +75,10 @@ internal class NetworkTrainPosSync : MonoBehaviour
         //{
         //    bogieAudios[i] = trainCar.Bogies[i].GetComponent<BogieAudioController>();
         //}
+        trainCar.TrainsetChanged += TrainCar_TrainsetChanged;
 
         if (NetworkManager.IsHost())
         {
-            trainCar.TrainsetChanged += TrainCar_TrainsetChanged;
             SetAuthority(true);
         }
         else
@@ -89,6 +89,8 @@ internal class NetworkTrainPosSync : MonoBehaviour
 
     private void TrainCar_TrainsetChanged(Trainset set)
     {
+        if (!NetworkManager.IsHost())
+            return;
         if (isBeingDestroyed || set == null || set.firstCar == null || !trainCar || trainCar.logicCar == null )
             return;
         //Issue with trainset being detatched in the middle positioning not updating correctly.
