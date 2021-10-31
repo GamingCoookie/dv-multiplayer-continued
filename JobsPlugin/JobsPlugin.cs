@@ -2,25 +2,32 @@
 using DarkRift.Server;
 using DVMultiplayer.DTO.Job;
 using DVMultiplayer.Networking;
+using DVServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace JobsPlugin
 {
-    public class JobsPlugin : Plugin
+    public class JobData
+    {
+        public List<Chain> Chains = new List<Chain>();
+        public List<Job> Jobs = new List<Job>();
+    }
+
+    public class JobsPlugin : Plugin, IPluginSave
     {
         public override bool ThreadSafe => true;
 
         public override Version Version => new Version("1.0.10");
 
-        private readonly List<Chain> chains;
-        public readonly List<Job> jobs;
+        private JobData JobData = new JobData();
+        private List<Chain> chains => JobData.Chains;
+        private List<Job> jobs => JobData.Jobs;
 
         public JobsPlugin(PluginLoadData pluginLoadData) : base(pluginLoadData)
         {
-            chains = new List<Chain>();
-            jobs = new List<Job>();
+            ServerManager.RegisterPlugin(this);
             ClientManager.ClientConnected += OnClientConnected;
         }
 
@@ -213,6 +220,33 @@ namespace JobsPlugin
         {
             foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
                 client.SendMessage(message, SendMode.Reliable);
+        }
+
+        public object SaveData()
+        {
+            return JobData;
+        }
+
+        public void LoadData(string data)
+        {
+            var rVal = ServerManager.LoadObject<JobData>(data);
+            if (rVal != null)
+            {
+                foreach (var item in rVal.Jobs.Where(j => j.IsTaken || j.IsCompleted || j.IsCurrentJob).ToList())
+                {
+                    Logger.Info("Removed completed Job " + item.Id + " Chain "+item.ChainId);
+                    rVal.Chains.RemoveAll(c => c.Id == item.ChainId);
+                    rVal.Jobs.RemoveAll(j => j.ChainId == item.ChainId);
+                }
+                foreach (var item in rVal.Chains.Where(c => c.IsCompleted || c.IsExpired).ToList())
+                {
+                    rVal.Jobs.RemoveAll(j => j.ChainId == item.Id);
+                    rVal.Chains.RemoveAll(c=>c.Id == item.Id);
+                    Logger.Info("Removed completed Chain " + item.Id);
+                }
+
+                JobData = rVal;
+            }
         }
     }
 }
