@@ -403,6 +403,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         Main.Log($"Finished loading everything. Unlocking mouse and allow movement");
         UUI.UnlockMouse(false);
         TutorialController.movementAllowed = true;
+        newPlayerConnecting = false;
         IsSynced = true;
         // Move to spawn
     }
