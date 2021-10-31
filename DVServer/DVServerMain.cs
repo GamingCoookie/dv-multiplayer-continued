@@ -9,7 +9,7 @@ using System.Threading;
 using System.IO;
 using System.Collections.Specialized;
 
-namespace DarkRift.Server.Console
+namespace DVServer
 {
     class Program
     {
@@ -72,10 +72,12 @@ namespace DarkRift.Server.Console
                 System.Console.ReadKey();
                 return;
             }
-            
+            ServerManager.Init();
             server = new DarkRiftServer(spawnData);
             server.StartServer();
-
+            ServerManager.Load();
+            ServerManager.Start();
+            ServerManager.SetServerStatus(SERVER_STATUS.READY);
             new Thread(new ThreadStart(ConsoleLoop)).Start();
 
             while (true)
@@ -93,7 +95,18 @@ namespace DarkRift.Server.Console
             while (true)
             {
                 string input = System.Console.ReadLine();
-
+                if (input == "exit")
+                {
+                    ServerManager.SetServerStatus(SERVER_STATUS.SHUTDOWN);
+                    ServerManager.Save(true);
+                    server.Dispose();
+                    return;
+                }
+                if (input == "save")
+                {
+                    ServerManager.Save(true);
+                    continue;
+                }
                 server.ExecuteCommand(input);
             }
         }

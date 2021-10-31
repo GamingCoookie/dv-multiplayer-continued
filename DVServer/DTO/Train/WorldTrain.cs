@@ -56,7 +56,7 @@ namespace DVMultiplayer.DTO.Train
 
         //Data specific
         public long updatedAt { get; set; }
-
+        public int tUpdates { get; set; } = 0;
         public void Deserialize(DeserializeEvent e)
         {
             Guid = e.Reader.ReadString();
