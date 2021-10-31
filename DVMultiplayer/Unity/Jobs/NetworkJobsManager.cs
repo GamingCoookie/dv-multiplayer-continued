@@ -72,7 +72,7 @@ internal class NetworkJobsManager : SingletonBehaviour<NetworkJobsManager>
 
                 if (data.Definition.job.State == JobState.Available)
                     data.Definition.job.JobTaken -= OnJobTaken;
-                if(data.Definition.job.State == JobState.InProgress)
+                if (data.Definition.job.State == JobState.InProgress)
                     data.Definition.job.JobCompleted -= OnJobCompleted;
             }
         }
@@ -96,14 +96,14 @@ internal class NetworkJobsManager : SingletonBehaviour<NetworkJobsManager>
         if (NetworkManager.IsHost())
         {
             SendCurrentJobs();
-
-            foreach (StationController station in StationController.allStations)
-            {
-                NetworkJobsSync jobSync = station.gameObject.AddComponent<NetworkJobsSync>();
-                jobSync.OnJobsGenerated += SendJobCreatedMessage;
-            }
-            IsSynced = true;
         }
+        foreach (StationController station in StationController.allStations)
+        {
+            NetworkJobsSync jobSync = station.gameObject.AddComponent<NetworkJobsSync>();
+            jobSync.OnJobsGenerated += SendJobCreatedMessage;
+        }
+        IsSynced = true;
+
     }
 
     private void OnJobTaken(DV.Logic.Job.Job job, bool takenViaGame)
