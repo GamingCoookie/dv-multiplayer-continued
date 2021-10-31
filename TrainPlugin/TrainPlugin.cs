@@ -4,6 +4,7 @@ using DV.Logic.Job;
 using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Train;
 using DVMultiplayer.Networking;
+using DVServer;
 using PlayerPlugin;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ using System.Timers;
 
 namespace TrainPlugin
 {
-    public class TrainPlugin : Plugin
+    public class TrainPlugin : Plugin, IPluginSave
     {
         public override bool ThreadSafe => false;
 
@@ -28,6 +29,7 @@ namespace TrainPlugin
             worldTrains = new List<WorldTrain>();
             queue = new BufferQueue();
             playerHasInitializedTrain = new List<IClient>();
+            DVServer.ServerManager.RegisterPlugin(this);
             ClientManager.ClientConnected += OnClientConnected;
             ClientManager.ClientDisconnected += OnClientDisconnect;
         }
@@ -200,6 +202,7 @@ namespace TrainPlugin
                 CarsAuthChange authChange = reader.ReadSerializable<CarsAuthChange>();
                 List<IClient> sentTo = new List<IClient>();
                 IEnumerable<IClient> players = PluginManager.GetPluginByType<PlayerPlugin.PlayerPlugin>().GetPlayers();
+                var hostID = PluginManager.GetPluginByType<PlayerPlugin.PlayerPlugin>().GetHostPlayerID();
                 foreach (string guid in authChange.Guids)
                 {
                     WorldTrain train = worldTrains.FirstOrDefault(t => t.Guid == guid);
@@ -220,7 +223,7 @@ namespace TrainPlugin
                 }
                 Logger.Trace("[SERVER] > TRAIN_AUTH_CHANGE");
                 IClient cl = players.FirstOrDefault(c => c.ID == authChange.PlayerId);
-                if(cl.ID != 0)
+                if(cl.ID != hostID)
                     SendDelayedMessage(authChange, NetworkTags.TRAIN_AUTH_CHANGE, cl, (int)sentTo.OrderByDescending(c => c.RoundTripTime.SmoothedRtt).First().RoundTripTime.SmoothedRtt / 2 * 1000);
                 sentTo.Add(cl);
 
@@ -776,16 +779,21 @@ namespace TrainPlugin
                     foreach(TrainLocation data in datas)
                     {
                         WorldTrain train = worldTrains.FirstOrDefault(t => t.Guid == data.TrainId);
+                        if (train == null)
+                        {
+                            Logger.Warning($"UpdatetTrainPosition: Train not found {data.TrainId}");
+                            continue;
+                        }
                         if (data.Timestamp <= train.updatedAt)
                             continue;
-
                         train.Position = data.Position;
                         train.Rotation = data.Rotation;
                         train.Forward = data.Forward;
                         train.Bogies = data.Bogies;
                         train.IsStationary = data.IsStationary;
                         train.updatedAt = data.Timestamp;
-                        isReliable = train.IsStationary;
+                        isReliable |= train.IsStationary;
+                        train.tUpdates++;                        
                     }
                 }
             }
@@ -884,6 +892,31 @@ namespace TrainPlugin
                     }
                     break;
             }
+        }
+
+        public object SaveData()
+        {
+            return worldTrains.Where(x => !x.IsRemoved).ToList();
+        }
+
+        public void LoadData(string data)
+        {
+            var rVal = DVServer.ServerManager.LoadObject<List<WorldTrain>>(data);
+            if (rVal != null)
+            {
+                foreach (var item in rVal)
+                {
+                    if (item.IsRemoved || String.IsNullOrEmpty(item.Id) || item.CarType == TrainCarType.NotSet)
+                    {
+                        Logger.Info("Removing invalid train " + item.Guid);
+                        continue;
+                    }
+                    item.AuthorityPlayerId = 0xfff;
+                    item.tUpdates = 0;
+                    worldTrains.Add(item);
+                }
+            }
+            //SendWorldTrains(null);
         }
     }
 }

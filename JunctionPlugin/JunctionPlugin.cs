@@ -2,13 +2,14 @@
 using DarkRift.Server;
 using DVMultiplayer.DTO.Junction;
 using DVMultiplayer.Networking;
+using DVServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace JunctionPlugin
 {
-    public class JunctionPlugin : Plugin
+    public class JunctionPlugin : Plugin , IPluginSave
     {
         public override bool ThreadSafe => true;
 
@@ -19,6 +20,7 @@ namespace JunctionPlugin
         public JunctionPlugin(PluginLoadData pluginLoadData) : base(pluginLoadData)
         {
             switchStates = new List<Switch>();
+            ServerManager.RegisterPlugin(this);
             ClientManager.ClientConnected += OnClientConnected;
         }
 
@@ -97,6 +99,23 @@ namespace JunctionPlugin
         {
             foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
                 client.SendMessage(message, SendMode.Reliable);
+        }
+
+        public object SaveData()
+        {
+            return switchStates;
+        }
+
+        public void LoadData(string data)
+        {
+            var rVal = ServerManager.LoadObject<List<Switch>>(data);
+            if (rVal != null)
+            {
+                foreach (var item in rVal)
+                {
+                    switchStates.Add(item);
+                }
+            }
         }
     }
 }

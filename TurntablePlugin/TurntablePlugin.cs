@@ -2,13 +2,14 @@
 using DarkRift.Server;
 using DVMultiplayer.DTO.Turntable;
 using DVMultiplayer.Networking;
+using DVServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace TurntablePlugin
 {
-    public class TurntablePlugin : Plugin
+    public class TurntablePlugin : Plugin, IPluginSave
     {
         public override bool ThreadSafe => true;
 
@@ -18,6 +19,7 @@ namespace TurntablePlugin
 
         public TurntablePlugin(PluginLoadData pluginLoadData) : base(pluginLoadData)
         {
+            ServerManager.RegisterPlugin(this);
             ClientManager.ClientConnected += OnClientConnected;
         }
 
@@ -160,7 +162,7 @@ namespace TurntablePlugin
         private void UnreliableSendToOthers(Message message, IClient sender)
         {
             foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
-                client.SendMessage(message, SendMode.Unreliable);
+                client.SendMessage(message, ServerManager.Unreliable);
         }
 
         private void ReliableSendToOthers(Message message, IClient sender)
@@ -168,5 +170,23 @@ namespace TurntablePlugin
             foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
                 client.SendMessage(message, SendMode.Reliable);
         }
+
+        public object SaveData()
+        {
+            return turntableStates;
+        }
+
+        public void LoadData(string data)
+        {
+            var rVal = ServerManager.LoadObject<List<Turntable>>(data);
+            if (rVal != null)
+            {
+                foreach (var item in rVal)
+                {
+                    turntableStates.Add(item);
+                }
+            }
+        }
+
     }
 }
