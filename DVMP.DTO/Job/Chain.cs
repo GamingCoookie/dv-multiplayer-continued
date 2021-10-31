@@ -13,9 +13,9 @@ namespace DVMultiplayer.DTO.Job
         public string Data { get; set; }
         public bool IsCompleted { get; set; } = false;
         public bool IsExpired { get; set; } = false;
-
+#if !DVSERVER
         internal JobChainController Controller { get; set; }
-
+#endif
         public void Deserialize(DeserializeEvent e)
         {
             Id = e.Reader.ReadString();

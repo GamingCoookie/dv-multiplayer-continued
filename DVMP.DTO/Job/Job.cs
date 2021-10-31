@@ -18,10 +18,11 @@ namespace DVMultiplayer.DTO.Job
         public bool IsCurrentJob { get; set; } = false;
         public JobType Type { get; set; }
 
+#if DVCLIENT // Client Stuff
         internal bool CanTakeJob { get; set; } = true;
         internal bool IsTakenByLocalPlayer { get; set; } = false;
         internal StaticJobDefinition Definition { get; set; }
-
+#endif
         public void Deserialize(DeserializeEvent e)
         {
             Id = e.Reader.ReadString();

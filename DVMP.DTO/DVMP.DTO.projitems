@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>4e6da75a-2542-430c-b90d-16e00c71d4fd</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>DVMP.DTO</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Debt\DebtPaid.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enums.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Job\Chain.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Job\Job.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Junction\Switch.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Player\Disconnect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Player\Location.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Player\NPlayer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Player\PlayerLoaded.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Player\SetSpawn.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\CarDamage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\CarMUChange.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\CarRemoval.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\CarsAuthChange.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\MultipleUnit.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\Shunter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\TrainCarChange.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\TrainCargoChanged.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\TrainCouplerCockChange.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\TrainCouplerHoseChange.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\TrainCouplingChange.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\TrainDerail.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\TrainLever.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\TrainLocation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\TrainRerail.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\WorldTrain.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Turntable\ReleaseAuthority.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Turntable\RequestAuthority.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Turntable\Turntable.cs" />
+  </ItemGroup>
+</Project>

@@ -1,6 +1,9 @@
 ﻿using DarkRift;
 using DVMultiplayer.Darkrift;
 using UnityEngine;
+#if DVSERVER
+using System.Numerics;
+#endif
 
 namespace DVMultiplayer.DTO.Player
 {
