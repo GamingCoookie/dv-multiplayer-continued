@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{33A6F155-F53F-4D24-9A77-6157ED955A6D}</ProjectGuid>
+    <ProjectGuid>{A9B088E1-D0D0-44C4-9BDE-360FA8C20742}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TurntablePlugin</RootNamespace>
-    <AssemblyName>TurntablePlugin</AssemblyName>
+    <RootNamespace>DebtPlugin</RootNamespace>
+    <AssemblyName>DebtPlugin</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -36,16 +36,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DarkRift">
-      <HintPath>..\DVMultiplayer\lib\DarkRift.dll</HintPath>
+      <HintPath>..\..\lib\DarkRift.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DarkRift.Server">
-      <HintPath>..\DVMultiplayer\lib\DarkRift.Server.dll</HintPath>
+      <HintPath>..\..\lib\DarkRift.Server.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -54,11 +53,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="TurntablePlugin.cs" />
+    <Compile Include="DebtPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DVServer\DVServer.csproj">
+    <ProjectReference Include="..\..\DVServer\DVServer.csproj">
       <Project>{0d7b6b8c-2092-4894-b3a1-f61170086d8c}</Project>
       <Name>DVServer</Name>
       <Private>False</Private>
