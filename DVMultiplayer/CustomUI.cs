@@ -12,11 +12,9 @@ namespace DVMultiplayer
         internal static MenuScreen NetworkUI;
         internal static MenuScreen ConnectMenuUI;
         internal static MenuScreen InputScreenUI;
-        internal static MenuScreen HostMenuUI;
         internal static MenuScreen SaveFavoriteMenuUI;
         internal static MenuScreen FavoriteConnectMenuUI;
         internal static MenuScreen UsernameRequestMenuUI;
-        internal static MenuScreen HostConnectedMenuUI;
         internal static MenuScreen ClientConnectedMenuUI;
         internal static MenuScreen ModMismatchScreen;
         internal static MenuScreen PopupUI;
@@ -38,7 +36,6 @@ namespace DVMultiplayer
                 GenerateFavoriteUI();
                 GenerateFavoriteListUI();
                 GenerateRequestUsernameUI();
-                GenerateHostNetworkUI();
                 GenerateClientNetworkUI();
                 GenerateModMismatchScreenUI();
                 GeneratePopUp();
@@ -151,23 +148,6 @@ namespace DVMultiplayer
             GameObject menu = Object.Instantiate(menuBuilder, canvas.transform);
             Object.DestroyImmediate(menuBuilder);
             PopupUI = menu.GetComponent<MenuScreen>();
-        }
-
-        private static void GenerateHostNetworkUI()
-        {
-            GameObject canvas = SingletonBehaviour<CanvasSpawner>.Instance.CanvasGO;
-            GameObject menuBuilder = CreateMenu(new MenuBuilder("DVMultiplayer Hosting", "Hosting", 668, 418, false, false));
-
-            ButtonBuilder stopServerButtonBuilder = new ButtonBuilder("Stop Server", "Stop Server", menuBuilder.transform, new Rect(0f, -318.5f, 608, 91f), RectTransformAnchoring.TopCenter, new Vector2(.5f, .5f), TextAlignmentOptions.Center);
-
-            CreateSection(new Rect(0f, -177, 618, 91), RectTransformAnchoring.TopCenter, menuBuilder.transform);
-            CreateLabel("Username", "Connected as: ", menuBuilder.transform, new Rect(0f, -177.5f, 608, 76), FontStyles.Normal, TextAlignmentOptions.MidlineLeft, RectTransformAnchoring.TopCenter, new Vector2(.5f, .5f));
-            CreateSection(new Rect(0f, -318, 618, 91f), RectTransformAnchoring.TopCenter, menuBuilder.transform);
-            CreateButton(stopServerButtonBuilder);
-
-            GameObject menu = Object.Instantiate(menuBuilder, canvas.transform);
-            Object.DestroyImmediate(menuBuilder);
-            HostConnectedMenuUI = menu.GetComponent<MenuScreen>();
         }
 
         private static void GenerateClientNetworkUI()
