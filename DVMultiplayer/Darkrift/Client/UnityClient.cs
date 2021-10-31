@@ -439,6 +439,8 @@ namespace DarkRift.Client.Unity
         /// <returns>Whether the send was successful.</returns>
         public bool SendMessage(Message message, SendMode sendMode)
         {
+            if (Client == null || Client.ConnectionState == ConnectionState.Disconnected || Client.ConnectionState == ConnectionState.Disconnecting)
+                return false;
             return Client.SendMessage(message, sendMode);
         }
 
