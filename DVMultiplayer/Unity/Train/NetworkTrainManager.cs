@@ -498,10 +498,20 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         {
                             Guid = train.CarGUID,
                         };
-                        if (train.carType == TrainCarType.LocoShunter)
-                            serverState.Shunter = new Shunter();
-                        else if (train.carType == TrainCarType.LocoDiesel)
-                            serverState.Diesel = new Diesel();
+                        switch (train.carType)
+                        {
+                            case TrainCarType.LocoShunter:
+                                serverState.Shunter = new Shunter();
+                                break;
+                            case TrainCarType.LocoDiesel:
+                                serverState.Diesel = new Diesel();
+                                break;
+                            case TrainCarType.LocoSteamHeavy:
+                            case TrainCarType.LocoSteamHeavyBlue:
+                                serverState.Steamer = new Steamer();
+                                break;
+                        }
+                                
                         serverCarStates.Add(serverState);
                     }
                     serverState.Bogies[0] = new TrainBogie()
@@ -822,10 +832,19 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         {
                             Guid = trainCoupler1.CarGUID,
                         };
-                        if (trainCoupler1.carType == TrainCarType.LocoShunter)
-                            train.Shunter = new Shunter();
-                        else if (trainCoupler1.carType == TrainCarType.LocoDiesel)
-                            train.Diesel = new Diesel();
+                        switch (trainCoupler1.carType)
+                        {
+                            case TrainCarType.LocoShunter:
+                                train.Shunter = new Shunter();
+                                break;
+                            case TrainCarType.LocoDiesel:
+                                train.Diesel = new Diesel();
+                                break;
+                            case TrainCarType.LocoSteamHeavy:
+                            case TrainCarType.LocoSteamHeavyBlue:
+                                train.Steamer = new Steamer();
+                                break;
+                        }
                         serverCarStates.Add(train);
                     }
                     if (train != null)
@@ -852,11 +871,19 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         {
                             Guid = trainCoupler2.CarGUID,
                         };
-                        if (trainCoupler2.carType == TrainCarType.LocoShunter)
-                            train.Shunter = new Shunter();
-                        else if (trainCoupler2.carType == TrainCarType.LocoDiesel)
-                            train.Diesel = new Diesel();
-                        serverCarStates.Add(train);
+                        switch (trainCoupler2.carType)
+                        {
+                            case TrainCarType.LocoShunter:
+                                train.Shunter = new Shunter();
+                                break;
+                            case TrainCarType.LocoDiesel:
+                                train.Diesel = new Diesel();
+                                break;
+                            case TrainCarType.LocoSteamHeavy:
+                            case TrainCarType.LocoSteamHeavyBlue:
+                                train.Steamer = new Steamer();
+                                break;
+                        }
                     }
                     if (train != null)
                     {
@@ -926,10 +953,19 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         {
                             Guid = trainCoupler.CarGUID,
                         };
-                        if (trainCoupler.carType == TrainCarType.LocoShunter)
-                            train.Shunter = new Shunter();
-                        else if (trainCoupler.carType == TrainCarType.LocoDiesel)
-                            train.Diesel = new Diesel();
+                        switch (trainCoupler.carType)
+                        {
+                            case TrainCarType.LocoShunter:
+                                train.Shunter = new Shunter();
+                                break;
+                            case TrainCarType.LocoDiesel:
+                                train.Diesel = new Diesel();
+                                break;
+                            case TrainCarType.LocoSteamHeavy:
+                            case TrainCarType.LocoSteamHeavyBlue:
+                                train.Steamer = new Steamer();
+                                break;
+                        }
                         serverCarStates.Add(train);
                     }
 
@@ -975,10 +1011,19 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         {
                             Guid = trainCoupler1.CarGUID,
                         };
-                        if (trainCoupler1.carType == TrainCarType.LocoShunter)
-                            train.Shunter = new Shunter();
-                        else if (trainCoupler1.carType == TrainCarType.LocoDiesel)
-                            train.Diesel = new Diesel();
+                        switch (trainCoupler1.carType)
+                        {
+                            case TrainCarType.LocoShunter:
+                                train.Shunter = new Shunter();
+                                break;
+                            case TrainCarType.LocoDiesel:
+                                train.Diesel = new Diesel();
+                                break;
+                            case TrainCarType.LocoSteamHeavy:
+                            case TrainCarType.LocoSteamHeavyBlue:
+                                train.Steamer = new Steamer();
+                                break;
+                        }
                         serverCarStates.Add(train);
                     }
                     if (hoseChange.IsC1Front)
@@ -992,10 +1037,19 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         {
                             Guid = trainCoupler2.CarGUID,
                         };
-                        if (trainCoupler2.carType == TrainCarType.LocoShunter)
-                            train.Shunter = new Shunter();
-                        else if (trainCoupler2.carType == TrainCarType.LocoDiesel)
-                            train.Diesel = new Diesel();
+                        switch (trainCoupler2.carType)
+                        {
+                            case TrainCarType.LocoShunter:
+                                train.Shunter = new Shunter();
+                                break;
+                            case TrainCarType.LocoDiesel:
+                                train.Diesel = new Diesel();
+                                break;
+                            case TrainCarType.LocoSteamHeavy:
+                            case TrainCarType.LocoSteamHeavyBlue:
+                                train.Steamer = new Steamer();
+                                break;
+                        }
                         serverCarStates.Add(train);
                     }
                     if (hoseChange.IsC2Front)
@@ -1022,10 +1076,19 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         {
                             Guid = trainCoupler1.CarGUID,
                         };
-                        if (trainCoupler1.carType == TrainCarType.LocoShunter)
-                            train.Shunter = new Shunter();
-                        else if (trainCoupler1.carType == TrainCarType.LocoDiesel)
-                            train.Diesel = new Diesel();
+                        switch (trainCoupler1.carType)
+                        {
+                            case TrainCarType.LocoShunter:
+                                train.Shunter = new Shunter();
+                                break;
+                            case TrainCarType.LocoDiesel:
+                                train.Diesel = new Diesel();
+                                break;
+                            case TrainCarType.LocoSteamHeavy:
+                            case TrainCarType.LocoSteamHeavyBlue:
+                                train.Steamer = new Steamer();
+                                break;
+                        }
                         serverCarStates.Add(train);
                     }
                     if (hoseChange.IsC1Front)
@@ -2057,6 +2120,22 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     serverState.Diesel = new Diesel();
                 }
                 break;
+            case TrainCarType.LocoSteamHeavy:
+            case TrainCarType.LocoSteamHeavyBlue:
+                Main.Log($"Train Loco is steamer");
+                LocoControllerSteam controllerSteam = train.GetComponent<LocoControllerSteam>();
+                Main.Log($"Train controller found {controllerSteam != null}");
+                Steamer steamer = serverState.Steamer;
+                if (steamer != null)
+                {
+                    Main.Log($"Sync fire on");
+                    controllerSteam.SetFireOn(steamer.GetFireOn);
+                }
+                else
+                {
+                    serverState.Steamer = new Steamer();
+                }
+                break;
         }
     }
 
@@ -2177,6 +2256,10 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         break;
                     case TrainCarType.LocoDiesel:
                         carHealthData = car.GetComponent<DamageControllerDiesel>().GetDamageSaveData().ToString(Newtonsoft.Json.Formatting.None);
+                        break;
+                    case TrainCarType.LocoSteamHeavy:
+                    case TrainCarType.LocoSteamHeavyBlue:
+                        carHealthData = car.GetComponent<DamageController>().GetDamageSaveData().ToString(Newtonsoft.Json.Formatting.None);
                         break;
                 }
             }
