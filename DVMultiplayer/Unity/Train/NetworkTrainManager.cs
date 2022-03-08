@@ -2353,6 +2353,13 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         $"IsSideFuse1On: {train.Diesel.IsSideFuse1On}, IsSideFuse2On: {train.Diesel.IsSideFuse2On}, " +
                         $"IsSideFuse3On: {train.Diesel.IsSideFuse3On}");
                     break;
+                case TrainCarType.LocoSteamHeavy:
+                case TrainCarType.LocoSteamHeavyBlue:
+                    Main.Log($"Set steam defaults");
+                    LocoControllerSteam steam = car.GetComponent<LocoControllerSteam>();
+                    Main.Log($"Steam controller found: {steam != null}");
+                    break;
+
             }
 
             data.Add(train);
