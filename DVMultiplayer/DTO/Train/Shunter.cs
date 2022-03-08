@@ -9,7 +9,6 @@ namespace DVMultiplayer.DTO.Train
         public bool IsSideFuse2On { get; set; } = false;
         public bool IsMainFuseOn { get; set; } = false;
         
-
         public void Deserialize(DeserializeEvent e)
         {
             IsEngineOn = e.Reader.ReadBoolean();
