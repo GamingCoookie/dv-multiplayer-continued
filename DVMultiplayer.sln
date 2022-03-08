@@ -1,21 +1,39 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30503.244
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DVMultiplayer", "DVMultiplayer\DVMultiplayer.csproj", "{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayerPlugin", "PlayerPlugin\PlayerPlugin.csproj", "{B065403B-A846-4F7E-82CE-18DF9639171F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D} = {CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobsPlugin", "JobsPlugin\JobsPlugin.csproj", "{35C90392-A7A9-47E4-8F2C-73580F4306E2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D} = {CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainPlugin", "TrainPlugin\TrainPlugin.csproj", "{C3EB586C-DD26-404B-B118-2325637A960B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D} = {CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JunctionPlugin", "JunctionPlugin\JunctionPlugin.csproj", "{CDCB2A60-DF60-4B09-944E-137A2FB84D3C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D} = {CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TurntablePlugin", "TurntablePlugin\TurntablePlugin.csproj", "{33A6F155-F53F-4D24-9A77-6157ED955A6D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D} = {CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebtPlugin", "DebtPlugin\DebtPlugin.csproj", "{A9B088E1-D0D0-44C4-9BDE-360FA8C20742}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D} = {CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DVMultiplayer", "DVMultiplayer\DVMultiplayer.csproj", "{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +41,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B065403B-A846-4F7E-82CE-18DF9639171F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B065403B-A846-4F7E-82CE-18DF9639171F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B065403B-A846-4F7E-82CE-18DF9639171F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -51,6 +65,10 @@ Global
 		{A9B088E1-D0D0-44C4-9BDE-360FA8C20742}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A9B088E1-D0D0-44C4-9BDE-360FA8C20742}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A9B088E1-D0D0-44C4-9BDE-360FA8C20742}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

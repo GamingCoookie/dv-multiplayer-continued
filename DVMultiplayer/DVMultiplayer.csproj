@@ -189,6 +189,7 @@
     <Compile Include="DTO\Train\Diesel.cs" />
     <Compile Include="DTO\Train\MultipleUnit.cs" />
     <Compile Include="DTO\Train\Shunter.cs" />
+    <Compile Include="DTO\Train\Steamer.cs" />
     <Compile Include="DTO\Train\TrainCargoChanged.cs" />
     <Compile Include="DTO\Train\TrainCouplerCockChange.cs" />
     <Compile Include="DTO\Train\TrainCouplerHoseChange.cs" />
