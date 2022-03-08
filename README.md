@@ -48,8 +48,8 @@ Features have been split into sections to show different parts of the mod. The s
 | **Feature**                  |      **State**     | **Version Introduced** |
 |------------------------------|:------------------:|------------------------|
 | DE2 (Shunter)                | :hourglass:        | 1.0.0                  |
-| DE6 (Diesel)                 | :x:                |                        |
-| SH282 (Steamer)              | :x:                |                        |
+| DE6 (Diesel)                 | :hourglass:        | 1.3.5                  |
+| SH282 (Steamer)              | :hourglass:        | 1.3.5                  |
 | Coupling                     | :hourglass:        | 1.0.0                  |
 | Decoupling                   | :hourglass:        | 1.0.0                  |
 | Multiple Unit Working        | :x:                |                        |
