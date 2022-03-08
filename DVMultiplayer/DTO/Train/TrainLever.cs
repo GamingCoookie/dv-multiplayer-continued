@@ -14,7 +14,8 @@ namespace DVMultiplayer.DTO.Train
         SideFuse_3,
         MainFuse,
         FusePowerStarter,
-        Horn
+        Horn,
+        Whistle
     }
 
     public class TrainLever : IDarkRiftSerializable
