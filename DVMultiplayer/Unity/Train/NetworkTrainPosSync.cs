@@ -28,10 +28,8 @@ internal class NetworkTrainPosSync : MonoBehaviour
     NetworkPlayerSync localPlayer;
     ShunterLocoSimulation shunterLocoSimulation = null;
     DieselLocoSimulation dieselLocoSimulation = null;
-    SteamLocoSimulation steamLocoSimulation = null;
     ParticleSystem.MainModule shunterExhaust;
     ParticleSystem.MainModule dieselExhaust;
-    ParticleSystem.MainModule steamParticles;
     private bool isBeingDestroyed;
     internal Trainset tempFrontTrainsetWithAuthority;
     internal Trainset tempRearTrainsetWithAuthority;
