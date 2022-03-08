@@ -2358,6 +2358,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     Main.Log($"Set steam defaults");
                     LocoControllerSteam steam = car.GetComponent<LocoControllerSteam>();
                     Main.Log($"Steam controller found: {steam != null}");
+                    train.Steamer = new Steamer();
                     break;
 
             }
