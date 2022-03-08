@@ -46,8 +46,8 @@ namespace DVMultiplayer.DTO.Train
 
         // Specific Train states
         public Shunter Shunter { get; set; } = new Shunter();
-
         public Diesel Diesel { get; set; } = new Diesel();
+        public Steamer Steamer { get; set; } = new Steamer();
         public MultipleUnit MultipleUnit { get; set; } = new MultipleUnit();
 
         // Cargo based trains
@@ -110,6 +110,10 @@ namespace DVMultiplayer.DTO.Train
                     Diesel = e.Reader.ReadSerializable<Diesel>();
                     MultipleUnit = e.Reader.ReadSerializable<MultipleUnit>();
                     break;
+                case TrainCarType.LocoSteamHeavy:
+                case TrainCarType.LocoSteamHeavyBlue:
+                    Steamer = e.Reader.ReadSerializable<Steamer>();
+                    break;
             }
 
             updatedAt = e.Reader.ReadInt64();
@@ -166,6 +170,10 @@ namespace DVMultiplayer.DTO.Train
                 case TrainCarType.LocoDiesel:
                     e.Writer.Write(Diesel);
                     e.Writer.Write(MultipleUnit);
+                    break;
+                case TrainCarType.LocoSteamHeavy:
+                case TrainCarType.LocoSteamHeavyBlue:
+                    e.Writer.Write(Steamer);
                     break;
             }
             e.Writer.Write(updatedAt);
