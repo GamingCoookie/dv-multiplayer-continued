@@ -52,5 +52,6 @@
         TRAIN_MU_CHANGE,
         DEBT_JOB_PAID,
         DEBT_OTHER_PAID,
+        TRAIN_SIM_UPDATE,
     }
 }

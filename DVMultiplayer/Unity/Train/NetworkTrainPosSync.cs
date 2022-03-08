@@ -1,7 +1,9 @@
 using DV.Logic.Job;
 using DVMultiplayer;
 using DVMultiplayer.DTO.Train;
+using DVMultiplayer.DTO.Train.Positioning;
 using DVMultiplayer.Networking;
+using DVMultiplayer.Unity.Train.Locomotives;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -56,6 +58,8 @@ internal class NetworkTrainPosSync : MonoBehaviour
 
         Main.Log($"Listening to movement changed event");
         trainCar.MovementStateChanged += TrainCar_MovementStateChanged;
+
+
         trainCar.CarDamage.CarEffectiveHealthStateUpdate += OnBodyDamageTaken;
 
         if (trainCar.carType == TrainCarType.LocoShunter)
@@ -574,9 +578,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
             {
                 Main.Log($"Car {trainCar.CarGUID}: Changing authority [GAINED]");
                 if (!trainCar.IsInteriorLoaded)
-                {
                     trainCar.LoadInterior();
-                }
                 trainCar.keepInteriorLoaded = true;
                 SetAuthority(true);
             }
@@ -587,6 +589,8 @@ internal class NetworkTrainPosSync : MonoBehaviour
                 newPos = transform.position - WorldMover.currentMove;
                 newRot = transform.rotation;
                 trainCar.keepInteriorLoaded = false;
+                if (trainCar.IsLoco)
+                    locomotive.UpdateAuthorityPhysics(false);
             }
         }
         catch (Exception ex)
@@ -946,15 +950,15 @@ internal class NetworkTrainPosSync : MonoBehaviour
     //        return Vector3.Distance(a.position, b);
     //}
 
-    private TrainCar GetMostFrontCar(TrainCar car)
-    {
-        if (car.frontCoupler.coupledTo != null)
-        {
-            return GetMostFrontCar(car.frontCoupler.coupledTo.train);
-        }
-        else
-        {
-            return car;
-        }
-    }
+    //private TrainCar GetMostFrontCar(TrainCar car)
+    //{
+    //    if (car.frontCoupler.coupledTo != null)
+    //    {
+    //        return GetMostFrontCar(car.frontCoupler.coupledTo.train);
+    //    }
+    //    else
+    //    {
+    //        return car;
+    //    }
+    //}
 }

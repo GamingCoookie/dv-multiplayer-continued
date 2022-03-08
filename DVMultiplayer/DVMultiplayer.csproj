@@ -225,6 +225,10 @@
     <Compile Include="Patches\Train\HoseSeperationCheck.cs" />
     <Compile Include="Patches\Train\Shunter\LocoControllerShunterSetNeutralStatePatch.cs" />
     <Compile Include="Patches\Train\Shunter\ShunterLocoSimulationPatch.cs" />
+    <Compile Include="Patches\Train\Steamer\SteamLocoSimulation_SimulateTick_Patch.cs" />
+    <Compile Include="Patches\Train\Steamer\LocoControllerSteam_SetWhistle_Patch.cs" />
+    <Compile Include="Patches\Train\Steamer\LocoControllerSteam_SetFireOn_Patch.cs" />
+    <Compile Include="Patches\Train\Steamer\ShovelUnloadCoalPatch.cs" />
     <Compile Include="Patches\UI\StopClosingUIIfNotAllowed.cs" />
     <Compile Include="Patches\Train\RemoveScriptsBeforeCarDeletion.cs" />
     <Compile Include="Patches\Train\StopTrainsToPoolWhenClient.cs" />
@@ -243,6 +247,9 @@
     <Compile Include="Unity\Junction\NetworkJunctionManager.cs" />
     <Compile Include="Unity\Player\RotateTowardsPlayer.cs" />
     <Compile Include="Unity\Savegame\NetworkSaveGameManager.cs" />
+    <Compile Include="Unity\Train\Locomotives\NetworkLocomotive.cs" />
+    <Compile Include="Unity\Train\Locomotives\NetworkSteamerSync.cs" />
+    <Compile Include="Unity\Train\Locomotives\NetworkShunterSync.cs" />
     <Compile Include="Unity\Train\NetworkTrainMUSync.cs" />
     <Compile Include="Unity\Train\NetworkTrainPosSync.cs" />
     <Compile Include="Unity\Player\NetworkPlayerSync.cs" />

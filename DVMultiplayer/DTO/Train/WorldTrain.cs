@@ -1,6 +1,8 @@
 ﻿using DarkRift;
 using DV.Logic.Job;
 using DVMultiplayer.Darkrift;
+using DVMultiplayer.DTO.Train.Locomotives;
+using DVMultiplayer.DTO.Train.Positioning;
 using UnityEngine;
 
 namespace DVMultiplayer.DTO.Train
@@ -43,6 +45,7 @@ namespace DVMultiplayer.DTO.Train
         public float IndepBrake { get; set; } = 0;
         public float Sander { get; set; } = 0;
         public float Reverser { get; set; } = 0;
+        public Locomotive Locomotive { get; set; } = null;
 
         // Specific Train states
         public Shunter Shunter { get; set; } = new Shunter();
@@ -56,7 +59,7 @@ namespace DVMultiplayer.DTO.Train
         public float CargoHealth { get; set; }
 
         //Data specific
-        public long updatedAt { get; set; }
+        public long UpdatedAt { get; set; }
 
         public void Deserialize(DeserializeEvent e)
         {
@@ -103,8 +106,13 @@ namespace DVMultiplayer.DTO.Train
             switch (CarType)
             {
                 case TrainCarType.LocoShunter:
-                    Shunter = e.Reader.ReadSerializable<Shunter>();
-                    MultipleUnit = e.Reader.ReadSerializable<MultipleUnit>();
+                    Locomotive = e.Reader.ReadSerializable<Shunter>();
+                    
+                    break;
+
+                case TrainCarType.LocoSteamHeavy:
+                case TrainCarType.LocoSteamHeavyBlue:
+                    Locomotive = e.Reader.ReadSerializable<Steamer>();
                     break;
                 case TrainCarType.LocoDiesel:
                     Diesel = e.Reader.ReadSerializable<Diesel>();
@@ -112,7 +120,7 @@ namespace DVMultiplayer.DTO.Train
                     break;
             }
 
-            updatedAt = e.Reader.ReadInt64();
+            UpdatedAt = e.Reader.ReadInt64();
         }
 
         public void Serialize(SerializeEvent e)
@@ -149,6 +157,9 @@ namespace DVMultiplayer.DTO.Train
                 e.Writer.Write(IndepBrake);
                 e.Writer.Write(Sander);
                 e.Writer.Write(Reverser);
+
+                //Write Train here to avoid DRY
+                e.Writer.Write(Locomotive);
             }
             else
             {
@@ -157,14 +168,7 @@ namespace DVMultiplayer.DTO.Train
                 e.Writer.Write(CargoHealth);
             }
 
-            switch (CarType)
-            {
-                case TrainCarType.LocoShunter:
-                    e.Writer.Write(Shunter);
-                    e.Writer.Write(MultipleUnit);
-                    break;
-            }
-            e.Writer.Write(updatedAt);
+            e.Writer.Write(UpdatedAt);
         }
     }
 }
