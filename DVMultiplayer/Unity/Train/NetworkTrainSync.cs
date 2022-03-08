@@ -59,7 +59,7 @@ internal class NetworkTrainSync : MonoBehaviour
                     }
                 }
                 fuseBox.mainFuseObj.GetComponent<ToggleSwitchBase>().ValueChanged += OnTrainMainFuseChanged;
-                shunterDashboard.hornObj.GetComponent<ControlImplBase>().ValueChanged += ShunterHornUsed;
+                shunterDashboard.hornObj.GetComponent<ControlImplBase>().ValueChanged += HornUsed;
                 SingletonBehaviour<CoroutineManager>.Instance.Run(ShunterRotaryAmplitudeCheckerStartListen(fuseBox));
                 break;
 
@@ -85,7 +85,7 @@ internal class NetworkTrainSync : MonoBehaviour
                     }
                 }
                 dieselFuseBox.mainFuseObj.GetComponent<ToggleSwitchBase>().ValueChanged += OnTrainMainFuseChanged;
-                dieselDashboard.hornObj.GetComponent<ControlImplBase>().ValueChanged += DieselHornUsed;
+                dieselDashboard.hornObj.GetComponent<ControlImplBase>().ValueChanged += HornUsed;
                 SingletonBehaviour<CoroutineManager>.Instance.Run(DieselRotaryAmplitudeCheckerStartListen(dieselFuseBox));
                 break;
         }
@@ -153,7 +153,7 @@ internal class NetworkTrainSync : MonoBehaviour
                             break;
 
                         case 2:
-                            sideFuse.ValueChanged -= OnTrainSideFuse_2Changed;
+                            sideFuse.ValueChanged -= OnTrainSideFuse_3Changed;
                             break;
                     }
                 }
@@ -180,19 +180,7 @@ internal class NetworkTrainSync : MonoBehaviour
         fuseBox.powerRotaryObj.GetComponent<RotaryAmplitudeChecker>().RotaryStateChanged += OnTrainFusePowerStarterStateChanged;
     }
 
-    private void ShunterHornUsed(ValueChangedEventArgs e)
-    {
-        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
-            return;
-
-        float val = e.newValue;
-        if (val < .7f && val > .3f)
-            val = 0;
-
-        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Horn, val);
-    }
-
-    private void DieselHornUsed(ValueChangedEventArgs e)
+    private void HornUsed(ValueChangedEventArgs e)
     {
         if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
             return;
