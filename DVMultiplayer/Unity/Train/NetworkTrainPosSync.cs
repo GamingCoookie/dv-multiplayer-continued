@@ -28,8 +28,10 @@ internal class NetworkTrainPosSync : MonoBehaviour
     NetworkPlayerSync localPlayer;
     ShunterLocoSimulation shunterLocoSimulation = null;
     DieselLocoSimulation dieselLocoSimulation = null;
+    SteamLocoSimulation steamLocoSimulation = null;
     ParticleSystem.MainModule shunterExhaust;
     ParticleSystem.MainModule dieselExhaust;
+    ParticleSystem.MainModule steamParticles;
     private bool isBeingDestroyed;
     internal Trainset tempFrontTrainsetWithAuthority;
     internal Trainset tempRearTrainsetWithAuthority;
@@ -664,6 +666,10 @@ internal class NetworkTrainPosSync : MonoBehaviour
             case TrainCarType.LocoDiesel:
                 trainCar.GetComponent<DamageControllerDiesel>().IgnoreDamage(set);
                 break;
+            case TrainCarType.LocoSteamHeavy:
+            case TrainCarType.LocoSteamHeavyBlue:
+                trainCar.GetComponent<DamageController>().IgnoreDamage(set);
+                break;
         }
     }
 
@@ -791,6 +797,10 @@ internal class NetworkTrainPosSync : MonoBehaviour
                     break;
                 case TrainCarType.LocoDiesel:
                     data = trainCar.GetComponent<DamageControllerDiesel>().GetDamageSaveData().ToString(Newtonsoft.Json.Formatting.None);
+                    break;
+                case TrainCarType.LocoSteamHeavy:
+                case TrainCarType.LocoSteamHeavyBlue:
+                    data = trainCar.GetComponent<DamageController>().GetDamageSaveData().ToString(Newtonsoft.Json.Formatting.None);
                     break;
             }
         }
