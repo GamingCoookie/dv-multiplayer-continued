@@ -163,6 +163,10 @@ namespace DVMultiplayer.DTO.Train
                     e.Writer.Write(Shunter);
                     e.Writer.Write(MultipleUnit);
                     break;
+                case TrainCarType.LocoDiesel:
+                    e.Writer.Write(Diesel);
+                    e.Writer.Write(MultipleUnit);
+                    break;
             }
             e.Writer.Write(updatedAt);
         }
