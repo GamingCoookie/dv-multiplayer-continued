@@ -2,7 +2,7 @@
 using DVMultiplayer.Darkrift;
 using UnityEngine;
 
-namespace DVMultiplayer.DTO.Train.Positioning
+namespace DVMultiplayer.DTO.Train
 {
     public class TrainLocation : IDarkRiftSerializable
     {
