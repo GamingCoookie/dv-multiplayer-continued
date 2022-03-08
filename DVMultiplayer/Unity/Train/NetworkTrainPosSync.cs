@@ -59,16 +59,15 @@ internal class NetworkTrainPosSync : MonoBehaviour
         Main.Log($"Listening to movement changed event");
         trainCar.MovementStateChanged += TrainCar_MovementStateChanged;
         trainCar.CarDamage.CarEffectiveHealthStateUpdate += OnBodyDamageTaken;
-
-        if (trainCar.carType == TrainCarType.LocoShunter)
-        {
-            shunterLocoSimulation = GetComponent<ShunterLocoSimulation>();
-            shunterExhaust = trainCar.transform.Find("[particles]").Find("ExhaustEngineSmoke").GetComponent<ParticleSystem>().main;
-        }
-        else if (trainCar.carType == TrainCarType.LocoDiesel)
-        {
-            dieselLocoSimulation = GetComponent<DieselLocoSimulation>();
-            dieselExhaust = trainCar.transform.Find("[particles]").Find("ExhaustEngineSmoke").GetComponent<ParticleSystem>().main;
+        switch (trainCar.carType) {
+            case TrainCarType.LocoShunter:
+                shunterLocoSimulation = GetComponent<ShunterLocoSimulation>();
+                shunterExhaust = trainCar.transform.Find("[particles]").Find("ExhaustEngineSmoke").GetComponent<ParticleSystem>().main;
+                break;
+            case TrainCarType.LocoDiesel:
+                dieselLocoSimulation = GetComponent<DieselLocoSimulation>();
+                dieselExhaust = trainCar.transform.Find("[particles]").Find("ExhaustEngineSmoke").GetComponent<ParticleSystem>().main;
+                break;
         }
 
         if (!trainCar.IsLoco)
@@ -610,14 +609,14 @@ internal class NetworkTrainPosSync : MonoBehaviour
         hasLocalPlayerAuthority = gain;
         Main.Log($"Set kinematic state {!gain}");
         trainCar.rb.isKinematic = !gain;
-
-        if (trainCar.carType == TrainCarType.LocoShunter)
+        switch (trainCar.carType)
         {
-            shunterExhaust.emitterVelocityMode = gain ? ParticleSystemEmitterVelocityMode.Rigidbody : ParticleSystemEmitterVelocityMode.Transform;
-        }
-        else if (trainCar.carType == TrainCarType.LocoDiesel)
-        {
-            dieselExhaust.emitterVelocityMode = gain ? ParticleSystemEmitterVelocityMode.Rigidbody : ParticleSystemEmitterVelocityMode.Transform;
+            case TrainCarType.LocoShunter:
+                shunterExhaust.emitterVelocityMode = gain ? ParticleSystemEmitterVelocityMode.Rigidbody : ParticleSystemEmitterVelocityMode.Transform;
+                break;
+            case TrainCarType.LocoDiesel:
+                dieselExhaust.emitterVelocityMode = gain ? ParticleSystemEmitterVelocityMode.Rigidbody : ParticleSystemEmitterVelocityMode.Transform;
+                break;
         }
 
         //if (gain)
