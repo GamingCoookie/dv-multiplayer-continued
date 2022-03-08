@@ -2537,6 +2537,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             case TrainCarType.LocoShunter:
                 serverState.Shunter.IsEngineOn = false;
                 break;
+            case TrainCarType.LocoDiesel:
+                serverState.Diesel.IsEngineOn = false;
+                break;
         }
     }
 
