@@ -21,11 +21,10 @@ namespace DVMultiplayer.Patches.Train
                 WorldTrain state = net.GetServerStateById(___train.CarGUID);
                 if(state != null)
                 {
-                    DTO.Train.Locomotives.Shunter shunter = state.Locomotive as DTO.Train.Locomotives.Shunter;
-                    shunter.IsEngineOn = false;
-                    shunter.IsMainFuseOn = false;
-                    shunter.IsSideFuse1On = false;
-                    shunter.IsSideFuse2On = false;
+                    state.Shunter.IsEngineOn = false;
+                    state.Shunter.IsMainFuseOn = false;
+                    state.Shunter.IsSideFuse1On = false;
+                    state.Shunter.IsSideFuse2On = false;
                     state.Sander = 0;
                     state.Throttle = 0;
                     state.Reverser = 0;

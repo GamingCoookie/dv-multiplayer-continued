@@ -2,9 +2,6 @@
 using DarkRift.Server;
 using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Train;
-using DVMultiplayer.DTO.Train.Locomotives;
-using DVMultiplayer.DTO.Train.Positioning;
-using DVMultiplayer.DTO.Train.SimUpdates;
 using DVMultiplayer.Networking;
 using System;
 using System.Collections.Generic;
@@ -17,12 +14,12 @@ namespace TrainPlugin
     {
         public override bool ThreadSafe => false;
 
-        public override Version Version => new Version("1.7.0");
+        public override Version Version => new Version("1.6.48");
 
         private readonly List<WorldTrain> worldTrains;
         private readonly List<IClient> playerHasInitializedTrain;
         private bool isLoadingTrain = false;
-        private readonly BufferQueue queue;
+        private BufferQueue queue;
 
         public TrainPlugin(PluginLoadData pluginLoadData) : base(pluginLoadData)
         {
@@ -130,40 +127,8 @@ namespace TrainPlugin
                     case NetworkTags.TRAIN_MU_CHANGE:
                         OnCarMUChange(message, e.Client);
                         break;
-
-                    case NetworkTags.TRAIN_SIM_UPDATE:
-                        OnLocoSimUpdate(message, e.Client);
-                        break;
                 }
             }
-        }
-
-        private void OnLocoSimUpdate(Message message, IClient client)
-        {
-            using (DarkRiftReader reader = message.GetReader())
-            {
-                SimUpdate data = reader.ReadSerializable<SimUpdate>();
-                WorldTrain train = worldTrains.FirstOrDefault(t => t.Guid == data.Id);
-                if (!(train is null))
-                {
-                    switch (train.CarType)
-                    {
-                        case TrainCarType.LocoShunter:
-                            Shunter shunter = train.Locomotive as Shunter;
-                            shunter.SimData = data.SimData as ShunterSimData;
-                            break;
-
-                        case TrainCarType.LocoSteamHeavy:
-                        case TrainCarType.LocoSteamHeavyBlue:
-                            Steamer steamer = train.Locomotive as Steamer;
-                            steamer.SimData = data.SimData as SteamerSimData;
-                            break;
-                    }
-                }
-            }
-
-            Logger.Trace("[SERVER] > TRAIN_SIM_UPDATE");
-            ReliableSendToOthers(message, client);
         }
 
         private void OnCarMUChange(Message message, IClient client)
@@ -180,11 +145,10 @@ namespace TrainPlugin
                     switch (train.CarType)
                     {
                         case TrainCarType.LocoShunter:
-                            Shunter shunter = train.Locomotive as Shunter;
                             if (data.Train1IsFront)
-                                shunter.MultipleUnit.IsFrontMUConnectedTo = value;
+                                train.MultipleUnit.IsFrontMUConnectedTo = value;
                             else
-                                shunter.MultipleUnit.IsRearMUConnectedTo = value;
+                                train.MultipleUnit.IsRearMUConnectedTo = value;
                             break;
                         case TrainCarType.LocoDiesel:
                             if (data.Train1IsFront)
@@ -206,11 +170,10 @@ namespace TrainPlugin
                         switch (train.CarType)
                         {
                             case TrainCarType.LocoShunter:
-                                Shunter shunter = train.Locomotive as Shunter;
                                 if (data.Train2IsFront)
-                                    shunter.MultipleUnit.IsFrontMUConnectedTo = value;
+                                    train.MultipleUnit.IsFrontMUConnectedTo = value;
                                 else
-                                    shunter.MultipleUnit.IsRearMUConnectedTo = value;
+                                    train.MultipleUnit.IsRearMUConnectedTo = value;
                                 break;
                             case TrainCarType.LocoDiesel:
                                 if (data.Train2IsFront)
@@ -223,7 +186,6 @@ namespace TrainPlugin
                 }
             }
 
-            Logger.Trace("[SERVER] > TRAIN_MU_CHANGE");
             ReliableSendToOthers(message, client);
         }
 
@@ -740,16 +702,12 @@ namespace TrainPlugin
                         train.Brake = 0;
                         train.IndepBrake = 1;
                         train.Reverser = 0f;
-                        if (train.Locomotive != null)
+                        if (train.Shunter != null)
                         {
-                            if(train.CarType == TrainCarType.LocoShunter)
-                            {
-                                Shunter shunter = train.Locomotive as Shunter;
-                                shunter.IsEngineOn = false;
-                                shunter.IsMainFuseOn = false;
-                                shunter.IsSideFuse1On = false;
-                                shunter.IsSideFuse2On = false;
-                            }
+                            train.Shunter.IsEngineOn = false;
+                            train.Shunter.IsMainFuseOn = false;
+                            train.Shunter.IsSideFuse1On = false;
+                            train.Shunter.IsSideFuse2On = false;
                         }
                         else if (train.Diesel != null)
                         {
@@ -836,7 +794,7 @@ namespace TrainPlugin
                     foreach(TrainLocation data in datas)
                     {
                         WorldTrain train = worldTrains.FirstOrDefault(t => t.Guid == data.TrainId);
-                        if (data.Timestamp <= train.UpdatedAt)
+                        if (data.Timestamp <= train.updatedAt)
                             continue;
 
                         train.Position = data.Position;
@@ -875,15 +833,11 @@ namespace TrainPlugin
 
             UpdateLeverTrain(train, lever);
 
-            if(train.CarType == TrainCarType.LocoShunter)
-            {
-                Shunter shunter = train.Locomotive as Shunter;
-                if (shunter.MultipleUnit.IsFrontMUConnectedTo != "" && shunter.MultipleUnit.IsFrontMUConnectedTo != prevGuid)
-                    UpdateMULevers(worldTrains.FirstOrDefault(t => t.Guid == shunter.MultipleUnit.IsFrontMUConnectedTo), lever, train.Guid);
+            if(train.MultipleUnit.IsFrontMUConnectedTo != "" && train.MultipleUnit.IsFrontMUConnectedTo != prevGuid)
+                UpdateMULevers(worldTrains.FirstOrDefault(t => t.Guid == train.MultipleUnit.IsFrontMUConnectedTo), lever, train.Guid);
 
-                if(shunter.MultipleUnit.IsRearMUConnectedTo != "" && shunter.MultipleUnit.IsFrontMUConnectedTo != prevGuid)
-                    UpdateMULevers(worldTrains.FirstOrDefault(t => t.Guid == shunter.MultipleUnit.IsRearMUConnectedTo), lever, train.Guid);
-            }
+            if(train.MultipleUnit.IsRearMUConnectedTo != "" && train.MultipleUnit.IsFrontMUConnectedTo != prevGuid)
+                UpdateMULevers(worldTrains.FirstOrDefault(t => t.Guid == train.MultipleUnit.IsRearMUConnectedTo), lever, train.Guid);
         }
 
         private void UpdateLeverTrain(WorldTrain train, TrainLever lever)
@@ -915,10 +869,10 @@ namespace TrainPlugin
             switch (train.CarType)
             {
                 case TrainCarType.LocoShunter:
-                    if (train.Locomotive == null)
-                        train.Locomotive = new Shunter();
+                    if (train.Shunter == null)
+                        train.Shunter = new Shunter();
 
-                    Shunter shunter = train.Locomotive as Shunter;
+                    Shunter shunter = train.Shunter;
                     switch (lever.Lever)
                     {
                         case Levers.MainFuse:
@@ -984,44 +938,6 @@ namespace TrainPlugin
                                 diesel.IsEngineOn = true;
                             else if (lever.Value == 0)
                                 diesel.IsEngineOn = false;
-                            break;
-                    }
-                    break;
-
-                case TrainCarType.LocoSteamHeavy:
-                case TrainCarType.LocoSteamHeavyBlue:
-                    if (train.Locomotive == null)
-                        train.Locomotive = new Steamer();
-
-                    Steamer steamer = train.Locomotive as Steamer;
-                    switch (lever.Lever)
-                    {
-                        case Levers.Blower:
-                            steamer.Blower = lever.Value;
-                            break;
-
-                        case Levers.DraftPuller:
-                            steamer.DraftPuller = lever.Value;
-                            break;
-
-                        case Levers.Fire:
-                            steamer.IsFireOn = lever.Value == 1;
-                            break;
-
-                        case Levers.FireboxDoor:
-                            steamer.FireboxDoor = lever.Value;
-                            break;
-
-                        case Levers.WaterInjector:
-                            steamer.WaterInjector = lever.Value;
-                            break;
-
-                        case Levers.SteamRelease:
-                            steamer.SteamRelease = lever.Value;
-                            break;
-
-                        case Levers.WaterDump:
-                            steamer.WaterDump = lever.Value;
                             break;
                     }
                     break;
