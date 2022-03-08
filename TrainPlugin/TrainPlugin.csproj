@@ -65,11 +65,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DVMultiplayer\DVMultiplayer.csproj">
-      <Project>{cf3cddf7-aec2-4b54-af12-f8a84e807e3d}</Project>
-      <Name>DVMultiplayer</Name>
-      <Private>False</Private>
-    </ProjectReference>
     <ProjectReference Include="..\PlayerPlugin\PlayerPlugin.csproj">
       <Project>{b065403b-a846-4f7e-82ce-18df9639171f}</Project>
       <Name>PlayerPlugin</Name>

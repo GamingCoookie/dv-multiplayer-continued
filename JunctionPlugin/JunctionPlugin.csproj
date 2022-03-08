@@ -60,13 +60,6 @@
     <Compile Include="JunctionPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DVMultiplayer\DVMultiplayer.csproj">
-      <Project>{cf3cddf7-aec2-4b54-af12-f8a84e807e3d}</Project>
-      <Name>DVMultiplayer</Name>
-      <Private>False</Private>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>SET BUILDFOLDER=$(SolutionDir)Build\Plugins

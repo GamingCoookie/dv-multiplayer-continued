@@ -60,13 +60,6 @@
     <Compile Include="TurntablePlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DVMultiplayer\DVMultiplayer.csproj">
-      <Project>{CF3CDDF7-AEC2-4B54-AF12-F8A84E807E3D}</Project>
-      <Name>DVMultiplayer</Name>
-      <Private>False</Private>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>SET BUILDFOLDER=$(SolutionDir)Build\Plugins
