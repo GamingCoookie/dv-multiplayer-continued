@@ -406,7 +406,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                                 serverState.Shunter.IsSideFuse1On = false;
                                 serverState.Shunter.IsSideFuse2On = false;
                             }
-                            if (serverState.Diesel != null)
+                            else if (serverState.Diesel != null)
                             {
                                 serverState.Diesel.IsEngineOn = false;
                                 serverState.Diesel.IsMainFuseOn = false;
