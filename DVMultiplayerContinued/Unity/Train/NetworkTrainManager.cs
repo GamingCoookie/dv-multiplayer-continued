@@ -1781,7 +1781,11 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 coupler = otherTrain.rearCoupler;
 
             if (coupler)
-                train.frontCoupler.CoupleTo(coupler, false, false);
+            {
+                train.frontCoupler.TryCouple(false, false, 1.5f);
+                if (!train.frontCoupler.IsCoupled())
+                    Main.Log($"Coupler of train {serverState.FrontCouplerCoupledTo} wasn't in range.");
+            }
             else
                 Main.Log($"Coupler not found of train {serverState.FrontCouplerCoupledTo}. Found serverState = {otherTrainServerState != null}. Found train = {otherTrain != null}");
         }
@@ -1797,7 +1801,11 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 coupler = otherTrain.rearCoupler;
 
             if (coupler)
-                train.frontCoupler.CoupleTo(coupler, false, true);
+            {
+                train.frontCoupler.TryCouple(false, false, 1.5f);
+                if (!train.frontCoupler.IsCoupled())
+                    Main.Log($"Coupler of train {serverState.FrontCouplerCoupledTo} wasn't in range.");
+            }
             else
                 Main.Log($"Coupler not found of train {serverState.FrontCouplerCoupledTo}. Found serverState = {otherTrainServerState != null}. Found train = {otherTrain != null}");
         }
@@ -1838,7 +1846,11 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 coupler = otherTrain.rearCoupler;
 
             if (coupler)
-                train.rearCoupler.CoupleTo(coupler, false, false);
+            {
+                train.rearCoupler.TryCouple(false, false, 1.5f);
+                if (!train.frontCoupler.IsCoupled())
+                    Main.Log($"Coupler of train {serverState.RearCouplerCoupledTo} wasn't in range.");
+            }
             else
                 Main.Log($"Coupler not found of train {serverState.RearCouplerCoupledTo}. Found serverState = {otherTrainServerState != null}. Found train = {otherTrain != null}");
         }
@@ -1854,7 +1866,11 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 coupler = otherTrain.rearCoupler;
 
             if (coupler)
-                train.rearCoupler.CoupleTo(coupler, false, true);
+            {
+                train.rearCoupler.TryCouple(false, false, 1.5f);
+                if (!train.frontCoupler.IsCoupled())
+                    Main.Log($"Coupler of train {serverState.RearCouplerCoupledTo} wasn't in range.");
+            }
             else
                 Main.Log($"Coupler not found of train {serverState.RearCouplerCoupledTo}. Found serverState = {otherTrainServerState != null}. Found train = {otherTrain != null}");
         }
@@ -2198,11 +2214,11 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         {
             if (!trainCar.derailed)
             {
-                yield return trainCar.MoveToTrackWithCarUncoupleCoro(track, CalculateWorldPosition(pos + WorldMover.currentMove, fwd, trainCar.Bounds.center.z), fwd);
+                trainCar.MoveToTrackWithCarUncouple(track, CalculateWorldPosition(pos + WorldMover.currentMove, fwd, trainCar.Bounds.center.z), fwd);
             }
             else
             {
-                yield return trainCar.RerailCoro(track, CalculateWorldPosition(pos + WorldMover.currentMove, fwd, trainCar.Bounds.center.z), fwd);
+                trainCar.Rerail(track, CalculateWorldPosition(pos + WorldMover.currentMove, fwd, trainCar.Bounds.center.z), fwd);
                 yield return new WaitUntil(() => !trainCar.derailed);
             }
 

@@ -35,7 +35,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="RedworkDE.Publicizer" Version="0.2.2" />
-    <PublicizeAssembly Include="Assembly-CSharp" Private="True" Readonly="True" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
@@ -54,7 +53,7 @@
       <HintPath>..\lib\DarkRift.Client.dll</HintPath>
       <Private>True</Private>
     </Reference>
-	<Reference Include="DarkRift.Server">
+    <Reference Include="DarkRift.Server">
       <HintPath>..\lib\DarkRift.Server.dll</HintPath>
       <Private>True</Private>
     </Reference>
@@ -165,7 +164,7 @@
     <Compile Include="Darkrift\BufferQueue.cs" />
     <Compile Include="Darkrift\Client\SerializableObjectCacheSettings.cs" />
     <Compile Include="Darkrift\Client\UnityClient.cs" />
-	<Compile Include="Darkrift\Server\UnityModManagerWriter.cs" />
+    <Compile Include="Darkrift\Server\UnityModManagerWriter.cs" />
     <Compile Include="Darkrift\Server\UnityConsoleWriter.cs" />
     <Compile Include="Darkrift\Server\UnityServer.cs" />
     <Compile Include="Darkrift\Server\UnityServerHelper.cs" />
@@ -192,7 +191,7 @@
     <Compile Include="Patches\Train\ChangeSpeedCalculationWhenPhysicsAreOff.cs" />
     <Compile Include="Patches\Train\AllowUpdateWhenKinematic.cs" />
     <Compile Include="Patches\Spawning\StopCreatingLocosAsClient.cs" />
-    <Compile Include="Patches\Train\HoseSeperationCheck.cs" />
+    <!-- <Compile Include="Patches\Train\HoseSeperationCheck.cs" /> --> 
     <Compile Include="Patches\Train\Shunter\LocoControllerShunterSetNeutralStatePatch.cs" />
     <Compile Include="Patches\Train\Shunter\ShunterLocoSimulationPatch.cs" />
     <Compile Include="Patches\UI\StopClosingUIIfNotAllowed.cs" />
