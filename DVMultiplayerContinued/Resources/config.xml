@@ -1,0 +1,37 @@
+﻿<configuration>
+  <server maxStrikes="3" reconnectAttempts="0" />
+  
+  <pluginSearch>
+    <pluginSearchPath src="Mods/DVMultiplayerContinued/Plugins" createDir="true" />
+  </pluginSearch>
+
+  <plugins loadByDefault="false">
+    <plugin type="PlayerPlugin" load="true" />
+    <plugin type="TrainPlugin" load="true" />
+    <plugin type="JunctionPlugin" load="true" />
+    <plugin type="TurntablePlugin" load="true" />
+    <plugin type="JobsPlugin" load="true" />
+    <plugin type="DebtPlugin" load="true" />
+  </plugins>
+
+  <data directory="Mods/DVMultiplayerContinued/Data/"/>
+
+  <databases>
+
+  </databases>
+
+  <logging>
+    <logWriters>
+      <logWriter name="FileWriter1" type="FileWriter" levels="trace, info, warning, error, fatal">
+        <settings file="Mods/DVMultiplayerContinued/Logs/{0:dd-MM-yyyy}/{0:HH-mm-ss-fff}.log" />
+      </logWriter>
+      <logWriter name="UnityModManagerWriter1" type="UnityModManagerWriter" levels="info, warning, error, fatal" />
+    </logWriters>
+  </logging>
+
+  <listeners>
+    <listener name="DefaultNetworkListener" type="CompatibilityBichannelListener" address="0.0.0.0" port="4296">
+      <settings maxTcpBodyLength="134217728" />
+    </listener>
+  </listeners>
+</configuration>

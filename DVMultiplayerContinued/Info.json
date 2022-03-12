@@ -1,0 +1,11 @@
+﻿{
+  "Id": "DVMultiplayerContinued",
+  "DisplayName": "Derail Valley Multiplayer Continued",
+  "Author": "Patrick van Halm & GamingCoookie",
+  "Version": "1.3.6",
+  "LoadAfter": ["PassengerJobs"],
+  "AssemblyName": "DVMultiplayerContinued.dll",
+  "EntryMethod": "DVMultiplayer.Main.Load",
+  "HomePage": "https://www.nexusmods.com/derailvalley/mods/406",
+  "Repository": "https://github.com/GamingCoookie/dv-multiplayer-continued/blob/main/repository.json"
+}
