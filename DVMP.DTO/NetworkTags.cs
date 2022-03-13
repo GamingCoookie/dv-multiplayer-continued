@@ -20,6 +20,7 @@
         TRAIN_COUPLE_HOSE,
         TRAIN_COUPLE_COCK,
         TRAIN_UNCOUPLE,
+        TRAIN_SYNC,
         TRAIN_SYNC_ALL,
         TRAIN_RERAIL,
         TRAINS_INIT,
