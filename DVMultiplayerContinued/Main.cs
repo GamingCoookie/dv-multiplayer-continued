@@ -42,11 +42,9 @@ namespace DVMultiplayer
             mod.OnToggle = OnToggle;
             mod.OnUpdate = OnUpdate;
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-            /*
             ModEntry passengerJobsModEntry = FindMod("PassengerJobs");
             if (passengerJobsModEntry != null && passengerJobsModEntry.Active)
                 PassengerJobsModInitializer.Initialize(passengerJobsModEntry, harmony);
-            */
             return true;
         }
 
