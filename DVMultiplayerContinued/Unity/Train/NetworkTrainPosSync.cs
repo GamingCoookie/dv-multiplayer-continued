@@ -162,7 +162,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
         try
         {
             // If not on turntable or no one is in control shed of turntable
-            if (turntable == null || turntable != null && !turntable.IsAnyoneInControlArea)
+            if (turntable == null || (turntable != null && !turntable.IsAnyoneInControlArea))
             {
                 bool authNeedsChange = false;
                 GameObject newOwner = null;
