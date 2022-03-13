@@ -14,7 +14,19 @@ namespace DVMultiplayer.DTO.Train
         SideFuse_3,
         MainFuse,
         FusePowerStarter,
-        Horn
+        Horn,
+        FireDoor,
+        WaterDump,
+        SteamRelease,
+        Blower,
+        BlankValve,
+        FireOut,
+        Injector,
+        SteamSander,
+        LightLever,
+        LightSwitch,
+        Draft,
+        Whistle
     }
 
     public class TrainLever : IDarkRiftSerializable

@@ -217,6 +217,10 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     OnCarCoupleChangeMessage(message, false);
                     break;
 
+                case NetworkTags.TRAIN_SYNC:
+                    OnLocoUpdateMessage(message);
+                    break;
+
                 case NetworkTags.TRAIN_COUPLE_HOSE:
                     OnCarCouplerHoseChangeMessage(message);
                     break;
@@ -642,6 +646,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     //Main.Log($"[CLIENT] < TRAIN_LEVER: Packet size: {reader.Length}, TrainID: {train.ID}, Lever: {lever.Lever}, Value: {lever.Value}");
                     IsChangeByNetwork = true;
                     LocoControllerBase baseController = train.GetComponent<LocoControllerBase>();
+                    LocoSimulation baseSimulation = train.GetComponent<LocoSimulation>();
                     switch (lever.Lever)
                     {
                         case Levers.Throttle:
@@ -767,10 +772,175 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                             }
                             baseController.UpdateHorn(valHorn);
                             break;
-                    }
+                        case Levers.FireDoor:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                LeverBase[] levers;
+                                levers = train.interior.GetComponentsInChildren<LeverBase>();
+                                foreach (LeverBase local_lever in levers)
+                                {
+                                    if (local_lever.name == "C firebox handle invisible")
+                                        local_lever.SetValue(lever.Value);
+                                }
+                            }
+                            (baseController as LocoControllerSteam).SetFireDoorOpen(lever.Value);
+                            break;
+                        case Levers.SteamSander:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                LeverBase[] levers;
+                                levers = train.interior.GetComponentsInChildren<LeverBase>();
+                                foreach (LeverBase local_lever in levers)
+                                {
+                                    if (local_lever.name == "C sand valve")
+                                        local_lever.SetValue(lever.Value);
+                                }
+                            }
+                            (baseController as LocoControllerSteam).SetSanders(lever.Value);
+                            (baseSimulation as SteamLocoSimulation).sandValve.SetValue(lever.Value);
+                            break;
+                        case Levers.LightLever:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                LeverBase[] levers;
+                                levers = train.interior.GetComponentsInChildren<LeverBase>();
+                                foreach (LeverBase local_lever in levers)
+                                {
+                                    if (local_lever.name == "C light lever")
+                                        local_lever.SetValue(lever.Value);
+                                }
+                            }
+                            break;
+                        case Levers.WaterDump:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                RotaryBase[] valves;
+                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
+                                foreach (RotaryBase valve in valves)
+                                {
+                                    if (valve.name == "C valve 1")
+                                        valve.SetValue(lever.Value);
+                                }
+                            }
+                            (baseController as LocoControllerSteam).SetWaterDump(lever.Value);
+                            (baseSimulation as SteamLocoSimulation).waterDump.SetValue(lever.Value);
+                            break;
+                        case Levers.SteamRelease:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                RotaryBase[] valves;
+                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
+                                foreach (RotaryBase valve in valves)
+                                {
+                                    if (valve.name == "C valve 2")
+                                        valve.SetValue(lever.Value);
+                                }
+                            }
+                            (baseController as LocoControllerSteam).SetSteamReleaser(lever.Value);
+                            (baseSimulation as SteamLocoSimulation).steamReleaser.SetValue(lever.Value);
+                            break;
+                        case Levers.Blower:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                RotaryBase[] valves;
+                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
+                                foreach (RotaryBase valve in valves)
+                                {
+                                    if (valve.name == "C valve 3")
+                                        valve.SetValue(lever.Value);
+                                }
+                            }
+                            (baseController as LocoControllerSteam).SetBlower(lever.Value);
+                            (baseSimulation as SteamLocoSimulation).blower.SetValue(lever.Value);
+                            break;
+                        case Levers.BlankValve:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                RotaryBase[] valves;
+                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
+                                foreach (RotaryBase valve in valves)
+                                {
+                                    if (valve.name == "C valve 4")
+                                        valve.SetValue(lever.Value);
+                                }
+                            }
+                            break;
+                        case Levers.FireOut:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                RotaryBase[] valves;
+                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
+                                foreach (RotaryBase valve in valves)
+                                {
+                                    if (valve.name == "C valve 5")
+                                        valve.SetValue(lever.Value);
+                                }
+                            }
+                            break;
+                        case Levers.Injector:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                RotaryBase[] valves;
+                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
+                                foreach (RotaryBase valve in valves)
+                                {
+                                    if (valve.name == "C injector")
+                                        valve.SetValue(lever.Value);
+                                }
+                            }
+                            (baseController as LocoControllerSteam).SetInjector(lever.Value);
+                            (baseSimulation as SteamLocoSimulation).injector.SetValue(lever.Value);
+                            break;
+                        case Levers.Draft:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                PullerBase puller = train.interior.GetComponentInChildren<PullerBase>();
+                                if (puller.name == "C draft")
+                                    puller.SetValue(lever.Value);
+                            }
+                            (baseController as LocoControllerSteam).SetDraft(lever.Value);
+                            (baseSimulation as SteamLocoSimulation).draft.SetValue(lever.Value);
+                            break;
+                        case Levers.LightSwitch:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                ButtonBase[] buttons = train.interior.GetComponentsInChildren<ButtonBase>();
+                                foreach (ButtonBase button in buttons)
+                                {
+                                    switch (button.name)
+                                    {
+                                        case ("C inidactor light switch"):
+                                            button.SetValue(lever.Value);
+                                            break;
+                                    }
+                                }
+                            }
+                            break;
+                                                }
                     IsChangeByNetwork = false;
                 }
             }
+        }
+    }
+
+    private void OnLocoUpdateMessage(Message message)
+    {
+        using (DarkRiftReader reader = message.GetReader())
+        {
+            Steamer steamer = reader.ReadSerializable<Steamer>();
+            TrainCar loco = localCars.FirstOrDefault(t => t.CarGUID == steamer.TrainID);
+            WorldTrain serverState = serverCarStates.FirstOrDefault(t => t.Guid == steamer.TrainID);
+            LocoControllerSteam steamController = loco.GetComponent<LocoControllerSteam>();
+            SteamLocoSimulation steamSimulation = loco.GetComponentInChildren<SteamLocoSimulation>();
+
+            serverState.Steamer.FireOn = steamer.FireOn;
+            serverState.Steamer.CoalInFirebox = steamer.CoalInFirebox;
+            serverState.Steamer.CoalInTender = steamer.CoalInTender;
+
+            steamController.SetFireOn(steamer.FireOn);
+            steamSimulation.fireOn.SetValue(steamer.FireOn);
+            steamSimulation.coalbox.SetValue(steamer.CoalInFirebox);
+            steamSimulation.tenderCoal.SetValue(steamer.CoalInTender);
         }
     }
 
@@ -1511,6 +1681,11 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                             loc.Temperature = shunter.GetEngineTemp();
                             loc.RPM = shunter.GetEngineRPM();
                             break;
+                        case TrainCarType.LocoDiesel:
+                            LocoControllerDiesel diesel = car.GetComponent<LocoControllerDiesel>();
+                            loc.Temperature = diesel.GetEngineTemp();
+                            loc.RPM = diesel.GetEngineRPM();
+                            break;
                     }
                 }
 
@@ -1565,6 +1740,58 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             });
 
             using (Message message = Message.Create((ushort)NetworkTags.TRAIN_LEVER, writer))
+                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
+        }
+    }
+
+    internal void SendNewLocoValue(TrainCar loco)
+    {
+        bool fireStateChanged = false;
+        bool coalInFireboxIncreased = false;
+        bool coalInTenderDecreased = false;
+
+        if (!IsSynced)
+            return;
+
+        SteamLocoSimulation steamSimulation = loco.GetComponentInChildren<SteamLocoSimulation>();
+        float fireOn = steamSimulation.fireOn.value;
+        float coalInFireBox = steamSimulation.coalbox.value;
+        float tenderCoal = steamSimulation.tenderCoal.value;
+
+        Steamer serverState = serverCarStates.FirstOrDefault(t => t.Guid == loco.CarGUID).Steamer;
+
+        if (!(fireOn == 1f && serverState.FireOn == 1f))
+        {
+            serverState.FireOn = fireOn;
+            fireStateChanged = true;
+            Main.Log($"Fire state is now {fireOn}");
+        }
+        if (coalInFireBox > serverState.CoalInFirebox)
+        {
+            serverState.CoalInFirebox = coalInFireBox;
+            coalInFireboxIncreased = true;
+            Main.Log($"Coal in Firebox is now {coalInFireBox}");
+        }
+        if (tenderCoal < serverState.CoalInTender)
+        {
+            serverState.CoalInTender = tenderCoal;
+            coalInTenderDecreased = true;
+            Main.Log($"Coal in Tender is now {tenderCoal}");
+        }
+        if (!(fireStateChanged || coalInFireboxIncreased || coalInTenderDecreased))
+            return;
+        Main.Log($"[{loco.ID}] Send new SH282 values");
+        using (DarkRiftWriter writer = DarkRiftWriter.Create())
+        {
+            writer.Write<Steamer>(new Steamer()
+            {
+                TrainID = loco.CarGUID,
+                FireOn = serverState.FireOn,
+                CoalInFirebox = serverState.CoalInFirebox,
+                CoalInTender = serverState.CoalInTender
+            });
+
+            using (Message message = Message.Create((ushort)NetworkTags.TRAIN_SYNC, writer))
                 SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
         }
     }
@@ -2140,12 +2367,40 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             case TrainCarType.LocoSteamHeavyBlue:
                 Main.Log($"Train Loco is steamer");
                 LocoControllerSteam controllerSteam = train.GetComponent<LocoControllerSteam>();
-                Main.Log($"Train controller found {controllerSteam != null}");
+                SteamLocoSimulation simulationSteam = train.GetComponentInChildren<SteamLocoSimulation>();
+                Main.Log($"Steam controller found {controllerSteam != null}");
+                Main.Log($"Steam simulation found {simulationSteam != null}");
                 Steamer steamer = serverState.Steamer;
                 if (steamer != null)
                 {
-                    Main.Log($"Sync fire on");
-                    controllerSteam.SetFireOn(steamer.GetFireOn);
+                    Main.Log($"Sync coal in firebox to {steamer.CoalInFirebox}");
+                    simulationSteam.coalbox.SetValue(steamer.CoalInFirebox);
+                    simulationSteam.tenderCoal.SetValue(steamer.CoalInTender);
+                    Main.Log($"Sync tender water to {steamer.WaterInTender}");
+                    simulationSteam.tenderWater.SetValue(steamer.WaterInTender);
+                    Main.Log($"Sync fire on to {steamer.FireOn}");
+                    simulationSteam.fireOn.SetValue(steamer.FireOn);
+                    Main.Log($"Sync fire temperature to {steamer.FireTemp}");
+                    simulationSteam.temperature.SetValue(steamer.FireTemp);
+                    Main.Log($"Sync boiler water to {steamer.BoilerWater} & pressure level to {steamer.BoilerPressure}");
+                    simulationSteam.boilerWater.SetValue(steamer.BoilerWater);
+                    simulationSteam.boilerPressure.SetValue(steamer.BoilerPressure);
+                    Main.Log($"Sync injector to {steamer.Injector}");
+                    controllerSteam.SetInjector(steamer.Injector);
+                    Main.Log($"Sync blower to {steamer.Blower}");
+                    controllerSteam.SetBlower(steamer.Blower);
+                    Main.Log($"Sync water dump to {steamer.WaterDump}");
+                    controllerSteam.SetWaterDump(steamer.WaterDump);
+                    Main.Log($"Sync steam release to {steamer.SteamRelease}");
+                    controllerSteam.SetSteamReleaser(steamer.SteamRelease);
+                    //Main.Log($"Sync whistle to {steamer.Whistle}");
+                    //controllerSteam.SetWhistle(steamer.Whistle);
+                    Main.Log($"Sync draft to {steamer.Draft}");
+                    controllerSteam.SetDraft(steamer.Draft);
+                    Main.Log($"Sync firedoor position to {steamer.FireDoorPos}");
+                    controllerSteam.SetFireDoorOpen(steamer.FireDoorPos);
+                    Main.Log($"Sync sand level to {steamer.Sand}");
+                    simulationSteam.sand.SetValue(steamer.Sand);
                 }
                 else
                 {
@@ -2372,9 +2627,28 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 case TrainCarType.LocoSteamHeavy:
                 case TrainCarType.LocoSteamHeavyBlue:
                     Main.Log($"Set steam defaults");
-                    LocoControllerSteam steam = car.GetComponent<LocoControllerSteam>();
-                    Main.Log($"Steam controller found: {steam != null}");
-                    train.Steamer = new Steamer();
+                    LocoControllerSteam steamController = car.GetComponent<LocoControllerSteam>();
+                    SteamLocoSimulation steamSimulation = car.GetComponentInChildren<SteamLocoSimulation>();
+                    Main.Log($"Steam controller found: {steamController != null}");
+                    train.Steamer = new Steamer()
+                    {
+                        Blower = steamController.GetBlower(),
+                        BoilerPressure = steamSimulation.boilerPressure.value,
+                        BoilerWater = steamSimulation.boilerWater.value,
+                        CoalInFirebox = steamController.GetCoalInFirebox(),
+                        CoalInTender = steamSimulation.tenderCoal.value,
+                        Draft = steamController.GetDraft(),
+                        FireDoorPos = steamController.GetFireDoorOpen(),
+                        FireOn = steamController.GetFireOn(),
+                        FireTemp = steamSimulation.temperature.value,
+                        Injector = steamController.GetInjector(),
+                        Sand = steamSimulation.sand.value,
+                        Sander = steamController.GetSanderValve(),
+                        SteamRelease = steamController.GetSteamReleaser(),
+                        WaterInTender = steamSimulation.tenderWater.value,
+                        WaterDump = steamController.GetWaterDump(),
+                        //Whistle = steamController.GetWhistle()
+                    };
                     break;
 
             }
@@ -2531,6 +2805,80 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                             serverState.Diesel.IsEngineOn = false;
                     }
                 break;
+            case Levers.FireDoor:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.FireDoorPos = value;
+                }
+                break;
+            case Levers.WaterDump:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.WaterDump = value;
+                }
+                break;
+            case Levers.SteamRelease:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.SteamRelease = value;
+                }
+                break;
+            case Levers.Blower:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.Blower = value;
+                }
+                break;
+            case Levers.BlankValve:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.BlankValve = value;
+                }
+                break;
+            case Levers.FireOut:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.FireOut = value;
+                }
+                break;
+            case Levers.Injector:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.Injector = value;
+                }
+                break;
+            case Levers.SteamSander:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.Sander = value;
+                }
+                break;
+            case Levers.LightLever:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.LightLever = value;
+                }
+                break;
+            case Levers.LightSwitch:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.LightSwitch = value;
+                }
+                break;
+            case Levers.Draft:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.Draft = value;
+                }
+                break;
+            /*
+            case Levers.Whistle:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.Whistle = value;
+                }
+                break;
+            */
         }
     }
 

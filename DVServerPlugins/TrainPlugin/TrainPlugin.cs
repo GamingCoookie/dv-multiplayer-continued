@@ -948,6 +948,51 @@ namespace TrainPlugin
                             break;
                     }
                     break;
+                case TrainCarType.LocoSteamHeavy:
+                case TrainCarType.LocoSteamHeavyBlue:
+                    if (train.Steamer == null)
+                        train.Steamer = new Steamer();
+
+                    Steamer steamer = train.Steamer;
+                    switch (lever.Lever)
+                    {
+                        case Levers.FireDoor:
+                            steamer.FireDoorPos = lever.Value;
+                            break;
+                        case Levers.WaterDump:
+                            steamer.WaterDump = lever.Value;
+                            break;
+                        case Levers.SteamRelease:
+                            steamer.SteamRelease = lever.Value;
+                            break;
+                        case Levers.Blower:
+                            steamer.Blower = lever.Value;
+                            break;
+                        case Levers.BlankValve:
+                            steamer.BlankValve = lever.Value;
+                            break;
+                        case Levers.FireOut:
+                            steamer.FireOut = lever.Value;
+                            break;
+                        case Levers.Injector:
+                            steamer.Injector = lever.Value;
+                            break;
+                        case Levers.SteamSander:
+                            steamer.Sander = lever.Value;
+                            break;
+                        case Levers.LightLever:
+                            steamer.LightLever = lever.Value;
+                            break;
+                        case Levers.LightSwitch:
+                            steamer.LightSwitch = lever.Value;
+                            break;
+                        /*
+                        case Levers.Whistle:
+                            steamer.Whistle = lever.Value;
+                            break;
+                        */
+                    }
+                    break;
             }
         }
     }

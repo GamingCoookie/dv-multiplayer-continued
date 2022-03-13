@@ -28,8 +28,13 @@ internal class NetworkTrainPosSync : MonoBehaviour
     NetworkPlayerSync localPlayer;
     ShunterLocoSimulation shunterLocoSimulation = null;
     DieselLocoSimulation dieselLocoSimulation = null;
+    SteamLocoSimulation steamLocoSimulation = null;
+    SteamLocoChuffSmokeParticles steamLocoSmokeParticles = null;
     ParticleSystem.MainModule shunterExhaust;
     ParticleSystem.MainModule dieselExhaust;
+    ParticleSystem.MainModule steamChimney;
+    ParticleSystem.MainModule steamLeft;
+    ParticleSystem.MainModule steamRight;
     private bool isBeingDestroyed;
     internal Trainset tempFrontTrainsetWithAuthority;
     internal Trainset tempRearTrainsetWithAuthority;
@@ -66,6 +71,23 @@ internal class NetworkTrainPosSync : MonoBehaviour
                 dieselLocoSimulation = GetComponent<DieselLocoSimulation>();
                 dieselExhaust = trainCar.transform.Find("[particles]").Find("ExhaustEngineSmoke").GetComponent<ParticleSystem>().main;
                 break;
+            case TrainCarType.LocoSteamHeavy:
+            case TrainCarType.LocoSteamHeavyBlue:
+                /*
+                Component[] components = GetComponentsInChildren<Component>();
+                foreach (Component component in components)
+                    Main.Log($"Component found: {component}");
+                components = trainCar.interior.GetComponentsInChildren<Component>();
+                foreach (Component component in components)
+                    Main.Log($"Interior component found: {component}");
+                */
+                steamLocoSimulation = GetComponent<SteamLocoSimulation>();
+                steamLocoSmokeParticles = GetComponent<SteamLocoChuffSmokeParticles>();
+                steamChimney = steamLocoSmokeParticles.chimneyParticles.main;
+                steamLeft = steamLocoSmokeParticles.chuffParticlesLeft.main;
+                steamRight = steamLocoSmokeParticles.chuffParticlesRight.main;
+                break;
+
         }
 
         if (!trainCar.IsLoco)
@@ -617,6 +639,12 @@ internal class NetworkTrainPosSync : MonoBehaviour
             case TrainCarType.LocoDiesel:
                 dieselExhaust.emitterVelocityMode = gain ? ParticleSystemEmitterVelocityMode.Rigidbody : ParticleSystemEmitterVelocityMode.Transform;
                 break;
+            case TrainCarType.LocoSteamHeavy:
+            case TrainCarType.LocoSteamHeavyBlue:
+                steamChimney.emitterVelocityMode = gain ? ParticleSystemEmitterVelocityMode.Rigidbody : ParticleSystemEmitterVelocityMode.Transform;
+                steamLeft.emitterVelocityMode = gain ? ParticleSystemEmitterVelocityMode.Rigidbody : ParticleSystemEmitterVelocityMode.Transform;
+                steamRight.emitterVelocityMode = gain ? ParticleSystemEmitterVelocityMode.Rigidbody : ParticleSystemEmitterVelocityMode.Transform;
+                break;
         }
 
         //if (gain)
@@ -850,6 +878,14 @@ internal class NetworkTrainPosSync : MonoBehaviour
                     dieselLocoSimulation.engineTemp.SetValue(location.Temperature);
                     dieselLocoSimulation.engineRPM.SetValue(location.RPM);
                     break;
+                /*
+                case TrainCarType.LocoSteamHeavy:
+                case TrainCarType.LocoSteamHeavyBlue:
+                    steamLocoSimulation.temperature.SetValue(location.Temperature);
+                    steamLocoSimulation.coalbox.SetValue(location.CoalInFirebox);
+                    steamLocoSimulation.tenderCoal.SetValue(location.CoalInTender);
+                    break;
+                */
             }
         }
         
