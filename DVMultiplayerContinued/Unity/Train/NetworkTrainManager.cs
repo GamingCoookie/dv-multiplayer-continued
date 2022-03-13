@@ -53,6 +53,17 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             {
                 localCars.Remove(car);
             }
+            if (car.IsLoco) 
+            {
+                switch (car.carType)
+                {
+                    case TrainCarType.LocoSteamHeavy:
+                    case TrainCarType.LocoSteamHeavyBlue:
+                        LocoControllerSteam steam = car.GetComponent<LocoControllerSteam>();
+                        steam.SetWhistle(0f);
+                        break;
+                }
+            }
         }
     }
 #pragma warning restore IDE0051 // Restore unused private members
@@ -1686,6 +1697,15 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                             loc.Temperature = diesel.GetEngineTemp();
                             loc.RPM = diesel.GetEngineRPM();
                             break;
+                        /*
+                        case TrainCarType.LocoSteamHeavy:
+                        case TrainCarType.LocoSteamHeavyBlue:
+                            SteamLocoSimulation steamSimulation = car.GetComponent<SteamLocoSimulation>();
+                            loc.Temperature = steamSimulation.temperature.value;
+                            loc.CoalInFirebox = steamSimulation.coalbox.value;
+                            loc.CoalInTender = steamSimulation.tenderCoal.value;
+                            break;
+                        */
                     }
                 }
 
