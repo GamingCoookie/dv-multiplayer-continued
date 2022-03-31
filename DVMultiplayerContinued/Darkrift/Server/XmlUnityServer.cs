@@ -89,7 +89,10 @@ namespace DarkRift.Server.Unity
                 // Add types
                 spawnData.PluginSearch.PluginTypes.AddRange(UnityServerHelper.SearchForPlugins());
 
-                spawnData.Listeners.NetworkListeners[0].Port = port;
+                foreach (ServerSpawnData.ListenersSettings.NetworkListenerSettings listener in spawnData.Listeners.NetworkListeners)
+                {
+                    listener.Port = port;
+                }
 
                 // Create server
                 Server = new DarkRiftServer(spawnData);

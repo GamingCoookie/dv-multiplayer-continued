@@ -30,8 +30,11 @@
   </logging>
 
   <listeners>
-    <listener name="DefaultNetworkListener" type="CompatibilityBichannelListener" address="0.0.0.0" port="4296">
+    <listener name="IPv4 Listener" type="CompatibilityBichannelListener" address="0.0.0.0" port="4296">
       <settings maxTcpBodyLength="134217728" />
+    </listener>
+	<listener name="IPv6 Listener" type="CompatibilityBichannelListener" address="::" port="4296">
+      <settings maxTcpBodyLength="134217728"/>
     </listener>
   </listeners>
 </configuration>
