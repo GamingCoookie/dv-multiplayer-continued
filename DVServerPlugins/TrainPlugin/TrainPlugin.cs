@@ -642,7 +642,7 @@ namespace TrainPlugin
                         oldTrain.Steamer.FireOn = newTrain.Steamer.FireOn;
                         oldTrain.Steamer.CoalInFirebox = newTrain.Steamer.CoalInFirebox;
                         oldTrain.Steamer.CoalInTender = newTrain.Steamer.CoalInTender;
-                        oldTrain.Steamer.CoalInTender = newTrain.Steamer.Whistle;
+                        oldTrain.Steamer.Whistle = newTrain.Steamer.Whistle;
                     }
                 }
             }

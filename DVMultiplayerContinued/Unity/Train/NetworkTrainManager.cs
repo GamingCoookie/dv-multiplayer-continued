@@ -198,10 +198,10 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
     {
         yield return new WaitUntil(() => car.IsInteriorLoaded);
         yield return new WaitForSeconds(.1f);
-        ResyncCar(car);
         WhistleRopeInit whistle = car.interior.GetComponentInChildren<WhistleRopeInit>();
         whistle.muted = true;
         car.keepInteriorLoaded = true;
+        ResyncCar(car);
     }
 
     private void NetworkTrainManager_OnTrainCarInitialized(TrainCar train)
@@ -465,9 +465,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 Main.Log($"[CLIENT] < TRAIN_SYNC");
                 WorldTrain serverState = reader.ReadSerializable<WorldTrain>();
                 TrainCar train = localCars.FirstOrDefault(t => t.CarGUID == serverState.Guid);
-                //Main.Log($"ID of the WorldTrain loco: {serverState.Guid}");
-                //Main.Log($"ID of the TrainCar loco: {train.CarGUID}");
-                //Main.Log($"ID of the train player is in: {PlayerManager.Car.CarGUID}");
                 if (serverState.Steamer != null)
                 {
                     SteamLocoSimulation steamSimulation = train.GetComponentInChildren<SteamLocoSimulation>();
@@ -2275,7 +2272,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             yield return RerailDesynced(train, serverState.Position, serverState.Forward);
         else if(serverState.AuthorityPlayerId != SingletonBehaviour<UnityClient>.Instance.ID)
         {
-            train.rb.isKinematic = true;
+            train.rb.isKinematic = false;
             train.rb.MovePosition(serverState.Position + WorldMover.currentMove);
             train.rb.MoveRotation(serverState.Rotation);
             foreach (Bogie bogie in train.Bogies)
@@ -2471,7 +2468,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             bogie.ResetBogiesToStartPosition();
         newTrain.CarDamage.IgnoreDamage(true);
         newTrain.stress.EnableStress(false);
-        newTrain.rb.isKinematic = true;
+        newTrain.rb.isKinematic = false;
         newTrain.rb.MovePosition(serverState.Position + WorldMover.currentMove);
         newTrain.rb.MoveRotation(serverState.Rotation);
         foreach (Bogie bogie in newTrain.Bogies)

@@ -704,7 +704,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
 
     private IEnumerator ToggleKinematic(float seconds)
     {
-        trainCar.rb.isKinematic = true;
+        trainCar.rb.isKinematic = false;
         trainCar.rb.Sleep();
         trainCar.stress.EnableStress(false);
         //foreach (Bogie bogie in trainCar.Bogies)
