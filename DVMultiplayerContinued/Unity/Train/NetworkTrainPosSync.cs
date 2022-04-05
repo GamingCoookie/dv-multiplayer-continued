@@ -513,6 +513,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
 
         if (Vector3.Distance(transform.position, newPos + WorldMover.currentMove) > 5 || isDerailed)
         {
+            /*
             if (!isDerailed)
             {
                 foreach (Bogie b in trainCar.Bogies)
@@ -521,6 +522,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
                         b.rb.isKinematic = true;
                 }
             }
+            */
             trainCar.rb.MovePosition(newPos + WorldMover.currentMove);
             trainCar.rb.MoveRotation(newRot);
             if (!isDerailed)
@@ -600,7 +602,6 @@ internal class NetworkTrainPosSync : MonoBehaviour
                 {
                     trainCar.LoadInterior();
                 }
-                trainCar.keepInteriorLoaded = true;
                 SetAuthority(true);
             }
             else if (!willLocalPlayerGetAuthority && hasLocalPlayerAuthority)
@@ -609,7 +610,6 @@ internal class NetworkTrainPosSync : MonoBehaviour
                 SetAuthority(false);
                 newPos = transform.position - WorldMover.currentMove;
                 newRot = transform.rotation;
-                trainCar.keepInteriorLoaded = false;
             }
         }
         catch (Exception ex)
@@ -630,7 +630,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
         Main.Log($"Setting authority");
         hasLocalPlayerAuthority = gain;
         Main.Log($"Set kinematic state {!gain}");
-        trainCar.rb.isKinematic = !gain;
+        //trainCar.rb.isKinematic = !gain;
         switch (trainCar.carType)
         {
             case TrainCarType.LocoShunter:
@@ -863,9 +863,9 @@ internal class NetworkTrainPosSync : MonoBehaviour
             yield break;
 
         velocity = location.Velocity;
-        isStationary = velocity.magnitude > 0;
         newPos = location.Position;
         newRot = location.Rotation;
+        isStationary = !(velocity.magnitude > 0);
         if (trainCar.IsLoco)
         {
             switch (trainCar.carType)
@@ -878,14 +878,6 @@ internal class NetworkTrainPosSync : MonoBehaviour
                     dieselLocoSimulation.engineTemp.SetValue(location.Temperature);
                     dieselLocoSimulation.engineRPM.SetValue(location.RPM);
                     break;
-                /*
-                case TrainCarType.LocoSteamHeavy:
-                case TrainCarType.LocoSteamHeavyBlue:
-                    steamLocoSimulation.temperature.SetValue(location.Temperature);
-                    steamLocoSimulation.coalbox.SetValue(location.CoalInFirebox);
-                    steamLocoSimulation.tenderCoal.SetValue(location.CoalInTender);
-                    break;
-                */
             }
         }
         

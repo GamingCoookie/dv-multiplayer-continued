@@ -6,6 +6,7 @@ using DV.CabControls;
 using DV.Logic.Job;
 using DV.MultipleUnit;
 using DV.PointSet;
+using DV.Utils.String;
 using DVMultiplayer;
 using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Train;
@@ -42,7 +43,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
     }
 
 #pragma warning disable IDE0051 // Remove unused private members
-    private void Update()
+    private void FixedUpdate()
     {
         if (IsSpawningTrains || !IsSynced)
             return;
@@ -53,14 +54,27 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             {
                 localCars.Remove(car);
             }
-            if (car.IsLoco) 
+            if (car.IsLoco)
             {
                 switch (car.carType)
                 {
                     case TrainCarType.LocoSteamHeavy:
                     case TrainCarType.LocoSteamHeavyBlue:
-                        LocoControllerSteam steam = car.GetComponent<LocoControllerSteam>();
-                        steam.SetWhistle(0f);
+                        if (car.IsInteriorLoaded)
+                        {
+                            CabItemRigidbody[] cabItems = car.interior.GetComponentsInChildren<CabItemRigidbody>();
+                            bool hasAuthority = car.GetComponent<NetworkTrainPosSync>().hasLocalPlayerAuthority;
+                            foreach (CabItemRigidbody cabItem in cabItems)
+                            {
+                                //Main.Log($"Found component: {cabItem}");
+                                Rigidbody cabItemRigidbody = cabItem.GetRigidbody();
+                                if (cabItemRigidbody != null && !hasAuthority && cabItem.name != "lighter")
+                                {
+                                    cabItemRigidbody.isKinematic = true;
+                                    cabItemRigidbody.velocity = car.GetVelocity();
+                                }
+                            }
+                        }
                         break;
                 }
             }
@@ -185,6 +199,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         yield return new WaitUntil(() => car.IsInteriorLoaded);
         yield return new WaitForSeconds(.1f);
         ResyncCar(car);
+        WhistleRopeInit whistle = car.interior.GetComponentInChildren<WhistleRopeInit>();
+        whistle.muted = true;
+        car.keepInteriorLoaded = true;
     }
 
     private void NetworkTrainManager_OnTrainCarInitialized(TrainCar train)
@@ -228,16 +245,16 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     OnCarCoupleChangeMessage(message, false);
                     break;
 
-                case NetworkTags.TRAIN_SYNC:
-                    OnLocoUpdateMessage(message);
-                    break;
-
                 case NetworkTags.TRAIN_COUPLE_HOSE:
                     OnCarCouplerHoseChangeMessage(message);
                     break;
 
                 case NetworkTags.TRAIN_COUPLE_COCK:
                     OnCarCouplerCockChangeMessage(message);
+                    break;
+
+                case NetworkTags.TRAIN_SYNC:
+                    OnCarSyncMessage(message);
                     break;
 
                 case NetworkTags.TRAIN_SYNC_ALL:
@@ -436,6 +453,33 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 }
             }
         }
+    }
+
+    private void OnCarSyncMessage(Message message)
+    {
+        IsChangeByNetwork = true;
+        using (DarkRiftReader reader = message.GetReader())
+        {
+            while (reader.Position < reader.Length)
+            {
+                Main.Log($"[CLIENT] < TRAIN_SYNC");
+                WorldTrain serverState = reader.ReadSerializable<WorldTrain>();
+                TrainCar train = localCars.FirstOrDefault(t => t.CarGUID == serverState.Guid);
+                //Main.Log($"ID of the WorldTrain loco: {serverState.Guid}");
+                //Main.Log($"ID of the TrainCar loco: {train.CarGUID}");
+                //Main.Log($"ID of the train player is in: {PlayerManager.Car.CarGUID}");
+                if (serverState.Steamer != null)
+                {
+                    SteamLocoSimulation steamSimulation = train.GetComponentInChildren<SteamLocoSimulation>();
+                    LocoControllerSteam steamController = train.GetComponentInChildren<LocoControllerSteam>();
+                    steamSimulation.coalbox.SetValue(serverState.Steamer.CoalInFirebox);
+                    steamSimulation.tenderCoal.SetValue(serverState.Steamer.CoalInTender);
+                    steamSimulation.fireOn.SetValue(serverState.Steamer.FireOn);
+                    steamController.whistleRopeValue = serverState.Steamer.Whistle;
+                }
+            }
+        }
+        IsChangeByNetwork = false;
     }
 
     private void OnCarSyncAllMessage(Message message)
@@ -931,27 +975,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     IsChangeByNetwork = false;
                 }
             }
-        }
-    }
-
-    private void OnLocoUpdateMessage(Message message)
-    {
-        using (DarkRiftReader reader = message.GetReader())
-        {
-            Steamer steamer = reader.ReadSerializable<Steamer>();
-            TrainCar loco = localCars.FirstOrDefault(t => t.CarGUID == steamer.TrainID);
-            WorldTrain serverState = serverCarStates.FirstOrDefault(t => t.Guid == steamer.TrainID);
-            LocoControllerSteam steamController = loco.GetComponent<LocoControllerSteam>();
-            SteamLocoSimulation steamSimulation = loco.GetComponentInChildren<SteamLocoSimulation>();
-
-            serverState.Steamer.FireOn = steamer.FireOn;
-            serverState.Steamer.CoalInFirebox = steamer.CoalInFirebox;
-            serverState.Steamer.CoalInTender = steamer.CoalInTender;
-
-            steamController.SetFireOn(steamer.FireOn);
-            steamSimulation.fireOn.SetValue(steamer.FireOn);
-            steamSimulation.coalbox.SetValue(steamer.CoalInFirebox);
-            steamSimulation.tenderCoal.SetValue(steamer.CoalInTender);
         }
     }
 
@@ -1766,53 +1789,61 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 
     internal void SendNewLocoValue(TrainCar loco)
     {
-        bool fireStateChanged = false;
-        bool coalInFireboxIncreased = false;
-        bool coalInTenderDecreased = false;
-
+        bool hasAuthority = loco.GetComponent<NetworkTrainPosSync>().hasLocalPlayerAuthority;
+        bool send = false;
+        //Main.Log($"[{loco}] Sync status: {IsSynced} Authority Status: {hasAuthority}");
         if (!IsSynced)
             return;
-
-        SteamLocoSimulation steamSimulation = loco.GetComponentInChildren<SteamLocoSimulation>();
-        float fireOn = steamSimulation.fireOn.value;
-        float coalInFireBox = steamSimulation.coalbox.value;
-        float tenderCoal = steamSimulation.tenderCoal.value;
-
-        Steamer serverState = serverCarStates.FirstOrDefault(t => t.Guid == loco.CarGUID).Steamer;
-
-        if (!(fireOn == 1f && serverState.FireOn == 1f))
+        switch (loco.carType)
         {
-            serverState.FireOn = fireOn;
-            fireStateChanged = true;
-            Main.Log($"Fire state is now {fireOn}");
-        }
-        if (coalInFireBox > serverState.CoalInFirebox)
-        {
-            serverState.CoalInFirebox = coalInFireBox;
-            coalInFireboxIncreased = true;
-            Main.Log($"Coal in Firebox is now {coalInFireBox}");
-        }
-        if (tenderCoal < serverState.CoalInTender)
-        {
-            serverState.CoalInTender = tenderCoal;
-            coalInTenderDecreased = true;
-            Main.Log($"Coal in Tender is now {tenderCoal}");
-        }
-        if (!(fireStateChanged || coalInFireboxIncreased || coalInTenderDecreased))
-            return;
-        Main.Log($"[{loco.ID}] Send new SH282 values");
-        using (DarkRiftWriter writer = DarkRiftWriter.Create())
-        {
-            writer.Write<Steamer>(new Steamer()
-            {
-                TrainID = loco.CarGUID,
-                FireOn = serverState.FireOn,
-                CoalInFirebox = serverState.CoalInFirebox,
-                CoalInTender = serverState.CoalInTender
-            });
+            case TrainCarType.LocoSteamHeavy:
+            case TrainCarType.LocoSteamHeavyBlue:
+                WorldTrain serverState = serverCarStates.FirstOrDefault(t => t.Guid == loco.CarGUID);
+                Steamer steamer = serverState.Steamer;
+                SteamLocoSimulation steamSimulation = loco.GetComponentInChildren<SteamLocoSimulation>();
+                LocoControllerSteam steamController = loco.GetComponentInChildren<LocoControllerSteam>();
+                float fireOn = steamSimulation.fireOn.value;
+                float coalInFireBox = steamSimulation.coalbox.value;
+                float tenderCoal = steamSimulation.tenderCoal.value;
+                float whistle = steamController.whistleRopeValue;
 
-            using (Message message = Message.Create((ushort)NetworkTags.TRAIN_SYNC, writer))
-                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
+                if (!(fireOn == 1f && steamer.FireOn == 1f) && (fireOn != 0f && steamer.FireOn != 0f))
+                {
+                    //Main.Log($"Fire state is now {fireOn}");
+                    send = true;
+                }
+                if (coalInFireBox > steamer.CoalInFirebox)
+                {
+                    //Main.Log($"Coal in Firebox is now {coalInFireBox}");
+                    send = true;
+                }
+                if (tenderCoal < steamer.CoalInTender)
+                {
+                    //Main.Log($"Coal in Tender is now {tenderCoal}");
+                    send = true;
+                }
+                if (whistle != steamer.Whistle)
+                {
+                    //Main.Log($"Whistle now {whistle}");
+                    send = true;
+                }
+                steamer.CoalInFirebox = coalInFireBox;
+                steamer.CoalInTender = tenderCoal;
+                steamer.FireOn = fireOn;
+                steamer.Whistle = whistle;
+                //Main.Log($"[{loco.ID}] Send new SH282 values");
+
+                if (send)
+                {
+                    using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                    {
+                        writer.Write<WorldTrain>(serverState);
+
+                        using (Message message = Message.Create((ushort)NetworkTags.TRAIN_SYNC, writer))
+                            SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
+                    }
+                }
+                break;
         }
     }
 
@@ -2029,7 +2060,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 
             if (coupler)
             {
-                train.frontCoupler.TryCouple(false, false, 1.5f);
+                train.frontCoupler.TryCouple(false, false, 3f);
                 if (!train.frontCoupler.IsCoupled())
                     Main.Log($"Coupler of train {serverState.FrontCouplerCoupledTo} wasn't in range.");
             }
@@ -2049,7 +2080,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 
             if (coupler)
             {
-                train.frontCoupler.TryCouple(false, false, 1.5f);
+                train.frontCoupler.TryCouple(false, false, 3f);
                 if (!train.frontCoupler.IsCoupled())
                     Main.Log($"Coupler of train {serverState.FrontCouplerCoupledTo} wasn't in range.");
             }
@@ -2094,7 +2125,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 
             if (coupler)
             {
-                train.rearCoupler.TryCouple(false, false, 1.5f);
+                train.rearCoupler.TryCouple(false, false, 3f);
                 if (!train.frontCoupler.IsCoupled())
                     Main.Log($"Coupler of train {serverState.RearCouplerCoupledTo} wasn't in range.");
             }
@@ -2114,7 +2145,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 
             if (coupler)
             {
-                train.rearCoupler.TryCouple(false, false, 1.5f);
+                train.rearCoupler.TryCouple(false, false, 3f);
                 if (!train.frontCoupler.IsCoupled())
                     Main.Log($"Coupler of train {serverState.RearCouplerCoupledTo} wasn't in range.");
             }
@@ -2250,11 +2281,8 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             foreach (Bogie bogie in train.Bogies)
                 bogie.ResetBogiesToStartPosition();
         }
-        else
-        {
-            SyncDamageWithServerState(train, serverState);
-            SyncLocomotiveWithServerState(train, serverState);
-        }
+        SyncDamageWithServerState(train, serverState);
+        SyncLocomotiveWithServerState(train, serverState);
 
         Main.Log($"Train should be synced");
     }
@@ -2413,8 +2441,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     controllerSteam.SetWaterDump(steamer.WaterDump);
                     Main.Log($"Sync steam release to {steamer.SteamRelease}");
                     controllerSteam.SetSteamReleaser(steamer.SteamRelease);
-                    //Main.Log($"Sync whistle to {steamer.Whistle}");
-                    //controllerSteam.SetWhistle(steamer.Whistle);
                     Main.Log($"Sync draft to {steamer.Draft}");
                     controllerSteam.SetDraft(steamer.Draft);
                     Main.Log($"Sync firedoor position to {steamer.FireDoorPos}");
@@ -2453,6 +2479,21 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 
         if(newTrain.logicCar != null && !newTrain.IsLoco && serverState.CargoType != CargoType.None)
             newTrain.logicCar.LoadCargo(serverState.CargoAmount, serverState.CargoType);
+        /*
+        if (newTrain.IsLoco)
+        {
+            switch (newTrain.carType)
+            {
+                case TrainCarType.LocoSteamHeavy:
+                    if (!LicenseManager.IsGeneralLicenseAcquired(GeneralLicenseType.SH282))
+                    {
+                        newTrain.blockInteriorLoading = false;
+                        newTrain.GetComponentInChildren<CabTeleportDestination>().gameObject.SetActive(true);
+                    }
+                    break;
+            }
+        }
+        */
         localCars.Add(newTrain);
 
         return newTrain;
@@ -2647,27 +2688,26 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 case TrainCarType.LocoSteamHeavy:
                 case TrainCarType.LocoSteamHeavyBlue:
                     Main.Log($"Set steam defaults");
-                    LocoControllerSteam steamController = car.GetComponent<LocoControllerSteam>();
+                    LocoControllerSteam controllerSteam = car.GetComponent<LocoControllerSteam>();
                     SteamLocoSimulation steamSimulation = car.GetComponentInChildren<SteamLocoSimulation>();
-                    Main.Log($"Steam controller found: {steamController != null}");
+                    Main.Log($"Steam controller found: {controllerSteam != null}");
                     train.Steamer = new Steamer()
                     {
-                        Blower = steamController.GetBlower(),
+                        Blower = controllerSteam.GetBlower(),
                         BoilerPressure = steamSimulation.boilerPressure.value,
                         BoilerWater = steamSimulation.boilerWater.value,
-                        CoalInFirebox = steamController.GetCoalInFirebox(),
+                        CoalInFirebox = controllerSteam.GetCoalInFirebox(),
                         CoalInTender = steamSimulation.tenderCoal.value,
-                        Draft = steamController.GetDraft(),
-                        FireDoorPos = steamController.GetFireDoorOpen(),
-                        FireOn = steamController.GetFireOn(),
+                        Draft = controllerSteam.GetDraft(),
+                        FireDoorPos = controllerSteam.GetFireDoorOpen(),
+                        FireOn = controllerSteam.GetFireOn(),
                         FireTemp = steamSimulation.temperature.value,
-                        Injector = steamController.GetInjector(),
+                        Injector = controllerSteam.GetInjector(),
                         Sand = steamSimulation.sand.value,
-                        Sander = steamController.GetSanderValve(),
-                        SteamRelease = steamController.GetSteamReleaser(),
+                        Sander = controllerSteam.GetSanderValve(),
+                        SteamRelease = controllerSteam.GetSteamReleaser(),
                         WaterInTender = steamSimulation.tenderWater.value,
-                        WaterDump = steamController.GetWaterDump(),
-                        //Whistle = steamController.GetWhistle()
+                        WaterDump = controllerSteam.GetWaterDump()
                     };
                     break;
 
@@ -2891,14 +2931,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     serverState.Steamer.Draft = value;
                 }
                 break;
-            /*
-            case Levers.Whistle:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
-                {
-                    serverState.Steamer.Whistle = value;
-                }
-                break;
-            */
         }
     }
 

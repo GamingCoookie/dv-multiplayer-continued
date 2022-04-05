@@ -91,6 +91,10 @@ namespace TrainPlugin
                         UpdateCoupleCockState(message, e.Client);
                         break;
 
+                    case NetworkTags.TRAIN_SYNC:
+                        UpdateTrain(message, e.Client);
+                        break;
+
                     case NetworkTags.TRAIN_SYNC_ALL:
                         SendWorldTrains(e.Client);
                         break;
@@ -625,6 +629,28 @@ namespace TrainPlugin
             }
         }
 
+        private void UpdateTrain(Message message, IClient sender)
+        {
+            if (worldTrains != null)
+            {
+                using (DarkRiftReader reader = message.GetReader())
+                {
+                    WorldTrain newTrain = reader.ReadSerializable<WorldTrain>();
+                    WorldTrain oldTrain = worldTrains.FirstOrDefault(t => t.Guid == newTrain.Guid);
+                    if (newTrain.Steamer != null)
+                    {
+                        oldTrain.Steamer.FireOn = newTrain.Steamer.FireOn;
+                        oldTrain.Steamer.CoalInFirebox = newTrain.Steamer.CoalInFirebox;
+                        oldTrain.Steamer.CoalInTender = newTrain.Steamer.CoalInTender;
+                        oldTrain.Steamer.CoalInTender = newTrain.Steamer.Whistle;
+                    }
+                }
+            }
+
+            Logger.Trace("[SERVER] > TRAIN_SYNC");
+            ReliableSendToOthers(message, sender);
+        }
+
         private void UpdateTrainDerailed(Message message, IClient sender)
         {
             if (worldTrains != null)
@@ -986,11 +1012,6 @@ namespace TrainPlugin
                         case Levers.LightSwitch:
                             steamer.LightSwitch = lever.Value;
                             break;
-                        /*
-                        case Levers.Whistle:
-                            steamer.Whistle = lever.Value;
-                            break;
-                        */
                     }
                     break;
             }

@@ -287,9 +287,10 @@ internal class NetworkTrainSync : MonoBehaviour
         loco = GetComponent<TrainCar>();
     }
 
-    public void Update()
+    public void FixedUpdate()
     {
-        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+        //Main.Log($"{SingletonBehaviour<NetworkTrainManager>.Instance} {loco} {SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork} {listenToLocalPlayerInputs}");
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || !loco || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !listenToLocalPlayerInputs)
             return;
 
         SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoValue(loco);

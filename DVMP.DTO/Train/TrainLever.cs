@@ -25,8 +25,7 @@ namespace DVMultiplayer.DTO.Train
         SteamSander,
         LightLever,
         LightSwitch,
-        Draft,
-        Whistle
+        Draft
     }
 
     public class TrainLever : IDarkRiftSerializable

@@ -15,7 +15,7 @@ namespace DVMultiplayer
         public static event Action OnGameFixedGUI;
         public static event Action OnGameUpdate;
         public static bool isInitialized = false;
-        private static bool enabled;
+        private static bool enabled = true;
 
         private static string[] AllowedMods = new string[]
         {
@@ -39,18 +39,11 @@ namespace DVMultiplayer
             harmony = new Harmony(entry.Info.Id);
             mod = entry;
             mod.OnFixedGUI = OnFixedGUI;
-            mod.OnToggle = OnToggle;
             mod.OnUpdate = OnUpdate;
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             ModEntry passengerJobsModEntry = FindMod("PassengerJobs");
             if (passengerJobsModEntry != null && passengerJobsModEntry.Active)
                 PassengerJobsModInitializer.Initialize(passengerJobsModEntry, harmony);
-            return true;
-        }
-
-        private static bool OnToggle(ModEntry entry, bool enabled)
-        {
-            Main.enabled = enabled;
             return true;
         }
 
@@ -101,6 +94,8 @@ namespace DVMultiplayer
                 mod.Logger.Log($"[DEBUG] {msg}");
             else
                 mod.Logger.NativeLog($"[DEBUG] {msg}");
+
+            CommandTerminal.Terminal.Log($"[DEBUG] {msg}");
         }
     }
 }

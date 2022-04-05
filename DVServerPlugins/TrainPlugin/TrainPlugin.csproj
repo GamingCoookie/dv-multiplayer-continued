@@ -43,14 +43,14 @@
       <HintPath>..\..\lib\DarkRift.Server.dll</HintPath>
       <Private>False</Private>
     </Reference>
-	<Reference Include="UnityEngine.CoreModule">
-		<SpecificVersion>False</SpecificVersion>
-		<HintPath>..\..\lib\UnityEngine.CoreModule.dll</HintPath>
-	</Reference>
-	<Reference Include="DV.Logic.Job">
-		<SpecificVersion>False</SpecificVersion>
-		<HintPath>..\..\lib\Assembly-CSharp.dll</HintPath>
-	</Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="DV.Logic.Job">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\Assembly-CSharp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
