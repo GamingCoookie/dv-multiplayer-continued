@@ -1774,6 +1774,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             return;
 
         SteamLocoSimulation steamSimulation = loco.GetComponentInChildren<SteamLocoSimulation>();
+        if (steamSimulation == null)
+            return;
+
         float fireOn = steamSimulation.fireOn.value;
         float coalInFireBox = steamSimulation.coalbox.value;
         float tenderCoal = steamSimulation.tenderCoal.value;
