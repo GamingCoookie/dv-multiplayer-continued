@@ -166,7 +166,6 @@
     <Compile Include="Darkrift\Client\UnityClient.cs" />
     <Compile Include="Darkrift\Server\UnityModManagerWriter.cs" />
     <Compile Include="Darkrift\Server\UnityConsoleWriter.cs" />
-    <Compile Include="Darkrift\Server\UnityServer.cs" />
     <Compile Include="Darkrift\Server\UnityServerHelper.cs" />
     <Compile Include="Darkrift\Server\XmlUnityServer.cs" />
     <Compile Include="Darkrift\WriterExtends.cs" />
@@ -191,7 +190,7 @@
     <Compile Include="Patches\Train\ChangeSpeedCalculationWhenPhysicsAreOff.cs" />
     <Compile Include="Patches\Train\AllowUpdateWhenKinematic.cs" />
     <Compile Include="Patches\Spawning\StopCreatingLocosAsClient.cs" />
-    <!-- <Compile Include="Patches\Train\HoseSeperationCheck.cs" /> --> 
+    <!-- <Compile Include="Patches\Train\HoseSeperationCheck.cs" /> -->
     <Compile Include="Patches\Train\Shunter\LocoControllerShunterSetNeutralStatePatch.cs" />
     <Compile Include="Patches\Train\Shunter\ShunterLocoSimulationPatch.cs" />
     <Compile Include="Patches\UI\StopClosingUIIfNotAllowed.cs" />
