@@ -1703,32 +1703,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
                 };
 
-                if (car.IsLoco)
-                {
-                    switch (car.carType)
-                    {
-                        case TrainCarType.LocoShunter:
-                            LocoControllerShunter shunter = car.GetComponent<LocoControllerShunter>();
-                            loc.Temperature = shunter.GetEngineTemp();
-                            loc.RPM = shunter.GetEngineRPM();
-                            break;
-                        case TrainCarType.LocoDiesel:
-                            LocoControllerDiesel diesel = car.GetComponent<LocoControllerDiesel>();
-                            loc.Temperature = diesel.GetEngineTemp();
-                            loc.RPM = diesel.GetEngineRPM();
-                            break;
-                        /*
-                        case TrainCarType.LocoSteamHeavy:
-                        case TrainCarType.LocoSteamHeavyBlue:
-                            SteamLocoSimulation steamSimulation = car.GetComponent<SteamLocoSimulation>();
-                            loc.Temperature = steamSimulation.temperature.value;
-                            loc.CoalInFirebox = steamSimulation.coalbox.value;
-                            loc.CoalInTender = steamSimulation.tenderCoal.value;
-                            break;
-                        */
-                    }
-                }
-
                 locations.Add(loc);
             }
 

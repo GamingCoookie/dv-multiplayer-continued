@@ -13,10 +13,6 @@ namespace DVMultiplayer.DTO.Train
         public TrainBogie[] Bogies { get; set; }
         public bool IsStationary { get; set; }
         public Vector3 Velocity { get; internal set; }
-        public float Temperature { get; internal set; }
-        public float RPM { get; internal set; } = 0f;
-        public float CoalInFirebox { get; internal set; } = 0f;
-        public float CoalInTender { get; internal set; } = 0f;
         public long Timestamp { get; internal set; }
 
         public void Deserialize(DeserializeEvent e)
@@ -28,11 +24,7 @@ namespace DVMultiplayer.DTO.Train
             Bogies = e.Reader.ReadSerializables<TrainBogie>();
             IsStationary = e.Reader.ReadBoolean();
             Velocity = e.Reader.ReadVector3();
-            Temperature = e.Reader.ReadSingle();
-            RPM = e.Reader.ReadSingle();
             Timestamp = e.Reader.ReadInt64();
-            CoalInFirebox = e.Reader.ReadSingle();
-            CoalInTender = e.Reader.ReadSingle();
         }
 
         public void Serialize(SerializeEvent e)
@@ -44,11 +36,7 @@ namespace DVMultiplayer.DTO.Train
             e.Writer.Write(Bogies);
             e.Writer.Write(IsStationary);
             e.Writer.Write(Velocity);
-            e.Writer.Write(Temperature);
-            e.Writer.Write(RPM);
             e.Writer.Write(Timestamp);
-            e.Writer.Write(CoalInFirebox);
-            e.Writer.Write(CoalInTender);
         }
     }
 

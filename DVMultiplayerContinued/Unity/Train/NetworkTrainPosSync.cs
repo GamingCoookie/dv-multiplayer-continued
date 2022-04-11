@@ -482,7 +482,6 @@ internal class NetworkTrainPosSync : MonoBehaviour
         }
 
         if (hasLocalPlayerAuthority
-            && trainCar == trainCar.trainset.cars[0]
             && ((velocity.magnitude * 3.6f > .1f && Vector3.Distance(transform.position - WorldMover.currentMove, newPos) > Mathf.Lerp(1e-4f, 1e-2f, velocity.magnitude * 3.6f / 50)) || Quaternion.Angle(transform.rotation, newRot) > 1e-2f))
         {
             if (!trainCar.stress.enabled)
@@ -868,21 +867,6 @@ internal class NetworkTrainPosSync : MonoBehaviour
         newPos = location.Position;
         newRot = location.Rotation;
         isStationary = !(velocity.magnitude > 0);
-        if (trainCar.IsLoco)
-        {
-            switch (trainCar.carType)
-            {
-                case TrainCarType.LocoShunter:
-                    shunterLocoSimulation.engineTemp.SetValue(location.Temperature);
-                    shunterLocoSimulation.engineRPM.SetValue(location.RPM);
-                    break;
-                case TrainCarType.LocoDiesel:
-                    dieselLocoSimulation.engineTemp.SetValue(location.Temperature);
-                    dieselLocoSimulation.engineRPM.SetValue(location.RPM);
-                    break;
-            }
-        }
-        
     }
 
     //private void SyncVelocityAndSpeedUpIfDesyncedOnFrontCar(TrainLocation location)
