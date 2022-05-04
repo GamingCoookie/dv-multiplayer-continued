@@ -19,9 +19,7 @@ namespace DVMultiplayer.DTO.Train
         public float LightLever { get; set; } = 0f;
         public float LightSwitch { get; set; } = 0f;
         public float Sand { get; set; } = 0f;
-        public float Sander { get; set; } = 0f;
         public float SteamRelease { get; set; } = 0f;
-        public string TrainID { get; set; } = "";
         public float WaterDump { get; set; } = 0f;
         public float WaterInTender { get; set; } = 0f;
         public float Whistle { get; set; } = 0f;
@@ -43,9 +41,7 @@ namespace DVMultiplayer.DTO.Train
             LightLever = e.Reader.ReadSingle();
             LightSwitch = e.Reader.ReadSingle();
             Sand = e.Reader.ReadSingle();
-            Sander = e.Reader.ReadSingle();
             SteamRelease = e.Reader.ReadSingle();
-            TrainID = e.Reader.ReadString();
             WaterDump = e.Reader.ReadSingle();
             WaterInTender = e.Reader.ReadSingle();
             Whistle = e.Reader.ReadSingle();
@@ -67,9 +63,7 @@ namespace DVMultiplayer.DTO.Train
             e.Writer.Write(LightLever);
             e.Writer.Write(LightSwitch);
             e.Writer.Write(Sand);
-            e.Writer.Write(Sander);
             e.Writer.Write(SteamRelease);
-            e.Writer.Write(TrainID);
             e.Writer.Write(WaterDump);
             e.Writer.Write(WaterInTender);
             e.Writer.Write(Whistle);

@@ -631,7 +631,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
         Main.Log($"Setting authority");
         hasLocalPlayerAuthority = gain;
         Main.Log($"Set kinematic state {!gain}");
-        //trainCar.rb.isKinematic = !gain;
+        trainCar.rb.isKinematic = !gain;
         switch (trainCar.carType)
         {
             case TrainCarType.LocoShunter:
@@ -660,8 +660,8 @@ internal class NetworkTrainPosSync : MonoBehaviour
 
         Main.Log($"Toggle damage for 2 seconds");
         StartCoroutine(ToggleDamageAfterSeconds(2));
-        Main.Log($"Resync train");
-        SingletonBehaviour<NetworkTrainManager>.Instance.ResyncCar(trainCar);
+        //Main.Log($"Resync train");
+        //SingletonBehaviour<NetworkTrainManager>.Instance.ResyncCar(trainCar);
     }
 #pragma warning restore IDE0051 // Remove unused private members
 
@@ -703,7 +703,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
 
     private IEnumerator ToggleKinematic(float seconds)
     {
-        trainCar.rb.isKinematic = false;
+        trainCar.rb.isKinematic = true;
         trainCar.rb.Sleep();
         trainCar.stress.EnableStress(false);
         //foreach (Bogie bogie in trainCar.Bogies)
@@ -729,10 +729,12 @@ internal class NetworkTrainPosSync : MonoBehaviour
             trainCar.stress.EnableStress(false);
             if (SingletonBehaviour<NetworkTrainManager>.Exists && trainCar.IsLoco)
             {
-                Main.Log($"Movement state changed is moving: {isMoving}");
-                SingletonBehaviour<NetworkTrainManager>.Instance.SendCarLocationUpdate(trainCar, true);
-                newPos = trainCar.transform.position - WorldMover.currentMove;
-                newRot = transform.rotation;
+                {
+                    Main.Log($"Movement state changed is moving: {isMoving}");
+                    SingletonBehaviour<NetworkTrainManager>.Instance.SendCarLocationUpdate(trainCar, true);
+                    newPos = trainCar.transform.position - WorldMover.currentMove;
+                    newRot = transform.rotation;
+                }
             }
         }
 

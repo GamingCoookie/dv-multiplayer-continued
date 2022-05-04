@@ -1,12 +1,16 @@
-﻿using DV.CabControls;
+﻿using DV;
+using DV.CabControls;
 using DVMultiplayer;
 using DVMultiplayer.DTO.Train;
+using DVMultiplayer.DTO.Player;
 using DVMultiplayer.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Timers;
 using UnityEngine;
+using UnityEngine.UI;
 
 internal class NetworkTrainSync : MonoBehaviour
 {
@@ -17,7 +21,7 @@ internal class NetworkTrainSync : MonoBehaviour
 
     public void ListenToTrainInputEvents()
     {
-        if (!loco.IsLoco && isAlreadyListening)
+        if (!loco.IsLoco || isAlreadyListening)
             return;
 
         if (loco.logicCar != null)
@@ -67,10 +71,15 @@ internal class NetworkTrainSync : MonoBehaviour
 
             case TrainCarType.LocoDiesel:
                 DieselDashboardControls dieselDashboard = loco.interior.GetComponentInChildren<DieselDashboardControls>();
+                Main.Log($"dashboard found {dieselDashboard != null}");
                 FuseBoxPowerControllerDiesel dieselFuseBox = dieselDashboard.fuseBoxPowerControllerDiesel;
+                Main.Log($"fusebox found {dieselFuseBox != null}");
+                DoorsAndWindowsControllerDiesel doorsAndWindows = loco.interior.GetComponentInChildren<DoorsAndWindowsControllerDiesel>();
+                Main.Log($"doorsAndWindows found {doorsAndWindows != null}");
                 for (int i = 0; i < dieselFuseBox.sideFusesObj.Length; i++)
                 {
-                    ToggleSwitchBase sideFuse = dieselFuseBox.sideFusesObj[i].GetComponent<ToggleSwitchBase>();
+                    ControlImplBase sideFuse = dieselFuseBox.sideFusesObj[i].GetComponentInChildren<ControlImplBase>();
+                    Main.Log($"{sideFuse}");
                     switch (i)
                     {
                         case 0:
@@ -86,8 +95,59 @@ internal class NetworkTrainSync : MonoBehaviour
                             break;
                     }
                 }
-                dieselFuseBox.mainFuseObj.GetComponent<ToggleSwitchBase>().ValueChanged += OnTrainMainFuseChanged;
-                dieselDashboard.hornObj.GetComponent<ControlImplBase>().ValueChanged += HornUsed;
+                foreach (ControlImplBase thing in loco.interior.GetComponentsInChildren<ControlImplBase>())
+                {
+                    Main.Log($"Listen change: {thing.name}");
+                    switch (thing.name)
+                    {
+                        case "C bell button":
+                            thing.ValueChanged += OnBellChanged;
+                            break;
+                        case "C dynamic_brake_lever":
+                            thing.ValueChanged += OnDynamicBrakeChanged;
+                            break;
+                        case "C engine_bay_door01":
+                            thing.ValueChanged += OnEngineBayDoor1Changed;
+                            break;
+                        case "C engine_bay_door02":
+                            thing.ValueChanged += OnEngineBayDoor2Changed;
+                            break;
+                        case "C engine_thottle":
+                            thing.ValueChanged += OnEngineThrottleChanged;
+                            break;
+                        case "C engine_ignition":
+                            thing.ValueChanged += OnEngineIgnitionChanged;
+                            break;
+                        case "C fuse_panel_door":
+                            thing.ValueChanged += OnFusePanelDoorChanged;
+                            break;
+                    }
+                }
+                Main.Log($"Cab light");
+                dieselDashboard.cabLightRotary.GetComponentInChildren<ControlImplBase>().ValueChanged += OnCabLightChanged;
+                Main.Log($"Door 1");
+                doorsAndWindows.door1Lever.ValueChanged += OnDoor1Changed;
+                Main.Log($"Door 2");
+                doorsAndWindows.door2Lever.ValueChanged += OnDoor2Changed;
+                Main.Log($"Emergency Off");
+                dieselDashboard.emergencyEngineOffBtn.GetComponentInChildren<ControlImplBase>().ValueChanged += OnEmergencyOffChanged;
+                Main.Log($"Fan Switch");
+                dieselDashboard.fanSwitchButton.GetComponentInChildren<ControlImplBase>().ValueChanged += OnFanSwitchChanged;
+                Main.Log($"Headlight");
+                dieselDashboard.headlightsRotary.GetComponentInChildren<ControlImplBase>().ValueChanged += OnHeadlightSwitchChanged;
+                Main.Log($"Window 1");
+                doorsAndWindows.windows1Puller.ValueChanged += OnWindow1Changed;
+                Main.Log($"Window 2");
+                doorsAndWindows.windows2Puller.ValueChanged += OnWindow2Changed;
+                Main.Log($"Window 3");
+                doorsAndWindows.windows3Puller.ValueChanged += OnWindow3Changed;
+                Main.Log($"Window 4");
+                doorsAndWindows.windows4Puller.ValueChanged += OnWindow4Changed;
+                Main.Log($"MainFuse");
+                dieselFuseBox.mainFuseObj.GetComponent<ControlImplBase>().ValueChanged += OnTrainMainFuseChanged;
+                Main.Log($"Horn");
+                dieselDashboard.hornControl.ValueChanged += HornUsed;
+                Main.Log($"Rotary Amplitude");
                 SingletonBehaviour<CoroutineManager>.Instance.Run(DieselRotaryAmplitudeCheckerStartListen(dieselFuseBox));
                 break;
             case TrainCarType.LocoSteamHeavy:
@@ -111,7 +171,7 @@ internal class NetworkTrainSync : MonoBehaviour
                         case "C valve 4":
                             valve.ValueChanged += OnBlankValveChanged;
                             break;
-                        case "C valve 5":
+                        case "C valve 5 FireOn":
                             valve.ValueChanged += OnFireOutChanged;
                             break;
                         case "C injector":
@@ -203,7 +263,9 @@ internal class NetworkTrainSync : MonoBehaviour
                 break;
 
             case TrainCarType.LocoDiesel:
-                FuseBoxPowerControllerDiesel dieselFuseBox = loco.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel;
+                DieselDashboardControls dieselDashboard = loco.interior.GetComponentInChildren<DieselDashboardControls>();
+                FuseBoxPowerControllerDiesel dieselFuseBox = dieselDashboard.fuseBoxPowerControllerDiesel;
+                DoorsAndWindowsControllerDiesel doorsAndWindows = loco.interior.GetComponentInChildren<DoorsAndWindowsControllerDiesel>();
                 for (int i = 0; i < dieselFuseBox.sideFusesObj.Length; i++)
                 {
                     ToggleSwitchBase sideFuse = dieselFuseBox.sideFusesObj[i].GetComponent<ToggleSwitchBase>();
@@ -222,6 +284,44 @@ internal class NetworkTrainSync : MonoBehaviour
                             break;
                     }
                 }
+                foreach (ControlImplBase thing in loco.interior.GetComponentsInChildren<ControlImplBase>())
+                {
+                    Main.Log($"Listen change: {thing.name}");
+                    switch (thing.name)
+                    {
+                        case "C bell button":
+                            thing.ValueChanged -= OnBellChanged;
+                            break;
+                        case "C dynamic_brake_lever":
+                            thing.ValueChanged -= OnDynamicBrakeChanged;
+                            break;
+                        case "C engine_bay_door01":
+                            thing.ValueChanged -= OnEngineBayDoor1Changed;
+                            break;
+                        case "C engine_bay_door02":
+                            thing.ValueChanged -= OnEngineBayDoor2Changed;
+                            break;
+                        case "C engine_throttle":
+                            thing.ValueChanged -= OnEngineThrottleChanged;
+                            break;
+                        case "C engine_ignition":
+                            thing.ValueChanged -= OnEngineIgnitionChanged;
+                            break;
+                        case "C fuse_panel_door":
+                            thing.ValueChanged -= OnFusePanelDoorChanged;
+                            break;
+                    }
+                }
+                dieselDashboard.cabLightRotary.GetComponentInChildren<ControlImplBase>().ValueChanged -= OnCabLightChanged;
+                doorsAndWindows.door1Lever.ValueChanged -= OnDoor1Changed;
+                doorsAndWindows.door2Lever.ValueChanged -= OnDoor2Changed;
+                dieselDashboard.emergencyEngineOffBtn.GetComponentInChildren<ControlImplBase>().ValueChanged -= OnEmergencyOffChanged;
+                dieselDashboard.fanSwitchButton.GetComponentInChildren<ControlImplBase>().ValueChanged -= OnFanSwitchChanged;
+                dieselDashboard.headlightsRotary.GetComponentInChildren<ControlImplBase>().ValueChanged -= OnHeadlightSwitchChanged;
+                doorsAndWindows.windows1Puller.ValueChanged -= OnWindow1Changed;
+                doorsAndWindows.windows2Puller.ValueChanged -= OnWindow2Changed;
+                doorsAndWindows.windows3Puller.ValueChanged -= OnWindow3Changed;
+                doorsAndWindows.windows4Puller.ValueChanged -= OnWindow4Changed;
                 dieselFuseBox.mainFuseObj.GetComponent<ToggleSwitchBase>().ValueChanged -= OnTrainMainFuseChanged;
                 dieselFuseBox.powerRotaryObj.GetComponent<RotaryAmplitudeChecker>().RotaryStateChanged -= OnTrainFusePowerStarterStateChanged;
                 break;
@@ -246,7 +346,7 @@ internal class NetworkTrainSync : MonoBehaviour
                         case "C valve 4":
                             valve.ValueChanged -= OnBlankValveChanged;
                             break;
-                        case "C valve 5":
+                        case "C valve 5 FireOn":
                             valve.ValueChanged -= OnFireOutChanged;
                             break;
                         case "C injector":
@@ -273,9 +373,19 @@ internal class NetworkTrainSync : MonoBehaviour
                     }
                 }
 
-                ButtonBase lightSwitch = loco.interior.GetComponentInChildren<ButtonBase>();
-                lightSwitch.ValueChanged -= OnLightSwitchChanged;
+                ButtonBase[] buttons = loco.interior.GetComponentsInChildren<ButtonBase>();
+                foreach (ButtonBase button in buttons)
+                {
+                    Main.Log($"Listen button change: {button.name}");
+                    switch (button.name)
+                    {
+                        case "C inidactor light switch":
+                            button.ValueChanged -= OnLightSwitchChanged;
+                            break;
+                    }
+                }
                 PullerBase draft = loco.interior.GetComponentInChildren<PullerBase>();
+                Main.Log($"Listen puller change: C draft");
                 draft.ValueChanged -= OnDraftChanged;
                 break;
         }
@@ -285,6 +395,12 @@ internal class NetworkTrainSync : MonoBehaviour
     {
         Main.Log($"NetworkTrainSync.Awake()");
         loco = GetComponent<TrainCar>();
+        loco.LoadInterior();
+        loco.keepInteriorLoaded = true;
+        StartCoroutine(ListenToTrainInputEvents(loco));
+#if DEBUG
+        AddInfotagAboveTrain();
+#endif
     }
 
     public void FixedUpdate()
@@ -294,6 +410,36 @@ internal class NetworkTrainSync : MonoBehaviour
             return;
 
         SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoValue(loco);
+    }
+
+    public void Update()
+    {
+        WorldTrain serverState = SingletonBehaviour<NetworkTrainManager>.Instance.serverCarStates.First(s => s.Guid == loco.CarGUID);
+        //Main.Log($"{serverState.AuthorityPlayerId}");
+#if DEBUG
+        NetworkPlayerSync playerSync = new NetworkPlayerSync();
+        if (SingletonBehaviour<NetworkPlayerManager>.Instance.GetLocalPlayerSync().Id == serverState.AuthorityPlayerId)
+        {
+            playerSync = SingletonBehaviour<NetworkPlayerManager>.Instance.GetLocalPlayerSync();
+        }
+        else
+        {
+            playerSync = SingletonBehaviour<NetworkPlayerManager>.Instance.GetPlayerSyncById(serverState.AuthorityPlayerId);
+        }
+        if (playerSync != null)
+        {
+            //Main.Log($"{playerSync.Username}");
+            loco.GetComponentInChildren<Text>().text = $"Authority: {playerSync.Username}";
+        }
+#endif
+    }
+
+    private IEnumerator ListenToTrainInputEvents(TrainCar car)
+    {
+        yield return new WaitUntil(() => car.IsInteriorLoaded);
+        NetworkTrainSync trainSync = car.GetComponent<NetworkTrainSync>();
+        trainSync.ListenToTrainInputEvents();
+        trainSync.listenToLocalPlayerInputs = true;
     }
 
     private IEnumerator ShunterRotaryAmplitudeCheckerStartListen(FuseBoxPowerController fuseBox)
@@ -317,6 +463,142 @@ internal class NetworkTrainSync : MonoBehaviour
             val = 0;
 
         SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Horn, val);
+    }
+
+    private void OnBellChanged(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Bell, e.newValue);
+    }
+
+    private void OnDynamicBrakeChanged(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.DynamicBrake, e.newValue);
+    }
+
+    private void OnEngineBayDoor1Changed(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.EngineBayDoor1, e.newValue);
+    }
+
+    private void OnEngineBayDoor2Changed(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.EngineBayDoor2, e.newValue);
+    }
+
+    private void OnEngineThrottleChanged(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.EngineBayThrottle, e.newValue);
+    }
+
+    private void OnEngineIgnitionChanged(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.EngineIgnition, e.newValue);
+    }
+
+    private void OnFusePanelDoorChanged(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.FusePanelDoor, e.newValue);
+    }
+
+    private void OnCabLightChanged(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.CabLightSwitch, e.newValue);
+    }
+
+    private void OnDoor1Changed(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Door1, e.newValue);
+    }
+
+    private void OnDoor2Changed(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Door2, e.newValue);
+    }
+
+    private void OnEmergencyOffChanged(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.EmergencyOff, e.newValue);
+    }
+
+    private void OnFanSwitchChanged(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.FanSwitch, e.newValue);
+    }
+
+    private void OnHeadlightSwitchChanged(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.HeadlightSwitch, e.newValue);
+    }
+
+    private void OnWindow1Changed(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Window1, e.newValue);
+    }
+
+    private void OnWindow2Changed(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Window2, e.newValue);
+    }
+
+    private void OnWindow3Changed(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Window3, e.newValue);
+    }
+
+    private void OnWindow4Changed(ValueChangedEventArgs e)
+    {
+        if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
+            return;
+
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Window4, e.newValue);
     }
 
     private void OnTrainFusePowerStarterStateChanged(int state)
@@ -464,7 +746,7 @@ internal class NetworkTrainSync : MonoBehaviour
         if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
             return;
 
-        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.SteamSander, e.newValue);
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Sander, e.newValue);
     }
 
     private void OnLightLeverChanged(ValueChangedEventArgs e)
@@ -480,7 +762,7 @@ internal class NetworkTrainSync : MonoBehaviour
         if (!SingletonBehaviour<NetworkTrainManager>.Instance || SingletonBehaviour<NetworkTrainManager>.Instance.IsChangeByNetwork || !loco || !listenToLocalPlayerInputs)
             return;
 
-        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.LightSwitch, e.newValue);
+        SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.HeadlightSwitch, e.newValue);
     }
 
     private void OnDraftChanged(ValueChangedEventArgs e)
@@ -489,5 +771,48 @@ internal class NetworkTrainSync : MonoBehaviour
             return;
 
         SingletonBehaviour<NetworkTrainManager>.Instance.SendNewLocoLeverValue(loco, Levers.Draft, e.newValue);
+    }
+    private void AddInfotagAboveTrain()
+    {
+        GameObject infotagCanvas = new GameObject("Infotag canvas");
+        infotagCanvas.transform.parent = loco.transform;
+        infotagCanvas.transform.localPosition = new Vector3(0, 5, 0);
+        infotagCanvas.AddComponent<Canvas>();
+        infotagCanvas.AddComponent<RotateTowardsPlayer>();
+
+        RectTransform rectTransform = infotagCanvas.GetComponent<RectTransform>();
+        rectTransform.sizeDelta = new Vector2(1920, 1080);
+        rectTransform.localScale = new Vector3(0.004f, .001f, 0);
+
+        GameObject infotagBackground = new GameObject("Infotag BG");
+        infotagBackground.transform.parent = infotagCanvas.transform;
+        infotagBackground.transform.localPosition = new Vector3(0, 0, 0);
+
+        RawImage bg = infotagBackground.AddComponent<RawImage>();
+        bg.color = new Color(69 / 255, 69 / 255, 69 / 255, .45f);
+
+        rectTransform = infotagBackground.GetComponent<RectTransform>();
+        rectTransform.localScale = new Vector3(1f, 1f, 0);
+        rectTransform.anchorMin = new Vector2(0, 0);
+        rectTransform.anchorMax = new Vector2(1, 1);
+
+        GameObject infotag = new GameObject("Infotag");
+        infotag.transform.parent = infotagCanvas.transform;
+        infotag.transform.localPosition = new Vector3(775, 0, 0);
+
+        Text tag = infotag.AddComponent<Text>();
+        tag.font = Font.CreateDynamicFontFromOSFont("Arial", 16);
+        tag.fontSize = 300;
+        tag.alignment = TextAnchor.MiddleCenter;
+        tag.resizeTextForBestFit = true;
+        tag.text = "Authority: Nobody";
+
+        rectTransform = infotag.GetComponent<RectTransform>();
+        rectTransform.localScale = new Vector3(2f, 5f, 0);
+        rectTransform.anchorMin = new Vector2(0, .5f);
+        rectTransform.anchorMax = new Vector2(0, .5f);
+        rectTransform.offsetMin = new Vector2(rectTransform.offsetMin.x, 350);
+        rectTransform.offsetMax = new Vector2(rectTransform.offsetMax.x, -350);
+        rectTransform.sizeDelta = new Vector2(1575, 350);
     }
 }

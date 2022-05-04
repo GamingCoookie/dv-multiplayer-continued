@@ -942,6 +942,69 @@ namespace TrainPlugin
                     Diesel diesel = train.Diesel;
                     switch (lever.Lever)
                     {
+                        case Levers.Bell:
+                            diesel.Bell = lever.Value;
+                            break;
+
+                        case Levers.CabLightSwitch:
+                            diesel.CabLight = lever.Value;
+                            break;
+
+                        case Levers.Door1:
+                            diesel.Door1 = lever.Value;
+                            break;
+
+                        case Levers.Door2:
+                            diesel.Door2 = lever.Value;
+                            break;
+
+                        case Levers.DynamicBrake:
+                            diesel.DynamicBrake = lever.Value;
+                            break;
+
+                        case Levers.EmergencyOff:
+                            diesel.EmergencyOff = lever.Value;
+                            break;
+
+                        case Levers.EngineBayDoor1:
+                            diesel.EngineBayDoor1 = lever.Value;
+                            break;
+
+                        case Levers.EngineBayDoor2:
+                            diesel.EngineBayDoor2 = lever.Value;
+                            break;
+
+                        case Levers.EngineBayThrottle:
+                            diesel.EngineBayThrottle = lever.Value;
+                            break;
+
+                        case Levers.EngineIgnition:
+                            diesel.EngineIgnition = lever.Value;
+                            break;
+
+                        case Levers.FanSwitch:
+                            diesel.FanSwitch = lever.Value;
+                            break;
+
+                        case Levers.FusePanelDoor:
+                            diesel.FusePanelDoor = lever.Value;
+                            break;
+
+                        case Levers.FusePowerStarter:
+                            if (diesel.IsSideFuse1On && diesel.IsSideFuse2On && diesel.IsSideFuse3On && diesel.IsMainFuseOn && lever.Value == 1)
+                                diesel.IsEngineOn = true;
+                            else if (lever.Value == 0)
+                                diesel.IsEngineOn = false;
+                            break;
+
+                        case Levers.HeadlightSwitch:
+                            diesel.HeadlightSwitch = lever.Value;
+                            break;
+
+                        case Levers.Horn:
+                            diesel.Horn = lever.Value;
+                            break;
+
                         case Levers.MainFuse:
                             diesel.IsMainFuseOn = lever.Value == 1;
                             if (lever.Value == 0)
@@ -966,11 +1029,20 @@ namespace TrainPlugin
                                 diesel.IsEngineOn = false;
                             break;
 
-                        case Levers.FusePowerStarter:
-                            if (diesel.IsSideFuse1On && diesel.IsSideFuse2On && diesel.IsSideFuse3On && diesel.IsMainFuseOn && lever.Value == 1)
-                                diesel.IsEngineOn = true;
-                            else if (lever.Value == 0)
-                                diesel.IsEngineOn = false;
+                        case Levers.Window1:
+                            diesel.Window1 = lever.Value;
+                            break;
+
+                        case Levers.Window2:
+                            diesel.Window2 = lever.Value;
+                            break;
+
+                        case Levers.Window3:
+                            diesel.Window3 = lever.Value;
+                            break;
+
+                        case Levers.Window4:
+                            diesel.Window4 = lever.Value;
                             break;
                     }
                     break;
@@ -985,31 +1057,40 @@ namespace TrainPlugin
                         case Levers.FireDoor:
                             steamer.FireDoorPos = lever.Value;
                             break;
+
                         case Levers.WaterDump:
                             steamer.WaterDump = lever.Value;
                             break;
+
                         case Levers.SteamRelease:
                             steamer.SteamRelease = lever.Value;
                             break;
+
                         case Levers.Blower:
                             steamer.Blower = lever.Value;
                             break;
+
                         case Levers.BlankValve:
                             steamer.BlankValve = lever.Value;
                             break;
+
+                        case Levers.Draft:
+                            steamer.Draft = lever.Value;
+                            break;
+
                         case Levers.FireOut:
                             steamer.FireOut = lever.Value;
                             break;
+
                         case Levers.Injector:
                             steamer.Injector = lever.Value;
                             break;
-                        case Levers.SteamSander:
-                            steamer.Sander = lever.Value;
-                            break;
+
                         case Levers.LightLever:
                             steamer.LightLever = lever.Value;
                             break;
-                        case Levers.LightSwitch:
+
+                        case Levers.HeadlightSwitch:
                             steamer.LightSwitch = lever.Value;
                             break;
                     }

@@ -35,7 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="RedworkDE.Publicizer" Version="0.2.2" />
-	<PublicizeAssembly Include="Assembly-CSharp" Private="True" Readonly="True" />
+    <PublicizeAssembly Include="Assembly-CSharp" Private="True" Readonly="True" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony">

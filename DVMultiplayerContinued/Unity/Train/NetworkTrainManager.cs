@@ -56,26 +56,20 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             }
             if (car.IsLoco)
             {
-                switch (car.carType)
+                if (car.IsInteriorLoaded)
                 {
-                    case TrainCarType.LocoSteamHeavy:
-                    case TrainCarType.LocoSteamHeavyBlue:
-                        if (car.IsInteriorLoaded)
+                    CabItemRigidbody[] cabItems = car.interior.GetComponentsInChildren<CabItemRigidbody>();
+                    bool hasAuthority = car.GetComponent<NetworkTrainPosSync>().hasLocalPlayerAuthority;
+                    foreach (CabItemRigidbody cabItem in cabItems)
+                    {
+                        //Main.Log($"Found component: {cabItem}");
+                        Rigidbody cabItemRigidbody = cabItem.GetRigidbody();
+                        if (cabItemRigidbody != null && !hasAuthority && cabItem.name != "lighter")
                         {
-                            CabItemRigidbody[] cabItems = car.interior.GetComponentsInChildren<CabItemRigidbody>();
-                            bool hasAuthority = car.GetComponent<NetworkTrainPosSync>().hasLocalPlayerAuthority;
-                            foreach (CabItemRigidbody cabItem in cabItems)
-                            {
-                                //Main.Log($"Found component: {cabItem}");
-                                Rigidbody cabItemRigidbody = cabItem.GetRigidbody();
-                                if (cabItemRigidbody != null && !hasAuthority && cabItem.name != "lighter")
-                                {
-                                    cabItemRigidbody.isKinematic = true;
-                                    cabItemRigidbody.velocity = car.GetVelocity();
-                                }
-                            }
+                            cabItemRigidbody.isKinematic = true;
+                            cabItemRigidbody.velocity = car.GetVelocity();
                         }
-                        break;
+                    }
                 }
             }
         }
@@ -179,7 +173,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         NetworkPlayerSync playerSync = SingletonBehaviour<NetworkPlayerManager>.Instance.GetLocalPlayerSync();
         if (playerSync.Train && playerSync.Train.IsLoco)
         {
-            playerSync.Train.GetComponent<NetworkTrainSync>().listenToLocalPlayerInputs = false;
+            //playerSync.Train.GetComponent<NetworkTrainSync>().listenToLocalPlayerInputs = false;
             if (NetworkManager.IsHost()) playerSync.Train.GetComponent<NetworkTrainPosSync>().CheckAuthorityChange();
         }
 
@@ -189,8 +183,8 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 
         if (trainCar && trainCar.IsLoco)
         {
-            StartCoroutine(ListenToTrainInputEvents(trainCar));
-            StartCoroutine(ResyncCarWithInteriorLoaded(trainCar));
+            if (!trainCar.IsInteriorLoaded)
+                StartCoroutine(ResyncCarWithInteriorLoaded(trainCar));
         }
     }
 
@@ -198,8 +192,14 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
     {
         yield return new WaitUntil(() => car.IsInteriorLoaded);
         yield return new WaitForSeconds(.1f);
-        WhistleRopeInit whistle = car.interior.GetComponentInChildren<WhistleRopeInit>();
-        whistle.muted = true;
+        switch (car.carType)
+        {
+            case TrainCarType.LocoSteamHeavy:
+            case TrainCarType.LocoSteamHeavyBlue:
+                WhistleRopeInit whistle = car.interior.GetComponentInChildren<WhistleRopeInit>();
+                whistle.muted = true;
+                break;
+        }
         car.keepInteriorLoaded = true;
         ResyncCar(car);
     }
@@ -379,7 +379,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         {
             while (reader.Position < reader.Length)
             {
-                IsSpawningTrains = true;
                 Main.Log($"[CLIENT] < TRAINS_INIT");
                 IsChangeByNetwork = true;
                 WorldTrain[] trains = reader.ReadSerializables<WorldTrain>();
@@ -701,73 +700,154 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     LocoSimulation baseSimulation = train.GetComponent<LocoSimulation>();
                     switch (lever.Lever)
                     {
-                        case Levers.Throttle:
-                            baseController.SetThrottle(lever.Value);
+                        case Levers.Bell:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C bell button").SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.BlankValve:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C valve 4").SetValue(lever.Value);
+                            }
+                            break;
+
+                        case Levers.Blower:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C valve 3").SetValue(lever.Value);
+                                (baseController as LocoControllerSteam).SetBlower(lever.Value);
+                            }
                             break;
 
                         case Levers.Brake:
                             baseController.SetBrake(lever.Value);
                             break;
 
-                        case Levers.IndependentBrake:
-                            baseController.SetIndependentBrake(lever.Value);
-                            break;
-
-                        case Levers.Reverser:
-                            baseController.SetReverser(lever.Value);
-                            break;
-
-                        case Levers.Sander:
-                            baseController.SetSanders(lever.Value);
-                            break;
-
-                        case Levers.SideFuse_1:
-                            if (train.carType == TrainCarType.LocoShunter && train.IsInteriorLoaded)
+                        case Levers.CabLightSwitch:
+                            switch (train.carType)
                             {
-                                train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.sideFusesObj[0].GetComponent<ToggleSwitchBase>().Use();
-                                if (train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1 && lever.Value == 0)
-                                    train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
-                            }
-                            else if (train.carType == TrainCarType.LocoDiesel && train.IsInteriorLoaded)
-                            {
-                                train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.sideFusesObj[0].GetComponent<ToggleSwitchBase>().Use();
-                                if (train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1 && lever.Value == 0)
-                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().cabLightRotary.GetComponentInChildren<RotaryBase>().SetValue(lever.Value);
+                                    (baseController as LocoControllerDiesel).SetBacklight(lever.Value == 1);
+                                    break;
                             }
                             break;
 
-                        case Levers.SideFuse_2:
-                            if (train.carType == TrainCarType.LocoShunter && train.IsInteriorLoaded)
+                        case Levers.Door1:
+                            switch (train.carType)
                             {
-                                train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.sideFusesObj[1].GetComponent<ToggleSwitchBase>().Use();
-                                if (train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1 && lever.Value == 0)
-                                    train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
-                            }
-                            else if (train.carType == TrainCarType.LocoDiesel && train.IsInteriorLoaded)
-                            {
-                                train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.sideFusesObj[1].GetComponent<ToggleSwitchBase>().Use();
-                                if (train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1 && lever.Value == 0)
-                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DoorsAndWindowsControllerDiesel>().door1Lever.SetValue(lever.Value);
+                                    break;
                             }
                             break;
 
-                        case Levers.SideFuse_3:
-                            if (train.carType == TrainCarType.LocoDiesel && train.IsInteriorLoaded)
+                        case Levers.Door2:
+                            switch (train.carType)
                             {
-                                train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.sideFusesObj[2].GetComponent<ToggleSwitchBase>().Use();
-                                if (train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1 && lever.Value == 0)
-                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DoorsAndWindowsControllerDiesel>().door2Lever.SetValue(lever.Value);
+                                    break;
                             }
                             break;
 
-                        case Levers.MainFuse:
-                            if (train.carType == TrainCarType.LocoShunter && train.IsInteriorLoaded)
+                        case Levers.Draft:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
                             {
-                                train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
+                                train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C draft").SetValue(lever.Value);
+                                (baseController as LocoControllerSteam).SetDraft(lever.Value);
                             }
-                            else if (train.carType == TrainCarType.LocoDiesel && train.IsInteriorLoaded)
+                            break;
+
+                        case Levers.DynamicBrake:
+                            switch (train.carType)
                             {
-                                train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C dynamic_brake_lever").SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.EmergencyOff:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().emergencyEngineOffBtn.GetComponentInChildren<ControlImplBase>().SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.EngineBayDoor1:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door01").SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.EngineBayDoor2:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door02").SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.EngineBayThrottle:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_thottle").SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.EngineIgnition:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_ignition").SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.FanSwitch:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fanSwitchButton.GetComponentInChildren<ControlImplBase>().SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.FireDoor:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C firebox handle invisible").SetValue(lever.Value);
+                                (baseController as LocoControllerSteam).SetFireDoorOpen(lever.Value);
+                            }
+                            break;
+
+                        case Levers.FireOut:
+                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+                            {
+                                train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C valve 5 FireOn").SetValue(lever.Value);
+                            }
+                            break;
+
+                        case Levers.FusePanelDoor:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C fuse_panel_door").SetValue(lever.Value);
+                                    break;
                             }
                             break;
 
@@ -802,6 +882,19 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                             }
                             break;
 
+                        case Levers.HeadlightSwitch:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().headlightsRotary.GetComponentInChildren<ControlImplBase>().SetValue(lever.Value);
+                                    break;
+                                case TrainCarType.LocoSteamHeavy:
+                                case TrainCarType.LocoSteamHeavyBlue:
+                                    train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C inidactor light switch").SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
                         case Levers.Horn:
                             float valHorn = lever.Value;
                             if (train.carType == TrainCarType.LocoShunter)
@@ -824,151 +917,167 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                             }
                             baseController.UpdateHorn(valHorn);
                             break;
-                        case Levers.FireDoor:
-                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
-                            {
-                                LeverBase[] levers;
-                                levers = train.interior.GetComponentsInChildren<LeverBase>();
-                                foreach (LeverBase local_lever in levers)
-                                {
-                                    if (local_lever.name == "C firebox handle invisible")
-                                        local_lever.SetValue(lever.Value);
-                                }
-                            }
-                            (baseController as LocoControllerSteam).SetFireDoorOpen(lever.Value);
+
+                        case Levers.IndependentBrake:
+                            baseController.SetIndependentBrake(lever.Value);
                             break;
-                        case Levers.SteamSander:
-                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
-                            {
-                                LeverBase[] levers;
-                                levers = train.interior.GetComponentsInChildren<LeverBase>();
-                                foreach (LeverBase local_lever in levers)
-                                {
-                                    if (local_lever.name == "C sand valve")
-                                        local_lever.SetValue(lever.Value);
-                                }
-                            }
-                            (baseController as LocoControllerSteam).SetSanders(lever.Value);
-                            (baseSimulation as SteamLocoSimulation).sandValve.SetValue(lever.Value);
-                            break;
-                        case Levers.LightLever:
-                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
-                            {
-                                LeverBase[] levers;
-                                levers = train.interior.GetComponentsInChildren<LeverBase>();
-                                foreach (LeverBase local_lever in levers)
-                                {
-                                    if (local_lever.name == "C light lever")
-                                        local_lever.SetValue(lever.Value);
-                                }
-                            }
-                            break;
-                        case Levers.WaterDump:
-                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
-                            {
-                                RotaryBase[] valves;
-                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
-                                foreach (RotaryBase valve in valves)
-                                {
-                                    if (valve.name == "C valve 1")
-                                        valve.SetValue(lever.Value);
-                                }
-                            }
-                            (baseController as LocoControllerSteam).SetWaterDump(lever.Value);
-                            (baseSimulation as SteamLocoSimulation).waterDump.SetValue(lever.Value);
-                            break;
-                        case Levers.SteamRelease:
-                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
-                            {
-                                RotaryBase[] valves;
-                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
-                                foreach (RotaryBase valve in valves)
-                                {
-                                    if (valve.name == "C valve 2")
-                                        valve.SetValue(lever.Value);
-                                }
-                            }
-                            (baseController as LocoControllerSteam).SetSteamReleaser(lever.Value);
-                            (baseSimulation as SteamLocoSimulation).steamReleaser.SetValue(lever.Value);
-                            break;
-                        case Levers.Blower:
-                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
-                            {
-                                RotaryBase[] valves;
-                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
-                                foreach (RotaryBase valve in valves)
-                                {
-                                    if (valve.name == "C valve 3")
-                                        valve.SetValue(lever.Value);
-                                }
-                            }
-                            (baseController as LocoControllerSteam).SetBlower(lever.Value);
-                            (baseSimulation as SteamLocoSimulation).blower.SetValue(lever.Value);
-                            break;
-                        case Levers.BlankValve:
-                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
-                            {
-                                RotaryBase[] valves;
-                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
-                                foreach (RotaryBase valve in valves)
-                                {
-                                    if (valve.name == "C valve 4")
-                                        valve.SetValue(lever.Value);
-                                }
-                            }
-                            break;
-                        case Levers.FireOut:
-                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
-                            {
-                                RotaryBase[] valves;
-                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
-                                foreach (RotaryBase valve in valves)
-                                {
-                                    if (valve.name == "C valve 5")
-                                        valve.SetValue(lever.Value);
-                                }
-                            }
-                            break;
+
                         case Levers.Injector:
                             if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
                             {
-                                RotaryBase[] valves;
-                                valves = train.interior.GetComponentsInChildren<RotaryBase>();
-                                foreach (RotaryBase valve in valves)
-                                {
-                                    if (valve.name == "C injector")
-                                        valve.SetValue(lever.Value);
-                                }
+                                train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C injector").SetValue(lever.Value);
+                                (baseController as LocoControllerSteam).SetInjector(lever.Value);
                             }
-                            (baseController as LocoControllerSteam).SetInjector(lever.Value);
-                            (baseSimulation as SteamLocoSimulation).injector.SetValue(lever.Value);
                             break;
-                        case Levers.Draft:
+
+                        case Levers.LightLever:
                             if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
                             {
-                                PullerBase puller = train.interior.GetComponentInChildren<PullerBase>();
-                                if (puller.name == "C draft")
-                                    puller.SetValue(lever.Value);
+                                train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C light lever").SetValue(lever.Value);
                             }
-                            (baseController as LocoControllerSteam).SetDraft(lever.Value);
-                            (baseSimulation as SteamLocoSimulation).draft.SetValue(lever.Value);
                             break;
-                        case Levers.LightSwitch:
-                            if (train.carType == TrainCarType.LocoSteamHeavy || train.carType == TrainCarType.LocoSteamHeavyBlue)
+
+                        case Levers.MainFuse:
+                            if (train.carType == TrainCarType.LocoShunter && train.IsInteriorLoaded)
                             {
-                                ButtonBase[] buttons = train.interior.GetComponentsInChildren<ButtonBase>();
-                                foreach (ButtonBase button in buttons)
+                                train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
+                            }
+                            else if (train.carType == TrainCarType.LocoDiesel && train.IsInteriorLoaded)
+                            {
+                                train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ControlImplBase>().SetValue(lever.Value);
+                                if (lever.Value == 0)
                                 {
-                                    switch (button.name)
-                                    {
-                                        case ("C inidactor light switch"):
-                                            button.SetValue(lever.Value);
-                                            break;
-                                    }
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.SetAllFusesAndEngine(false);
                                 }
                             }
                             break;
-                                                }
+
+                        case Levers.Reverser:
+                            baseController.SetReverser(lever.Value);
+                            break;
+
+                        case Levers.Sander:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().sandDeployControl.SetValue(lever.Value);
+                                    (baseController as LocoControllerDiesel).SetSanders(lever.Value);
+                                    break;
+                                case TrainCarType.LocoSteamHeavy:
+                                case TrainCarType.LocoSteamHeavyBlue:
+                                    train.interior.GetComponentsInChildren<LeverBase>().FirstOrDefault(s => s.name == "C sand valve").SetValue(lever.Value);
+                                    (baseController as LocoControllerSteam).SetSanders(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.SideFuse_1:
+                            if (train.carType == TrainCarType.LocoShunter && train.IsInteriorLoaded)
+                            {
+                                train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.sideFusesObj[0].GetComponent<ToggleSwitchBase>().Use();
+                                if (train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1 && lever.Value == 0)
+                                    train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
+                            }
+                            else if (train.carType == TrainCarType.LocoDiesel && train.IsInteriorLoaded)
+                            {
+                                train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.sideFusesObj[0].GetComponent<ControlImplBase>().SetValue(lever.Value);
+                                if (train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.IsMainFuseOn && lever.Value == 0)
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ControlImplBase>().SetValue(lever.Value);
+                                else if (lever.Value == 0)
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.EngineOff();
+                            }
+                            break;
+
+                        case Levers.SideFuse_2:
+                            if (train.carType == TrainCarType.LocoShunter && train.IsInteriorLoaded)
+                            {
+                                train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.sideFusesObj[1].GetComponent<ToggleSwitchBase>().Use();
+                                if (train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1 && lever.Value == 0)
+                                    train.interior.GetComponentInChildren<ShunterDashboardControls>().fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Use();
+                            }
+                            else if (train.carType == TrainCarType.LocoDiesel && train.IsInteriorLoaded)
+                            {
+                                train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.sideFusesObj[1].GetComponent<ControlImplBase>().SetValue(lever.Value);
+                                if (train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.IsMainFuseOn && lever.Value == 0)
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ControlImplBase>().SetValue(lever.Value);
+                                else if (lever.Value == 0)
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.EngineOff();
+                            }
+                            break;
+
+                        case Levers.SideFuse_3:
+                            if (train.carType == TrainCarType.LocoDiesel && train.IsInteriorLoaded)
+                            {
+                                train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.sideFusesObj[2].GetComponent<ControlImplBase>().SetValue(lever.Value);
+                                if (train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.IsMainFuseOn && lever.Value == 0)
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ControlImplBase>().SetValue(lever.Value);
+                                else if (lever.Value == 0)
+                                    train.interior.GetComponentInChildren<DieselDashboardControls>().fuseBoxPowerControllerDiesel.EngineOff();
+                            }
+                            break;
+
+                        case Levers.SteamRelease:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoSteamHeavy:
+                                case TrainCarType.LocoSteamHeavyBlue:
+                                    train.interior.GetComponentsInChildren<RotaryBase>().FirstOrDefault(s => s.name == "C valve 2").SetValue(lever.Value);
+                                    (baseController as LocoControllerSteam).SetSteamReleaser(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.Throttle:
+                            baseController.SetThrottle(lever.Value);
+                            break;
+
+                        case Levers.WaterDump:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoSteamHeavy:
+                                case TrainCarType.LocoSteamHeavyBlue:
+                                    train.interior.GetComponentsInChildren<RotaryBase>().FirstOrDefault(s => s.name == "C valve 1").SetValue(lever.Value);
+                                    (baseController as LocoControllerSteam).SetWaterDump(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.Window1:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DoorsAndWindowsControllerDiesel>().windows1Puller.SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.Window2:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DoorsAndWindowsControllerDiesel>().windows2Puller.SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.Window3:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DoorsAndWindowsControllerDiesel>().windows3Puller.SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+
+                        case Levers.Window4:
+                            switch (train.carType)
+                            {
+                                case TrainCarType.LocoDiesel:
+                                    train.interior.GetComponentInChildren<DoorsAndWindowsControllerDiesel>().windows4Puller.SetValue(lever.Value);
+                                    break;
+                            }
+                            break;
+                    }
                     IsChangeByNetwork = false;
                 }
             }
@@ -2007,14 +2116,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         return position + forward * zBounds;
     }
 
-    private IEnumerator ListenToTrainInputEvents(TrainCar car)
-    {
-        yield return new WaitUntil(() => car.IsInteriorLoaded);
-        NetworkTrainSync trainSync = car.GetComponent<NetworkTrainSync>();
-        trainSync.ListenToTrainInputEvents();
-        trainSync.listenToLocalPlayerInputs = true;
-    }
-
     private void ResyncCoupling(TrainCar train, WorldTrain serverState)
     {
         // Front coupler check
@@ -2246,7 +2347,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             yield return RerailDesynced(train, serverState.Position, serverState.Forward);
         else if(serverState.AuthorityPlayerId != SingletonBehaviour<UnityClient>.Instance.ID)
         {
-            train.rb.isKinematic = false;
+            train.rb.isKinematic = true;
             train.rb.MovePosition(serverState.Position + WorldMover.currentMove);
             train.rb.MoveRotation(serverState.Rotation);
             foreach (Bogie bogie in train.Bogies)
@@ -2341,11 +2442,11 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         ShunterDashboardControls shunterDashboard = train.interior.GetComponentInChildren<ShunterDashboardControls>();
                         Main.Log($"Shunter dashboard found {shunterDashboard != null}");
                         Main.Log($"Sync engine fuse 1");
-                        shunterDashboard.fuseBoxPowerController.sideFusesObj[0].GetComponent<ToggleSwitchBase>().SetValue(shunter.IsSideFuse1On ? 1 : 0);
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "fuse 3 side").SetValue(shunter.IsSideFuse1On ? 1 : 0);
                         Main.Log($"Sync engine fuse 2");
-                        shunterDashboard.fuseBoxPowerController.sideFusesObj[1].GetComponent<ToggleSwitchBase>().SetValue(shunter.IsSideFuse2On ? 1 : 0);
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "fuse 5 side").SetValue(shunter.IsSideFuse2On ? 1 : 0);
                         Main.Log($"Sync engine main fuse");
-                        shunterDashboard.fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().SetValue(shunter.IsMainFuseOn ? 1 : 0);
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "fuse 1 main").SetValue(shunter.IsMainFuseOn ? 1 : 0);
                     }
                 }
                 else
@@ -2361,21 +2462,75 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 Main.Log($"Train Loco Server data found {diesel != null}");
                 if (diesel != null)
                 {
-                    Main.Log($"Sync engine on");
+                    Main.Log($"Sync engine on to {diesel.IsEngineOn}");
                     controllerDiesel.SetEngineRunning(diesel.IsEngineOn);
                     if (train.IsInteriorLoaded && !diesel.IsEngineOn)
                     {
                         DieselDashboardControls dieselDashboard = train.interior.GetComponentInChildren<DieselDashboardControls>();
-                        Main.Log($"Shunter dashboard found {dieselDashboard != null}");
-                        Main.Log($"Sync engine fuse 1");
-                        dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[0].GetComponent<ToggleSwitchBase>().SetValue(diesel.IsSideFuse1On ? 1 : 0);
-                        Main.Log($"Sync engine fuse 2");
-                        dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[1].GetComponent<ToggleSwitchBase>().SetValue(diesel.IsSideFuse2On ? 1 : 0);
-                        Main.Log($"Sync engine fuse 3");
-                        dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[2].GetComponent<ToggleSwitchBase>().SetValue(diesel.IsSideFuse3On ? 1 : 0);
-                        Main.Log($"Sync engine main fuse");
-                        dieselDashboard.fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ToggleSwitchBase>().SetValue(diesel.IsMainFuseOn ? 1 : 0);
+                        Main.Log($"Diesel dashboard found {dieselDashboard != null}");
+                        Main.Log($"Sync engine fuse 1 to {diesel.IsSideFuse1On}");
+                        dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[0].GetComponent<ControlImplBase>().SetValue(diesel.IsSideFuse1On ? 1 : 0);
+                        Main.Log($"Sync engine fuse 2 to {diesel.IsSideFuse2On}");
+                        dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[1].GetComponent<ControlImplBase>().SetValue(diesel.IsSideFuse2On ? 1 : 0);
+                        Main.Log($"Sync engine fuse 3 to {diesel.IsSideFuse3On}");
+                        dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[2].GetComponent<ControlImplBase>().SetValue(diesel.IsSideFuse3On ? 1 : 0);
+                        Main.Log($"Sync engine main fuse to {diesel.IsMainFuseOn}");
+                        dieselDashboard.fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ControlImplBase>().SetValue(diesel.IsMainFuseOn ? 1 : 0);
                     }
+                    if (train.IsInteriorLoaded)
+                    {
+                        DieselDashboardControls dieselDashboard = train.interior.GetComponentInChildren<DieselDashboardControls>();
+                        DoorsAndWindowsControllerDiesel doorsAndWindows = train.interior.GetComponentInChildren<DoorsAndWindowsControllerDiesel>();
+                        Main.Log($"Sync Bell to {diesel.Bell}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C bell button").SetValue(diesel.Bell);
+                        Main.Log($"Sync Cab light switch to {diesel.CabLight}");
+                        dieselDashboard.cabLightRotary.GetComponentInChildren<ControlImplBase>().SetValue(diesel.CabLight);
+                        Main.Log($"Sync Door 1 to {diesel.Door1}");
+                        doorsAndWindows.door1Lever.SetValue(diesel.Door1);
+                        Main.Log($"Sync Door 2 to {diesel.Door2}");
+                        doorsAndWindows.door2Lever.SetValue(diesel.Door2);
+                        Main.Log($"Sync Dynamic brake to {diesel.DynamicBrake}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C dynamic_brake_lever").SetValue(diesel.DynamicBrake);
+                        Main.Log($"Sync Emergency Off to {diesel.EmergencyOff}");
+                        dieselDashboard.emergencyEngineOffBtn.GetComponentInChildren<ControlImplBase>().SetValue(diesel.EmergencyOff);
+                        Main.Log($"Sync Engine bay door 1 to {diesel.EngineBayDoor1}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door01").SetValue(diesel.EngineBayDoor1);
+                        Main.Log($"Sync Engine bay door 2 to {diesel.EngineBayDoor2}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door02").SetValue(diesel.EngineBayDoor2);
+                        Main.Log($"Sync Engine bay throttle to {diesel.EngineBayThrottle}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_thottle").SetValue(diesel.EngineBayThrottle);
+                        Main.Log($"Sync Engine ignition to {diesel.EngineIgnition}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_ignition").SetValue(diesel.EngineIgnition);
+                        Main.Log($"Sync Fan switch to {diesel.FanSwitch}");
+                        dieselDashboard.fanSwitchButton.GetComponentInChildren<ControlImplBase>().SetValue(diesel.FanSwitch);
+                        Main.Log($"Sync fuse panel door to {diesel.FusePanelDoor}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C fuse_panel_door").SetValue(diesel.FusePanelDoor);
+                        Main.Log($"Sync headlight switch to {diesel.HeadlightSwitch}");
+                        dieselDashboard.headlightsRotary.GetComponentInChildren<ControlImplBase>().SetValue(diesel.HeadlightSwitch);
+                        Main.Log($"Sync horn to {diesel.Horn}");
+                        dieselDashboard.hornControl.SetValue(diesel.Horn);
+                        Main.Log($"Sync Window 1 to {diesel.Window1}");
+                        doorsAndWindows.windows1Puller.SetValue(diesel.Window1);
+                        Main.Log($"Sync Window 2 to {diesel.Window2}");
+                        doorsAndWindows.windows2Puller.SetValue(diesel.Window2);
+                        Main.Log($"Sync Window 2 to {diesel.Window3}");
+                        doorsAndWindows.windows2Puller.SetValue(diesel.Window3);
+                        Main.Log($"Sync Window 2 to {diesel.Window4}");
+                        doorsAndWindows.windows2Puller.SetValue(diesel.Window4);
+                    }
+                    else
+                        Main.Log($"Interior wasn't loaded!!!");
+
+                    Main.Log($"Sync Fuel to {diesel.Fuel}");
+                    controllerDiesel.sim.fuel.SetValue(diesel.Fuel);
+                    Main.Log($"Sync Oil to {diesel.Oil}");
+                    controllerDiesel.sim.oil.SetValue(diesel.Oil);
+                    Main.Log($"Sync RPM to {diesel.RPM}");
+                    controllerDiesel.sim.engineRPM.SetValue(diesel.RPM);
+                    Main.Log($"Sync Sand to {diesel.Sand}");
+                    controllerDiesel.sim.sand.SetValue(diesel.Sand);
+                    Main.Log($"Sync Temperature to {diesel.Temp}");
+                    controllerDiesel.sim.engineTemp.SetValue(diesel.Temp);
                 }
                 else
                 {
@@ -2386,14 +2541,41 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             case TrainCarType.LocoSteamHeavyBlue:
                 Main.Log($"Train Loco is steamer");
                 LocoControllerSteam controllerSteam = train.GetComponent<LocoControllerSteam>();
-                SteamLocoSimulation simulationSteam = train.GetComponentInChildren<SteamLocoSimulation>();
+                SteamLocoSimulation simulationSteam = controllerSteam.sim;
                 Main.Log($"Steam controller found {controllerSteam != null}");
                 Main.Log($"Steam simulation found {simulationSteam != null}");
                 Steamer steamer = serverState.Steamer;
                 if (steamer != null)
                 {
+                    if (train.IsInteriorLoaded)
+                    {
+                        Main.Log($"Sync Injector to {steamer.Injector}");
+                        controllerSteam.SetInjector(steamer.Injector);
+                        Main.Log($"Sync Blank valve to {steamer.BlankValve}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C draft").SetValue(steamer.BlankValve);
+                        Main.Log($"Sync Blower to {steamer.Blower}");
+                        controllerSteam.SetBlower(steamer.Blower);
+                        Main.Log($"Sync Draft to {steamer.Draft}");
+                        controllerSteam.SetDraft(steamer.Draft);
+                        Main.Log($"Sync Firedoor position to {steamer.FireDoorPos}");
+                        controllerSteam.SetFireDoorOpen(steamer.FireDoorPos);
+                        Main.Log($"Sync Fire out to {steamer.FireOut}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C valve 5 FireOn").SetValue(steamer.FireOut);
+                        Main.Log($"Sync Light lever to {steamer.LightLever}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C light lever").SetValue(steamer.LightLever);
+                        Main.Log($"Sync Light switch to {steamer.LightSwitch}");
+                        train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C inidactor light switch").SetValue(steamer.LightSwitch);
+                        Main.Log($"Sync Steam release to {steamer.SteamRelease}");
+                        controllerSteam.SetSteamReleaser(steamer.SteamRelease);
+                        Main.Log($"Sync Water dump to {steamer.WaterDump}");
+                        controllerSteam.SetWaterDump(steamer.WaterDump);
+                    }
+                    Main.Log($"Sync boiler water to {steamer.BoilerWater} & pressure level to {steamer.BoilerPressure}");
+                    simulationSteam.boilerWater.SetValue(steamer.BoilerWater);
+                    simulationSteam.boilerPressure.SetValue(steamer.BoilerPressure);
                     Main.Log($"Sync coal in firebox to {steamer.CoalInFirebox}");
                     simulationSteam.coalbox.SetValue(steamer.CoalInFirebox);
+                    Main.Log($"Sync coal in tender to {steamer.CoalInTender}");
                     simulationSteam.tenderCoal.SetValue(steamer.CoalInTender);
                     Main.Log($"Sync tender water to {steamer.WaterInTender}");
                     simulationSteam.tenderWater.SetValue(steamer.WaterInTender);
@@ -2401,21 +2583,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     simulationSteam.fireOn.SetValue(steamer.FireOn);
                     Main.Log($"Sync fire temperature to {steamer.FireTemp}");
                     simulationSteam.temperature.SetValue(steamer.FireTemp);
-                    Main.Log($"Sync boiler water to {steamer.BoilerWater} & pressure level to {steamer.BoilerPressure}");
-                    simulationSteam.boilerWater.SetValue(steamer.BoilerWater);
-                    simulationSteam.boilerPressure.SetValue(steamer.BoilerPressure);
-                    Main.Log($"Sync injector to {steamer.Injector}");
-                    controllerSteam.SetInjector(steamer.Injector);
-                    Main.Log($"Sync blower to {steamer.Blower}");
-                    controllerSteam.SetBlower(steamer.Blower);
-                    Main.Log($"Sync water dump to {steamer.WaterDump}");
-                    controllerSteam.SetWaterDump(steamer.WaterDump);
-                    Main.Log($"Sync steam release to {steamer.SteamRelease}");
-                    controllerSteam.SetSteamReleaser(steamer.SteamRelease);
-                    Main.Log($"Sync draft to {steamer.Draft}");
-                    controllerSteam.SetDraft(steamer.Draft);
-                    Main.Log($"Sync firedoor position to {steamer.FireDoorPos}");
-                    controllerSteam.SetFireDoorOpen(steamer.FireDoorPos);
                     Main.Log($"Sync sand level to {steamer.Sand}");
                     simulationSteam.sand.SetValue(steamer.Sand);
                 }
@@ -2442,7 +2609,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             bogie.ResetBogiesToStartPosition();
         newTrain.CarDamage.IgnoreDamage(true);
         newTrain.stress.EnableStress(false);
-        newTrain.rb.isKinematic = false;
+        newTrain.rb.isKinematic = true;
         newTrain.rb.MovePosition(serverState.Position + WorldMover.currentMove);
         newTrain.rb.MoveRotation(serverState.Rotation);
         foreach (Bogie bogie in newTrain.Bogies)
@@ -2465,6 +2632,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             }
         }
         */
+
         localCars.Add(newTrain);
 
         return newTrain;
@@ -2603,7 +2771,19 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 Main.Log($"IndepBrake set: {train.IndepBrake}");
                 train.Reverser = loco.reverser;
                 Main.Log($"Reverser set: {train.Reverser}");
-                train.Sander = loco.IsSandOn() ? 1 : 0;
+                switch (car.carType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        train.Sander = (loco as LocoControllerDiesel).sim.sandFlow.value;
+                        break;
+                    case TrainCarType.LocoSteamHeavy:
+                    case TrainCarType.LocoSteamHeavyBlue:
+                        train.Sander = (loco as LocoControllerSteam).sim.sandFlow.value;
+                        break;
+                    default:
+                        train.Sander = loco.IsSandOn() ? 1 : 0;
+                        break;
+                }
                 Main.Log($"Sander set: {train.Sander}");
             }
             else if(car.carType != TrainCarType.HandCar)
@@ -2621,13 +2801,13 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     Main.Log($"Shunter controller found: {shunter != null}");
                     if (car.IsInteriorLoaded)
                     {
-                        ShunterDashboardControls dashboard = car.interior.GetComponentInChildren<ShunterDashboardControls>();
-                        Main.Log($"Shunter dashboard found: {dashboard != null}");
+                        ShunterDashboardControls shunterDashboard = car.interior.GetComponentInChildren<ShunterDashboardControls>();
+                        Main.Log($"Shunter dashboard found: {shunterDashboard != null}");
                         train.Shunter = new Shunter()
                         {
-                            IsMainFuseOn = dashboard.fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1,
-                            IsSideFuse1On = dashboard.fuseBoxPowerController.sideFusesObj[0].GetComponent<ToggleSwitchBase>().Value == 1,
-                            IsSideFuse2On = dashboard.fuseBoxPowerController.sideFusesObj[1].GetComponent<ToggleSwitchBase>().Value == 1
+                            IsMainFuseOn = shunterDashboard.fuseBoxPowerController.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1,
+                            IsSideFuse1On = shunterDashboard.fuseBoxPowerController.sideFusesObj[0].GetComponent<ToggleSwitchBase>().Value == 1,
+                            IsSideFuse2On = shunterDashboard.fuseBoxPowerController.sideFusesObj[1].GetComponent<ToggleSwitchBase>().Value == 1
                         };
                     }
                     train.Shunter.IsEngineOn = shunter.GetEngineRunning();
@@ -2639,18 +2819,63 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     Main.Log($"Set diesel defaults");
                     LocoControllerDiesel diesel = car.GetComponent<LocoControllerDiesel>();
                     Main.Log($"Diesel controller found: {diesel != null}");
-                    if (car.IsInteriorLoaded)
+                    train.Diesel = new Diesel()
                     {
-                        DieselDashboardControls dashboard = car.interior.GetComponentInChildren<DieselDashboardControls>();
-                        Main.Log($"Diesel dashboard found: {dashboard != null}");
-                        train.Diesel = new Diesel()
-                        {
-                            IsMainFuseOn = dashboard.fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ToggleSwitchBase>().Value == 1,
-                            IsSideFuse1On = dashboard.fuseBoxPowerControllerDiesel.sideFusesObj[0].GetComponent<ToggleSwitchBase>().Value == 1,
-                            IsSideFuse2On = dashboard.fuseBoxPowerControllerDiesel.sideFusesObj[1].GetComponent<ToggleSwitchBase>().Value == 1,
-                            IsSideFuse3On = dashboard.fuseBoxPowerControllerDiesel.sideFusesObj[2].GetComponent<ToggleSwitchBase>().Value == 1
-                        };
-                    }
+                        Fuel = diesel.GetFuelAmount(),
+                        Oil = diesel.GetOilAmount(),
+                        RPM = diesel.GetEngineRPM(),
+                        Sand = diesel.GetSandAmount(),
+                        Temp = diesel.GetEngineTemp()
+                    };
+                    Transform interior = car.interior;
+                    DieselDashboardControls dieselDashboard = interior.GetComponentInChildren<DieselDashboardControls>();
+                    Main.Log($"Diesel dashboard found: {dieselDashboard != null}");
+
+                    Main.Log($"Bell");
+                    train.Diesel.Bell = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C bell button").Value;
+                    Main.Log($"Cablight");
+                    train.Diesel.CabLight = dieselDashboard.cabLightRotary.GetComponentInChildren<ControlImplBase>().Value;
+                    Main.Log($"Door1");
+                    train.Diesel.Door1 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_door01").Value;
+                    Main.Log($"Door2");
+                    train.Diesel.Door2 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_door02").Value;
+                    Main.Log($"Dynamic Brake");
+                    train.Diesel.DynamicBrake = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C dynamic_brake_lever").Value;
+                    Main.Log($"EmergencyOFf");
+                    train.Diesel.EmergencyOff = dieselDashboard.emergencyEngineOffBtn.GetComponentInChildren<ControlImplBase>().Value;
+                    Main.Log($"EngineBay1");
+                    train.Diesel.EngineBayDoor1 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door01").Value;
+                    Main.Log($"EngineBay2");
+                    train.Diesel.EngineBayDoor2 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door02").Value;
+                    Main.Log($"Primer");
+                    train.Diesel.EngineBayThrottle = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_thottle").Value;
+                    Main.Log($"EngineIgnition");
+                    train.Diesel.EngineIgnition = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_ignition").Value;
+                    Main.Log($"FanSwitch");
+                    train.Diesel.FanSwitch = dieselDashboard.fanSwitchButton.GetComponentInChildren<ControlImplBase>().Value;
+                    Main.Log($"FusePanel");
+                    train.Diesel.FusePanelDoor = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C fuse_panel_door").Value;
+                    Main.Log($"Headlight");
+                    train.Diesel.HeadlightSwitch = dieselDashboard.headlightsRotary.GetComponentInChildren<ControlImplBase>().Value;
+                    Main.Log($"Horn");
+                    train.Diesel.Horn = dieselDashboard.hornObj.GetComponent<ControlImplBase>().Value;
+                    Main.Log($"Mainfuse");
+                    train.Diesel.IsMainFuseOn = dieselDashboard.fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ControlImplBase>().Value == 1;
+                    Main.Log($"Sidefuse1");
+                    train.Diesel.IsSideFuse1On = dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[0].GetComponent<ControlImplBase>().Value == 1;
+                    Main.Log($"Sidefuse2");
+                    train.Diesel.IsSideFuse2On = dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[1].GetComponent<ControlImplBase>().Value == 1;
+                    Main.Log($"Sidefuse3");
+                    train.Diesel.IsSideFuse3On = dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[2].GetComponent<ControlImplBase>().Value == 1;
+                    Main.Log($"Window1");
+                    train.Diesel.Window1 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 01").Value;
+                    Main.Log($"Window2");
+                    train.Diesel.Window2 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 02").Value;
+                    Main.Log($"Window3");
+                    train.Diesel.Window3 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 03").Value;
+                    Main.Log($"Window4");
+                    train.Diesel.Window4 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 04").Value;
+                    Main.Log($"EngineOn");
                     train.Diesel.IsEngineOn = diesel.GetEngineRunning();
                     Main.Log($"Diesel set: IsEngineOn: {train.Diesel.IsEngineOn}, IsMainFuseOn: {train.Diesel.IsMainFuseOn}, " +
                         $"IsSideFuse1On: {train.Diesel.IsSideFuse1On}, IsSideFuse2On: {train.Diesel.IsSideFuse2On}, " +
@@ -2660,8 +2885,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 case TrainCarType.LocoSteamHeavyBlue:
                     Main.Log($"Set steam defaults");
                     LocoControllerSteam controllerSteam = car.GetComponent<LocoControllerSteam>();
-                    SteamLocoSimulation steamSimulation = car.GetComponentInChildren<SteamLocoSimulation>();
                     Main.Log($"Steam controller found: {controllerSteam != null}");
+                    SteamLocoSimulation steamSimulation = car.GetComponentInChildren<SteamLocoSimulation>();
+                    Main.Log($"Steam sim found: {steamSimulation != null}");
                     train.Steamer = new Steamer()
                     {
                         Blower = controllerSteam.GetBlower(),
@@ -2675,11 +2901,21 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         FireTemp = steamSimulation.temperature.value,
                         Injector = controllerSteam.GetInjector(),
                         Sand = steamSimulation.sand.value,
-                        Sander = controllerSteam.GetSanderValve(),
                         SteamRelease = controllerSteam.GetSteamReleaser(),
                         WaterInTender = steamSimulation.tenderWater.value,
                         WaterDump = controllerSteam.GetWaterDump()
                     };
+                    if (car.IsInteriorLoaded)
+                    {
+                        Main.Log($"Light lever");
+                        train.Steamer.LightLever = car.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C light lever").Value;
+                        Main.Log($"Light switch");
+                        train.Steamer.LightSwitch = car.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C inidactor light switch").Value;
+                        Main.Log($"Light fireout");
+                        train.Steamer.FireOut = car.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C valve 5 FireOn").Value;
+                        Main.Log($"Light blankvalve");
+                        train.Steamer.BlankValve = car.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C valve 4").Value;
+                    }
                     break;
 
             }
@@ -2700,9 +2936,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         CustomUI.OpenPopup("Streaming", "New Area being loaded");
         yield return new WaitUntil(() => SingletonBehaviour<CanvasSpawner>.Instance.IsOpen);
         yield return new WaitForFixedUpdate();
+        IsSpawningTrains = true;
         foreach (WorldTrain train in trains)
         {
-            IsSpawningTrains = true;
             Main.Log($"Initializing: {train.Guid} in area");
             serverCarStates.Add(train);
             TrainCar car = InitializeNewTrainCar(train);
@@ -2710,6 +2946,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             AddNetworkingScripts(car, train);
             Main.Log($"Initializing: {train.Guid} in area [DONE]");
         }
+        IsSpawningTrains = false;
         yield return new WaitUntil(() =>
         {
             foreach (WorldTrain train in trains)
@@ -2730,16 +2967,224 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
     {
         switch (lever)
         {
-            case Levers.Throttle:
-                serverState.Throttle = value;
+            case Levers.Bell:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.Bell = value;
+                        break;
+                }
+                break;
+
+            case Levers.BlankValve:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.BlankValve = value;
+                }
+                break;
+
+            case Levers.Blower:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.Blower = value;
+                }
                 break;
 
             case Levers.Brake:
                 serverState.Brake = value;
                 break;
 
+            case Levers.CabLightSwitch:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.CabLight = value;
+                        break;
+                }
+                break;
+
+            case Levers.Door1:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.Door1 = value;
+                        break;
+                }
+                break;
+
+            case Levers.Door2:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.Door2 = value;
+                        break;
+                }
+                break;
+
+            case Levers.DynamicBrake:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.DynamicBrake = value;
+                        break;
+                }
+                break;
+
+            case Levers.Draft:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.Draft = value;
+                }
+                break;
+
+            case Levers.EmergencyOff:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.EmergencyOff = value;
+                        break;
+                }
+                break;
+
+            case Levers.EngineBayDoor1:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.EngineBayDoor1 = value;
+                        break;
+                }
+                break;
+
+            case Levers.EngineBayDoor2:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.EngineBayDoor2 = value;
+                        break;
+                }
+                break;
+
+            case Levers.EngineBayThrottle:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.EngineBayThrottle = value;
+                        break;
+                }
+                break;
+
+            case Levers.EngineIgnition:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.EngineIgnition = value;
+                        break;
+                }
+                break;
+
+            case Levers.FanSwitch:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.FanSwitch = value;
+                        break;
+                }
+                break;
+
+            case Levers.FireDoor:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.FireDoorPos = value;
+                }
+                break;
+
+            case Levers.FireOut:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.FireOut = value;
+                }
+                break;
+
+            case Levers.FusePanelDoor:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.FusePanelDoor = value;
+                        break;
+                }
+                break;
+
+            case Levers.FusePowerStarter:
+                if (serverState.CarType == TrainCarType.LocoShunter)
+                {
+                    if (serverState.Shunter.IsSideFuse1On && serverState.Shunter.IsSideFuse2On && serverState.Shunter.IsMainFuseOn && value == 1)
+                        serverState.Shunter.IsEngineOn = true;
+                    else if (value == 0)
+                        serverState.Shunter.IsEngineOn = false;
+                }
+                else if (serverState.CarType == TrainCarType.LocoDiesel)
+                {
+                    if (serverState.Diesel.IsSideFuse1On && serverState.Diesel.IsSideFuse2On && serverState.Diesel.IsSideFuse3On
+                    && serverState.Diesel.IsMainFuseOn && value == 1)
+                        serverState.Diesel.IsEngineOn = true;
+                    else if (value == 0)
+                        serverState.Diesel.IsEngineOn = false;
+                }
+                break;
+
+            case Levers.HeadlightSwitch:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.HeadlightSwitch = value;
+                        break;
+                    case TrainCarType.LocoSteamHeavy:
+                    case TrainCarType.LocoSteamHeavyBlue:
+                        serverState.Steamer.LightSwitch = value;
+                        break;
+                }
+                break;
+
+            case Levers.Horn:
+                switch (serverState.CarType)
+                {
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.Horn = value;
+                        break;
+                }
+                break;
+
             case Levers.IndependentBrake:
                 serverState.IndepBrake = value;
+                break;
+
+            case Levers.Injector:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.Injector = value;
+                }
+                break;
+
+            case Levers.LightLever:
+                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+                {
+                    serverState.Steamer.LightLever = value;
+                }
+                break;
+
+            case Levers.MainFuse:
+                if (serverState.CarType == TrainCarType.LocoShunter)
+                {
+                    serverState.Shunter.IsMainFuseOn = value == 1;
+                    if (value == 0)
+                        serverState.Shunter.IsEngineOn = false;
+                }
+                else if (serverState.CarType == TrainCarType.LocoDiesel)
+                {
+                    serverState.Diesel.IsMainFuseOn = value == 1;
+                    if (value == 0)
+                        serverState.Diesel.IsEngineOn = false;
+                }
                 break;
 
             case Levers.Reverser:
@@ -2804,102 +3249,57 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 }
                 break;
 
-            case Levers.MainFuse:
-                if (serverState.CarType == TrainCarType.LocoShunter)
-                {
-                    serverState.Shunter.IsMainFuseOn = value == 1;
-                    if (value == 0)
-                        serverState.Shunter.IsEngineOn = false;
-                }
-                else if(serverState.CarType == TrainCarType.LocoDiesel)
-                {
-                    serverState.Diesel.IsMainFuseOn = value == 1;
-                    if (value == 0)
-                        serverState.Diesel.IsEngineOn = false;
-                }
-                break;
-
-            case Levers.FusePowerStarter:
-                if (serverState.CarType == TrainCarType.LocoShunter)
-                {
-                    if (serverState.Shunter.IsSideFuse1On && serverState.Shunter.IsSideFuse2On && serverState.Shunter.IsMainFuseOn && value == 1)
-                        serverState.Shunter.IsEngineOn = true;
-                    else if (value == 0)
-                        serverState.Shunter.IsEngineOn = false;
-                }
-                else if (serverState.CarType == TrainCarType.LocoDiesel)
-                    {
-                        if (serverState.Diesel.IsSideFuse1On && serverState.Diesel.IsSideFuse2On && serverState.Diesel.IsSideFuse3On 
-                        && serverState.Diesel.IsMainFuseOn && value == 1)
-                            serverState.Diesel.IsEngineOn = true;
-                        else if (value == 0)
-                            serverState.Diesel.IsEngineOn = false;
-                    }
-                break;
-            case Levers.FireDoor:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
-                {
-                    serverState.Steamer.FireDoorPos = value;
-                }
-                break;
-            case Levers.WaterDump:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
-                {
-                    serverState.Steamer.WaterDump = value;
-                }
-                break;
             case Levers.SteamRelease:
                 if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
                 {
                     serverState.Steamer.SteamRelease = value;
                 }
                 break;
-            case Levers.Blower:
+
+            case Levers.Throttle:
+                serverState.Throttle = value;
+                break;
+
+            case Levers.WaterDump:
                 if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
                 {
-                    serverState.Steamer.Blower = value;
+                    serverState.Steamer.WaterDump = value;
                 }
                 break;
-            case Levers.BlankValve:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+
+            case Levers.Window1:
+                switch (serverState.CarType)
                 {
-                    serverState.Steamer.BlankValve = value;
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.Window1 = value;
+                        break;
                 }
                 break;
-            case Levers.FireOut:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+
+            case Levers.Window2:
+                switch (serverState.CarType)
                 {
-                    serverState.Steamer.FireOut = value;
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.Window2 = value;
+                        break;
                 }
                 break;
-            case Levers.Injector:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+
+            case Levers.Window3:
+                switch (serverState.CarType)
                 {
-                    serverState.Steamer.Injector = value;
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.Window3 = value;
+                        break;
                 }
                 break;
-            case Levers.SteamSander:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
+
+            case Levers.Window4:
+                switch (serverState.CarType)
                 {
-                    serverState.Steamer.Sander = value;
-                }
-                break;
-            case Levers.LightLever:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
-                {
-                    serverState.Steamer.LightLever = value;
-                }
-                break;
-            case Levers.LightSwitch:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
-                {
-                    serverState.Steamer.LightSwitch = value;
-                }
-                break;
-            case Levers.Draft:
-                if (serverState.CarType == TrainCarType.LocoSteamHeavy || serverState.CarType == TrainCarType.LocoSteamHeavyBlue)
-                {
-                    serverState.Steamer.Draft = value;
+                    case TrainCarType.LocoDiesel:
+                        serverState.Diesel.Window4 = value;
+                        break;
                 }
                 break;
         }
