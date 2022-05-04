@@ -18,8 +18,8 @@ using UnityEngine.UI;
 
 public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 {
-    private Dictionary<ushort, GameObject> networkPlayers = new Dictionary<ushort, GameObject>();
-    private readonly Dictionary<ushort, GameObject> allPlayers = new Dictionary<ushort, GameObject>();
+    private Dictionary<ushort, GameObject> localPlayers = new Dictionary<ushort, GameObject>();
+    private readonly Dictionary<ushort, NPlayer> serverPlayers = new Dictionary<ushort, NPlayer>();
     private SetSpawn spawnData;
     private Coroutine playersLoaded;
     private bool modMismatched = false;
@@ -31,7 +31,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     protected override void Awake()
     {
         base.Awake();
-        networkPlayers = new Dictionary<ushort, GameObject>();
+        localPlayers = new Dictionary<ushort, GameObject>();
 
         SingletonBehaviour<UnityClient>.Instance.MessageReceived += MessageReceived;
     }
@@ -42,18 +42,20 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         player.transform.position = pos;
         player.transform.rotation = rotation;
+        player.transform.localScale = new Vector3(0.7f, 1f, 0.7f);
         player.GetComponent<CapsuleCollider>().enabled = false;
         player.AddComponent<NetworkPlayerSync>();
 
         GameObject nametagCanvas = new GameObject("Nametag Canvas");
         nametagCanvas.transform.parent = player.transform;
         nametagCanvas.transform.localPosition = new Vector3(0, 1.5f, 0);
+        nametagCanvas.transform.localScale = new Vector3(1.6f, 1.2f, 1.6f);
         nametagCanvas.AddComponent<Canvas>();
         nametagCanvas.AddComponent<RotateTowardsPlayer>();
 
         RectTransform rectTransform = nametagCanvas.GetComponent<RectTransform>();
         rectTransform.sizeDelta = new Vector2(1920, 1080);
-        rectTransform.localScale = new Vector3(.0013f, .0004f, 0);
+        rectTransform.localScale = new Vector3(.0018f, .0004f, 0);
 
         GameObject nametagBackground = new GameObject("Nametag BG");
         nametagBackground.transform.parent = nametagCanvas.transform;
@@ -177,7 +179,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 PlayerLoaded player = reader.ReadSerializable<PlayerLoaded>();
                 if (player.Id != SingletonBehaviour<UnityClient>.Instance.ID)
                 {
-                    if (networkPlayers.TryGetValue(player.Id, out GameObject playerObject))
+                    if (localPlayers.TryGetValue(player.Id, out GameObject playerObject))
                     {
                         playerObject.GetComponent<NetworkPlayerSync>().IsLoaded = true;
                     }
@@ -243,14 +245,14 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
             {
                 Disconnect disconnectedPlayer = reader.ReadSerializable<Disconnect>();
 
-                if (disconnectedPlayer.PlayerId != SingletonBehaviour<UnityClient>.Instance.ID && networkPlayers.ContainsKey(disconnectedPlayer.PlayerId))
+                if (disconnectedPlayer.PlayerId != SingletonBehaviour<UnityClient>.Instance.ID && localPlayers.ContainsKey(disconnectedPlayer.PlayerId))
                 {
-                    Main.Log($"[CLIENT] < PLAYER_DISCONNECT: Username: {networkPlayers[disconnectedPlayer.PlayerId].GetComponent<NetworkPlayerSync>().Username}");
-                    if (networkPlayers[disconnectedPlayer.PlayerId])
-                        Destroy(networkPlayers[disconnectedPlayer.PlayerId]);
+                    Main.Log($"[CLIENT] < PLAYER_DISCONNECT: Username: {localPlayers[disconnectedPlayer.PlayerId].GetComponent<NetworkPlayerSync>().Username}");
+                    if (localPlayers[disconnectedPlayer.PlayerId])
+                        Destroy(localPlayers[disconnectedPlayer.PlayerId]);
 
-                    allPlayers.Remove(disconnectedPlayer.PlayerId);
-                    networkPlayers.Remove(disconnectedPlayer.PlayerId);
+                    serverPlayers.Remove(disconnectedPlayer.PlayerId);
+                    localPlayers.Remove(disconnectedPlayer.PlayerId);
                 }
             }
         }
@@ -262,7 +264,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     public void PlayerConnect()
     {
         newPlayerConnecting = true;
-        allPlayers.Add(SingletonBehaviour<UnityClient>.Instance.ID, PlayerManager.PlayerTransform.gameObject);
+        serverPlayers.Add(SingletonBehaviour<UnityClient>.Instance.ID, new NPlayer());
         Vector3 pos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
         if (NetworkManager.IsHost())
         {
@@ -344,7 +346,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
             AppUtil.Instance.PauseGame();
             // Check if host is connected if so the savegame should be available to receive
             SingletonBehaviour<NetworkJobsManager>.Instance.PlayerConnect();
-            yield return new WaitUntil(() => networkPlayers.ContainsKey(0) || modMismatched);
+            yield return new WaitUntil(() => localPlayers.ContainsKey(0) || modMismatched);
             if (modMismatched)
             {
                 UUI.UnlockMouse(false);
@@ -445,11 +447,11 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         if (SingletonBehaviour<UnityClient>.Instance)
             SingletonBehaviour<UnityClient>.Instance.MessageReceived -= MessageReceived;
         GamePreferences.UnregisterFromPreferenceUpdated(Preferences.CommsRadioSpawnMode, DisableSpawnMode);
-        foreach (GameObject player in networkPlayers.Values)
+        foreach (GameObject player in localPlayers.Values)
         {
             DestroyImmediate(player);
         }
-        networkPlayers.Clear();
+        localPlayers.Clear();
         spawnData = null;
     }
 
@@ -481,8 +483,8 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                     playerSync.Mods = player.Mods;
                     playerSync.IsLoaded = player.IsLoaded;
 
-                    networkPlayers.Add(player.Id, playerObject);
-                    allPlayers.Add(player.Id, playerObject);
+                    localPlayers.Add(player.Id, playerObject);
+                    serverPlayers.Add(player.Id, player);
                     if (!player.IsLoaded)
                         WaitForPlayerLoaded();
                 }
@@ -502,7 +504,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     {
         CustomUI.OpenPopup("Incoming connection", "A new player is connecting");
         AppUtil.Instance.PauseGame();
-        yield return new WaitUntil(() => networkPlayers.All(p => p.Value.GetComponent<NetworkPlayerSync>().IsLoaded));
+        yield return new WaitUntil(() => localPlayers.All(p => p.Value.GetComponent<NetworkPlayerSync>().IsLoaded));
         AppUtil.Instance.UnpauseGame();
         playersLoaded = null;
         CustomUI.Close();
@@ -541,7 +543,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
             {
                 Location location = reader.ReadSerializable<Location>();
 
-                if (location.Id != SingletonBehaviour<UnityClient>.Instance.ID && networkPlayers.TryGetValue(location.Id, out GameObject playerObject))
+                if (location.Id != SingletonBehaviour<UnityClient>.Instance.ID && localPlayers.TryGetValue(location.Id, out GameObject playerObject))
                 {
                     Vector3 pos = location.Position;
                     pos = new Vector3(pos.x, pos.y + 1, pos.z);
@@ -559,8 +561,16 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     /// <returns>GameObject of player</returns>
     internal GameObject GetPlayerById(ushort playerId)
     {
-        if (networkPlayers.ContainsKey(playerId))
-            return networkPlayers[playerId];
+        if (localPlayers.ContainsKey(playerId))
+            return localPlayers[playerId];
+        else
+            return null;
+    }
+
+    internal NPlayer GetNPlayerById(ushort playerId)
+    {
+        if (serverPlayers.ContainsKey(playerId))
+            return serverPlayers[playerId];
         else
             return null;
     }
@@ -571,7 +581,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     /// <returns>GameObjects of all player</returns>
     internal IEnumerable<GameObject> GetPlayers()
     {
-        return networkPlayers.Values;
+        return localPlayers.Values;
     }
 
     /// <summary>
@@ -599,7 +609,10 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     /// <returns>NetworkPlayerSync of player with the specified ID</returns>
     internal NetworkPlayerSync GetPlayerSyncById(ushort playerId)
     {
-        return networkPlayers[playerId].GetComponent<NetworkPlayerSync>();
+        if (localPlayers.ContainsKey(playerId))
+            return localPlayers[playerId].GetComponent<NetworkPlayerSync>();
+        else
+            return null;
     }
 
     /// <summary>
@@ -609,7 +622,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     internal IReadOnlyList<NetworkPlayerSync> GetAllNonLocalPlayerSync()
     {
         List<NetworkPlayerSync> networkPlayerSyncs = new List<NetworkPlayerSync>();
-        foreach (GameObject playerObject in networkPlayers.Values)
+        foreach (GameObject playerObject in localPlayers.Values)
         {
             NetworkPlayerSync playerSync = playerObject.GetComponent<NetworkPlayerSync>();
             if (playerSync != null)
@@ -624,7 +637,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     /// <returns>The amount of players with the local player NOT included</returns>
     internal int GetPlayerCount()
     {
-        return networkPlayers.Count;
+        return localPlayers.Count;
     }
 
     /// <summary>
@@ -634,7 +647,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     /// <returns>An array containing all the players gameobjects in/on the given traincar</returns>
     internal GameObject[] GetPlayersInTrain(TrainCar train)
     {
-        return allPlayers.Values.Where(p => p.GetComponent<NetworkPlayerSync>().Train?.CarGUID == train.CarGUID).ToArray();
+        return localPlayers.Values.Where(p => p.GetComponent<NetworkPlayerSync>().Train?.CarGUID == train.CarGUID).ToArray();
     }
 
     internal GameObject[] GetPlayersInTrainSet(Trainset trainset)
@@ -650,7 +663,7 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
     internal bool IsAnyoneInLocalPlayerRegion()
     {
-        foreach (GameObject playerObject in networkPlayers.Values)
+        foreach (GameObject playerObject in localPlayers.Values)
         {
             if (SingletonBehaviour<TerrainGrid>.Instance.IsInLoadedRegion(playerObject.transform.position - WorldMover.currentMove))
             {

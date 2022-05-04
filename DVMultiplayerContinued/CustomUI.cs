@@ -341,7 +341,7 @@ namespace DVMultiplayer
                 btn.key = key;
             }
 
-            row = new char[] { 'z', 'x', 'c', 'v', 'b', 'n', 'm', '.' };
+            row = new char[] { 'z', 'x', 'c', 'v', 'b', 'n', 'm', '.', ':' };
             for (int i = 0; i < row.Length; i++)
             {
                 char key = row[i];
