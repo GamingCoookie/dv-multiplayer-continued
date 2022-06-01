@@ -2,6 +2,11 @@
 	"Releases": [
 		{
 			"Id": "DVMultiplayerContinued",
+			"Version": "1.3.8.1",
+			"DownloadUrl": "https://github.com/GamingCoookie/dv-multiplayer-continued/releases/download/v1.3.8.1/DVMultiplayerContinued-v1.3.8.1.zip"
+		},
+		{
+			"Id": "DVMultiplayerContinued",
 			"Version": "1.3.8",
 			"DownloadUrl": "https://github.com/GamingCoookie/dv-multiplayer-continued/releases/download/v1.3.8/DVMultiplayerContinued-v1.3.8.zip"
 		},

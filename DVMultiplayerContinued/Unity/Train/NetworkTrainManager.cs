@@ -2831,56 +2831,58 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     Transform interior = car.interior;
                     DieselDashboardControls dieselDashboard = interior.GetComponentInChildren<DieselDashboardControls>();
                     Main.Log($"Diesel dashboard found: {dieselDashboard != null}");
-
-                    Main.Log($"Bell");
-                    train.Diesel.Bell = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C bell button").Value;
-                    Main.Log($"Cablight");
-                    train.Diesel.CabLight = dieselDashboard.cabLightRotary.GetComponentInChildren<ControlImplBase>().Value;
-                    Main.Log($"Door1");
-                    train.Diesel.Door1 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_door01").Value;
-                    Main.Log($"Door2");
-                    train.Diesel.Door2 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_door02").Value;
-                    Main.Log($"Dynamic Brake");
-                    train.Diesel.DynamicBrake = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C dynamic_brake_lever").Value;
-                    Main.Log($"EmergencyOFf");
-                    train.Diesel.EmergencyOff = dieselDashboard.emergencyEngineOffBtn.GetComponentInChildren<ControlImplBase>().Value;
-                    Main.Log($"EngineBay1");
-                    train.Diesel.EngineBayDoor1 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door01").Value;
-                    Main.Log($"EngineBay2");
-                    train.Diesel.EngineBayDoor2 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door02").Value;
-                    Main.Log($"Primer");
-                    train.Diesel.EngineBayThrottle = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_thottle").Value;
-                    Main.Log($"EngineIgnition");
-                    train.Diesel.EngineIgnition = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_ignition").Value;
-                    Main.Log($"FanSwitch");
-                    train.Diesel.FanSwitch = dieselDashboard.fanSwitchButton.GetComponentInChildren<ControlImplBase>().Value;
-                    Main.Log($"FusePanel");
-                    train.Diesel.FusePanelDoor = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C fuse_panel_door").Value;
-                    Main.Log($"Headlight");
-                    train.Diesel.HeadlightSwitch = dieselDashboard.headlightsRotary.GetComponentInChildren<ControlImplBase>().Value;
-                    Main.Log($"Horn");
-                    train.Diesel.Horn = dieselDashboard.hornObj.GetComponent<ControlImplBase>().Value;
-                    Main.Log($"Mainfuse");
-                    train.Diesel.IsMainFuseOn = dieselDashboard.fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ControlImplBase>().Value == 1;
-                    Main.Log($"Sidefuse1");
-                    train.Diesel.IsSideFuse1On = dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[0].GetComponent<ControlImplBase>().Value == 1;
-                    Main.Log($"Sidefuse2");
-                    train.Diesel.IsSideFuse2On = dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[1].GetComponent<ControlImplBase>().Value == 1;
-                    Main.Log($"Sidefuse3");
-                    train.Diesel.IsSideFuse3On = dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[2].GetComponent<ControlImplBase>().Value == 1;
-                    Main.Log($"Window1");
-                    train.Diesel.Window1 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 01").Value;
-                    Main.Log($"Window2");
-                    train.Diesel.Window2 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 02").Value;
-                    Main.Log($"Window3");
-                    train.Diesel.Window3 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 03").Value;
-                    Main.Log($"Window4");
-                    train.Diesel.Window4 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 04").Value;
-                    Main.Log($"EngineOn");
-                    train.Diesel.IsEngineOn = diesel.GetEngineRunning();
-                    Main.Log($"Diesel set: IsEngineOn: {train.Diesel.IsEngineOn}, IsMainFuseOn: {train.Diesel.IsMainFuseOn}, " +
-                        $"IsSideFuse1On: {train.Diesel.IsSideFuse1On}, IsSideFuse2On: {train.Diesel.IsSideFuse2On}, " +
-                        $"IsSideFuse3On: {train.Diesel.IsSideFuse3On}");
+                    if (car.IsInteriorLoaded)
+                    {
+                        Main.Log($"Bell");
+                        train.Diesel.Bell = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C bell button").Value;
+                        Main.Log($"Cablight");
+                        train.Diesel.CabLight = dieselDashboard.cabLightRotary.GetComponentInChildren<ControlImplBase>().Value;
+                        Main.Log($"Door1");
+                        train.Diesel.Door1 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_door01").Value;
+                        Main.Log($"Door2");
+                        train.Diesel.Door2 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_door02").Value;
+                        Main.Log($"Dynamic Brake");
+                        train.Diesel.DynamicBrake = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C dynamic_brake_lever").Value;
+                        Main.Log($"EmergencyOFf");
+                        train.Diesel.EmergencyOff = dieselDashboard.emergencyEngineOffBtn.GetComponentInChildren<ControlImplBase>().Value;
+                        Main.Log($"EngineBay1");
+                        train.Diesel.EngineBayDoor1 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door01").Value;
+                        Main.Log($"EngineBay2");
+                        train.Diesel.EngineBayDoor2 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_bay_door02").Value;
+                        Main.Log($"Primer");
+                        train.Diesel.EngineBayThrottle = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_thottle").Value;
+                        Main.Log($"EngineIgnition");
+                        train.Diesel.EngineIgnition = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C engine_ignition").Value;
+                        Main.Log($"FanSwitch");
+                        train.Diesel.FanSwitch = dieselDashboard.fanSwitchButton.GetComponentInChildren<ControlImplBase>().Value;
+                        Main.Log($"FusePanel");
+                        train.Diesel.FusePanelDoor = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C fuse_panel_door").Value;
+                        Main.Log($"Headlight");
+                        train.Diesel.HeadlightSwitch = dieselDashboard.headlightsRotary.GetComponentInChildren<ControlImplBase>().Value;
+                        Main.Log($"Horn");
+                        train.Diesel.Horn = dieselDashboard.hornObj.GetComponent<ControlImplBase>().Value;
+                        Main.Log($"Mainfuse");
+                        train.Diesel.IsMainFuseOn = dieselDashboard.fuseBoxPowerControllerDiesel.mainFuseObj.GetComponent<ControlImplBase>().Value == 1;
+                        Main.Log($"Sidefuse1");
+                        train.Diesel.IsSideFuse1On = dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[0].GetComponent<ControlImplBase>().Value == 1;
+                        Main.Log($"Sidefuse2");
+                        train.Diesel.IsSideFuse2On = dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[1].GetComponent<ControlImplBase>().Value == 1;
+                        Main.Log($"Sidefuse3");
+                        train.Diesel.IsSideFuse3On = dieselDashboard.fuseBoxPowerControllerDiesel.sideFusesObj[2].GetComponent<ControlImplBase>().Value == 1;
+                        Main.Log($"Window1");
+                        train.Diesel.Window1 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 01").Value;
+                        Main.Log($"Window2");
+                        train.Diesel.Window2 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 02").Value;
+                        Main.Log($"Window3");
+                        train.Diesel.Window3 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 03").Value;
+                        Main.Log($"Window4");
+                        train.Diesel.Window4 = interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == "C cab_window 04").Value;
+                        Main.Log($"EngineOn");
+                        train.Diesel.IsEngineOn = diesel.GetEngineRunning();
+                        Main.Log($"Diesel set: IsEngineOn: {train.Diesel.IsEngineOn}, IsMainFuseOn: {train.Diesel.IsMainFuseOn}, " +
+                            $"IsSideFuse1On: {train.Diesel.IsSideFuse1On}, IsSideFuse2On: {train.Diesel.IsSideFuse2On}, " +
+                            $"IsSideFuse3On: {train.Diesel.IsSideFuse3On}");
+                    }
                     break;
                 case TrainCarType.LocoSteamHeavy:
                 case TrainCarType.LocoSteamHeavyBlue:
