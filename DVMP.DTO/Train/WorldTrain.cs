@@ -2,7 +2,6 @@
 using DV.Logic.Job;
 using DVMultiplayer.Darkrift;
 using UnityEngine;
-using DVMP.DTO.Train;
 using DVMP.DTO;
 
 namespace DVMultiplayer.DTO.Train

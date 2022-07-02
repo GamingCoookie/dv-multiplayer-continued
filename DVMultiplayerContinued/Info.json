@@ -1,11 +1,11 @@
 ﻿{
-  "Id": "DVMultiplayerContinued",
-  "DisplayName": "Derail Valley Multiplayer Continued",
-  "Author": "Patrick van Halm & GamingCoookie",
-  "Version": "1.3.8.1",
-  "LoadAfter": ["PassengerJobs"],
-  "AssemblyName": "DVMultiplayerContinued.dll",
-  "EntryMethod": "DVMultiplayer.Main.Load",
-  "HomePage": "https://www.nexusmods.com/derailvalley/mods/406",
-  "Repository": "https://github.com/GamingCoookie/dv-multiplayer-continued/blob/main/repository.json"
+    "Id": "DVMultiplayerContinued",
+    "DisplayName": "Derail Valley Multiplayer Continued",
+    "Author": "Patrick van Halm & GamingCoookie",
+    "Version": "1.4.0-dev",
+    "LoadAfter": [ "PassengerJobs", "DVCustomCarLoader" ],
+    "AssemblyName": "DVMultiplayerContinued.dll",
+    "EntryMethod": "DVMultiplayer.Main.Load",
+    "HomePage": "https://www.nexusmods.com/derailvalley/mods/406",
+    "Repository": "https://raw.githubusercontent.com/GamingCoookie/dv-multiplayer-continued/main/repository.json"
 }

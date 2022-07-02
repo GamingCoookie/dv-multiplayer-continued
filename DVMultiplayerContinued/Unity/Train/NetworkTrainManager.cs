@@ -5,14 +5,10 @@ using DV;
 using DV.CabControls;
 using DV.Logic.Job;
 using DV.MultipleUnit;
-using DV.PointSet;
-using DV.Utils.String;
 using DVMultiplayer;
 using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Train;
-using DVMP.DTO.Train;
 using DVMultiplayer.Networking;
-using DVMultiplayer.Utils.Game;
 using DVMultiplayerContinued.Patches.Train;
 using DVMP.DTO;
 using System;
@@ -20,7 +16,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UI;
 using Main = DVMultiplayer.Main;
 
 internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
