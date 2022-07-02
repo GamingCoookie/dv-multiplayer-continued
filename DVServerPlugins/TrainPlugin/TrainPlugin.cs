@@ -1,12 +1,9 @@
 ﻿using DarkRift;
 using DarkRift.Server;
-using DV.Logic.Job;
 using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Train;
-using DVMP.DTO.Train;
 using DVMP.DTO;
 using DVMultiplayer.Networking;
-using PlayerPlugin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
