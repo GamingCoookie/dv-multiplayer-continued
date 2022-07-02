@@ -74,6 +74,10 @@
       <HintPath>..\lib\DV.Utils.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="DVCustomCarLoader">
+      <HintPath>..\lib\DVCustomCarLoader.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="net.smkd.vector3d">
       <HintPath>..\lib\net.smkd.vector3d.dll</HintPath>
       <Private>False</Private>
@@ -176,6 +180,7 @@
     <Compile Include="Networking\FavoritesManager.cs" />
     <Compile Include="Networking\NetworkingUI.cs" />
     <Compile Include="Networking\NetworkManager.cs" />
+    <Compile Include="Patches\CustomCarLoader\CustomCarLoaderPatch.cs" />
     <Compile Include="Patches\Debt\JobDebtControllerPatch.cs" />
     <Compile Include="Patches\Debt\LocoDebtControllerPatch.cs" />
     <Compile Include="Patches\Jobs\JobValidatorStopAcceptingJobIfNotAllowed.cs" />

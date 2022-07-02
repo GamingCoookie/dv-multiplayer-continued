@@ -1,5 +1,6 @@
 ﻿using DVMultiplayer.Networking;
 using DVMultiplayer.Patches.PassengerJobs;
+using DVMultiplayerContinued.Patches.CustomCarLoader;
 using HarmonyLib;
 using System;
 using System.Linq;
@@ -42,8 +43,11 @@ namespace DVMultiplayer
             mod.OnUpdate = OnUpdate;
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             ModEntry passengerJobsModEntry = FindMod("PassengerJobs");
-            if (passengerJobsModEntry != null && passengerJobsModEntry.Active)
+            if (passengerJobsModEntry != null && passengerJobsModEntry.Enabled)
                 PassengerJobsModInitializer.Initialize(passengerJobsModEntry, harmony);
+            ModEntry customCarLoaderModEntry = FindMod("DVCustomCarLoader");
+            if (customCarLoaderModEntry != null && customCarLoaderModEntry.Enabled)
+                CustomCarLoaderInitializer.Initialize(customCarLoaderModEntry, harmony);
             return true;
         }
 
