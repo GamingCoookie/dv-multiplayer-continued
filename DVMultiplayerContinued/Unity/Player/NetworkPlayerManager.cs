@@ -34,12 +34,14 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         localPlayers = new Dictionary<ushort, GameObject>();
 
         SingletonBehaviour<UnityClient>.Instance.MessageReceived += MessageReceived;
+        SingletonBehaviour<Inventory>.Instance.MoneyChanged += OnLocalMoneyChanged;
     }
 
 
     private GameObject GetNewPlayerObject(Vector3 pos, Quaternion rotation, string username)
     {
         GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        player.name = username;
         player.transform.position = pos;
         player.transform.rotation = rotation;
         player.transform.localScale = new Vector3(0.7f, 1f, 0.7f);
