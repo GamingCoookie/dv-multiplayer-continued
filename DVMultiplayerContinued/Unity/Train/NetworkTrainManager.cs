@@ -9,7 +9,6 @@ using DVMultiplayer;
 using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Train;
 using DVMultiplayer.Networking;
-using DVMultiplayerContinued.Patches.Train;
 using DVMP.DTO;
 using System;
 using System.Collections;
@@ -1610,32 +1609,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             });
 
             using (Message message = Message.Create(isCoupled ? (ushort)NetworkTags.TRAIN_COUPLE : (ushort)NetworkTags.TRAIN_UNCOUPLE, writer))
-                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
-        }
-    }
-
-    internal void SendCarKnuckleButtonChange(Coupler coupler, float newValue)
-    {
-        if (!IsSynced)
-            return;
-
-        Main.Log($"[CLIENT] > TRAIN_KNUCKLE_CHANGE: Coupler on: {coupler.train.ID}");
-        WorldTrain serverState = serverCarStates.FirstOrDefault(t => t.Guid == coupler.train.CarGUID);
-        if (coupler.isFrontCoupler)
-            serverState.FrontCouplerKnuckleState = newValue;
-        else
-            serverState.RearCouplerKnuckleState = newValue;
-
-        using (DarkRiftWriter writer = DarkRiftWriter.Create())
-        {
-            writer.Write<KnuckleButtonChange>(new KnuckleButtonChange()
-            {
-                TrainIdC = coupler.train.CarGUID,
-                IsCFront = coupler.isFrontCoupler,
-                Value = newValue
-            });
-
-            using (Message message = Message.Create((ushort)NetworkTags.TRAIN_KNUCKLE_CHANGE, writer))
                 SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
         }
     }
