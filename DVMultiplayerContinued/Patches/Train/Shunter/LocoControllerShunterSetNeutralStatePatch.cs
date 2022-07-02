@@ -1,4 +1,5 @@
 using DVMultiplayer.DTO.Train;
+using DVMP.DTO;
 using DVMultiplayer.Networking;
 using HarmonyLib;
 
@@ -21,15 +22,15 @@ namespace DVMultiplayer.Patches.Train
                 WorldTrain state = net.GetServerStateById(___train.CarGUID);
                 if(state != null)
                 {
-                    state.Shunter.IsEngineOn = false;
-                    state.Shunter.IsMainFuseOn = false;
-                    state.Shunter.IsSideFuse1On = false;
-                    state.Shunter.IsSideFuse2On = false;
-                    state.Sander = 0;
-                    state.Throttle = 0;
-                    state.Reverser = 0;
-                    state.Brake = 0;
-                    state.IndepBrake = 1;
+                    state.LocoStuff.EngineOn = false;
+                    state.Controls[Ctrls.ShunterMainFuse] = 0;
+                    state.Controls[Ctrls.ShunterSideFuse1] = 0;
+                    state.Controls[Ctrls.ShunterSideFuse2] = 0;
+                    state.Controls[Ctrls.DESand] = 0;
+                    state.Controls[Ctrls.DEThrottle] = 0;
+                    state.Controls[Ctrls.DEReverser] = 0;
+                    state.Controls[Ctrls.DETrainBrake] = 0;
+                    state.Controls[Ctrls.DEIndepBrake] = 1;
                 }
             }
         }

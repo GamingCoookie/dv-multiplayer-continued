@@ -34,10 +34,9 @@ internal class NetworkTurntableSync : MonoBehaviour
 
     private IEnumerator CheckAuthorityChange()
     {
-        GameObject newAuthorityPlayer = null;
         while (NetworkManager.IsHost())
         {
-            newAuthorityPlayer = null;
+            GameObject newAuthorityPlayer = null;
             yield return new WaitForSeconds(.1f);
             if (!SingletonBehaviour<NetworkPlayerManager>.Exists)
                 continue;

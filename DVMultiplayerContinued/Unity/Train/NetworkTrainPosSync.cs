@@ -26,9 +26,6 @@ internal class NetworkTrainPosSync : MonoBehaviour
     internal NetworkTurntableSync turntable = null;
     public bool IsCarDamageEnabled { get; internal set; }
     NetworkPlayerSync localPlayer;
-    ShunterLocoSimulation shunterLocoSimulation = null;
-    DieselLocoSimulation dieselLocoSimulation = null;
-    SteamLocoSimulation steamLocoSimulation = null;
     SteamLocoChuffSmokeParticles steamLocoSmokeParticles = null;
     ParticleSystem.MainModule shunterExhaust;
     ParticleSystem.MainModule dieselExhaust;
@@ -64,11 +61,9 @@ internal class NetworkTrainPosSync : MonoBehaviour
         trainCar.CarDamage.CarEffectiveHealthStateUpdate += OnBodyDamageTaken;
         switch (trainCar.carType) {
             case TrainCarType.LocoShunter:
-                shunterLocoSimulation = GetComponent<ShunterLocoSimulation>();
                 shunterExhaust = trainCar.transform.Find("[particles]").Find("ExhaustEngineSmoke").GetComponent<ParticleSystem>().main;
                 break;
             case TrainCarType.LocoDiesel:
-                dieselLocoSimulation = GetComponent<DieselLocoSimulation>();
                 dieselExhaust = trainCar.transform.Find("[particles]").Find("ExhaustEngineSmoke").GetComponent<ParticleSystem>().main;
                 break;
             case TrainCarType.LocoSteamHeavy:
@@ -81,7 +76,6 @@ internal class NetworkTrainPosSync : MonoBehaviour
                 foreach (Component component in components)
                     Main.Log($"Interior component found: {component}");
                 */
-                steamLocoSimulation = GetComponent<SteamLocoSimulation>();
                 steamLocoSmokeParticles = GetComponent<SteamLocoChuffSmokeParticles>();
                 steamChimney = steamLocoSmokeParticles.chimneyParticles.main;
                 steamLeft = steamLocoSmokeParticles.chuffParticlesLeft.main;
@@ -175,7 +169,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
                 // Should force authority change
                 if (!resetAuthority)
                 {
-                    // Check if current owner is disconnected
+                    // Check if current owner is disconnected or if there even exists an owner
                     if (currentOwner)
                     {
                         // Get new owner that is valid
@@ -299,6 +293,7 @@ internal class NetworkTrainPosSync : MonoBehaviour
     {
         if (!trainCar.rearCoupler || !trainCar.frontCoupler || velocity.magnitude * 3.6f <= .5f)
             return;
+
 
         GameObject collidedCouplerRear = trainCar.rearCoupler.GetFirstCouplerInRange(3)?.gameObject;
         GameObject collidedCouplerFront = trainCar.frontCoupler.GetFirstCouplerInRange(3)?.gameObject;
@@ -600,10 +595,6 @@ internal class NetworkTrainPosSync : MonoBehaviour
             if (willLocalPlayerGetAuthority && !hasLocalPlayerAuthority)
             {
                 Main.Log($"Car {trainCar.CarGUID}: Changing authority [GAINED]");
-                if (!trainCar.IsInteriorLoaded)
-                {
-                    trainCar.LoadInterior();
-                }
                 SetAuthority(true);
             }
             else if (!willLocalPlayerGetAuthority && hasLocalPlayerAuthority)

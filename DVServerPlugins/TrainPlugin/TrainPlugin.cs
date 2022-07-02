@@ -3,6 +3,8 @@ using DarkRift.Server;
 using DV.Logic.Job;
 using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Train;
+using DVMP.DTO.Train;
+using DVMP.DTO;
 using DVMultiplayer.Networking;
 using PlayerPlugin;
 using System;
@@ -637,12 +639,9 @@ namespace TrainPlugin
                 {
                     WorldTrain newTrain = reader.ReadSerializable<WorldTrain>();
                     WorldTrain oldTrain = worldTrains.FirstOrDefault(t => t.Guid == newTrain.Guid);
-                    if (newTrain.Steamer != null)
+                    if (newTrain.LocoStuff != null)
                     {
-                        oldTrain.Steamer.FireOn = newTrain.Steamer.FireOn;
-                        oldTrain.Steamer.CoalInFirebox = newTrain.Steamer.CoalInFirebox;
-                        oldTrain.Steamer.CoalInTender = newTrain.Steamer.CoalInTender;
-                        oldTrain.Steamer.Whistle = newTrain.Steamer.Whistle;
+                        oldTrain = newTrain;
                     }
                 }
             }
@@ -726,25 +725,39 @@ namespace TrainPlugin
 
                     if (train.IsLoco)
                     {
-                        train.Throttle = 0;
-                        train.Sander = 0;
-                        train.Brake = 0;
-                        train.IndepBrake = 1;
-                        train.Reverser = 0f;
-                        if (train.Shunter != null)
+                        switch (train.CarType)
                         {
-                            train.Shunter.IsEngineOn = false;
-                            train.Shunter.IsMainFuseOn = false;
-                            train.Shunter.IsSideFuse1On = false;
-                            train.Shunter.IsSideFuse2On = false;
+                            case TrainCarType.LocoDiesel:
+                            case TrainCarType.LocoShunter:
+                                train.Controls[Ctrls.DEThrottle] = 0;
+                                train.Controls[Ctrls.DESand] = 0;
+                                train.Controls[Ctrls.DETrainBrake] = 0;
+                                train.Controls[Ctrls.DEIndepBrake] = 1;
+                                train.Controls[Ctrls.DEReverser] = 0f;
+                                break;
+                            case TrainCarType.LocoSteamHeavy:
+                            case TrainCarType.LocoSteamHeavyBlue:
+                                train.Controls[Ctrls.S282Throttle] = 0;
+                                train.Controls[Ctrls.S282Sand] = 0;
+                                train.Controls[Ctrls.S282TrainBrake] = 0;
+                                train.Controls[Ctrls.S282IndepBrake] = 1;
+                                train.Controls[Ctrls.S282Reverser] = 0f;
+                                break;
                         }
-                        else if (train.Diesel != null)
+                        if (train.LocoStuff != null && train.CarType == TrainCarType.LocoShunter)
                         {
-                            train.Diesel.IsEngineOn = false;
-                            train.Diesel.IsMainFuseOn = false;
-                            train.Diesel.IsSideFuse1On = false;
-                            train.Diesel.IsSideFuse2On = false;
-                            train.Diesel.IsSideFuse3On = false;
+                            train.LocoStuff.EngineOn = false;
+                            train.Controls[Ctrls.ShunterMainFuse] = 0;
+                            train.Controls[Ctrls.ShunterSideFuse1] = 0;
+                            train.Controls[Ctrls.ShunterSideFuse2] = 0;
+                        }
+                        else if (train.LocoStuff != null && train.CarType == TrainCarType.LocoDiesel)
+                        {
+                            train.LocoStuff.EngineOn = false;
+                            train.Controls[Ctrls.DieselMainFuse] = 0;
+                            train.Controls[Ctrls.DieselSideFuse1] = 0;
+                            train.Controls[Ctrls.DieselSideFuse2] = 0;
+                            train.Controls[Ctrls.DieselSideFuse3] = 0;
                         }
                     }
                 }
@@ -790,26 +803,18 @@ namespace TrainPlugin
                     }
 
                     if (train.CarType == TrainCarType.LocoShunter || train.CarType == TrainCarType.LocoDiesel)
-                        switch (lever.Lever)
+                        if (Ctrls.IsMUControl(lever.Name))
+                            UpdateMULevers(train, lever);
+                        else
                         {
-                            case Levers.Brake:
-                            case Levers.IndependentBrake:
-                            case Levers.Reverser:
-                            case Levers.Sander:
-                            case Levers.Throttle:
-                                UpdateMULevers(train, lever);
-                                break;
-
-                            default:
-                                UpdateLeverTrain(train, lever);
-                                break;
+                            UpdateLeverTrain(train, lever);
                         }
                     else
                         UpdateLeverTrain(train, lever);
                 }
             }
             Logger.Trace("[SERVER] > TRAIN_LEVER");
-            ReliableSendToOthers(message, sender);
+            UnreliableSendToOthers(message, sender);
         }
 
         private void UpdateTrainPosition(Message message, IClient sender)
@@ -875,227 +880,12 @@ namespace TrainPlugin
 
         private void UpdateLeverTrain(WorldTrain train, TrainLever lever)
         {
-            switch (lever.Lever)
-            {
-                case Levers.Throttle:
-                    train.Throttle = lever.Value;
-                    break;
-
-                case Levers.Brake:
-                    train.Brake = lever.Value;
-                    break;
-
-                case Levers.IndependentBrake:
-                    Logger.Trace($"Changed independent brake of {train.Guid}");
-                    train.IndepBrake = lever.Value;
-                    break;
-
-                case Levers.Sander:
-                    train.Sander = lever.Value;
-                    break;
-
-                case Levers.Reverser:
-                    train.Reverser = lever.Value;
-                    break;
-            }
-
-            switch (train.CarType)
-            {
-                case TrainCarType.LocoShunter:
-                    if (train.Shunter == null)
-                        train.Shunter = new Shunter();
-
-                    Shunter shunter = train.Shunter;
-                    switch (lever.Lever)
-                    {
-                        case Levers.MainFuse:
-                            shunter.IsMainFuseOn = lever.Value == 1;
-                            if (lever.Value == 0)
-                                shunter.IsEngineOn = false;
-                            break;
-
-                        case Levers.SideFuse_1:
-                            shunter.IsSideFuse1On = lever.Value == 1;
-                            if (lever.Value == 0)
-                                shunter.IsEngineOn = false;
-                            break;
-
-                        case Levers.SideFuse_2:
-                            shunter.IsSideFuse2On = lever.Value == 1;
-                            if (lever.Value == 0)
-                                shunter.IsEngineOn = false;
-                            break;
-
-                        case Levers.FusePowerStarter:
-                            if (shunter.IsSideFuse1On && shunter.IsSideFuse2On && shunter.IsMainFuseOn && lever.Value == 1)
-                                shunter.IsEngineOn = true;
-                            else if (lever.Value == 0)
-                                shunter.IsEngineOn = false;
-                            break;
-                    }
-                    break;
-
-                case TrainCarType.LocoDiesel:
-                    if (train.Diesel == null)
-                        train.Diesel = new Diesel();
-
-                    Diesel diesel = train.Diesel;
-                    switch (lever.Lever)
-                    {
-                        case Levers.Bell:
-                            diesel.Bell = lever.Value;
-                            break;
-
-                        case Levers.CabLightSwitch:
-                            diesel.CabLight = lever.Value;
-                            break;
-
-                        case Levers.Door1:
-                            diesel.Door1 = lever.Value;
-                            break;
-
-                        case Levers.Door2:
-                            diesel.Door2 = lever.Value;
-                            break;
-
-                        case Levers.DynamicBrake:
-                            diesel.DynamicBrake = lever.Value;
-                            break;
-
-                        case Levers.EmergencyOff:
-                            diesel.EmergencyOff = lever.Value;
-                            break;
-
-                        case Levers.EngineBayDoor1:
-                            diesel.EngineBayDoor1 = lever.Value;
-                            break;
-
-                        case Levers.EngineBayDoor2:
-                            diesel.EngineBayDoor2 = lever.Value;
-                            break;
-
-                        case Levers.EngineBayThrottle:
-                            diesel.EngineBayThrottle = lever.Value;
-                            break;
-
-                        case Levers.EngineIgnition:
-                            diesel.EngineIgnition = lever.Value;
-                            break;
-
-                        case Levers.FanSwitch:
-                            diesel.FanSwitch = lever.Value;
-                            break;
-
-                        case Levers.FusePanelDoor:
-                            diesel.FusePanelDoor = lever.Value;
-                            break;
-
-                        case Levers.FusePowerStarter:
-                            if (diesel.IsSideFuse1On && diesel.IsSideFuse2On && diesel.IsSideFuse3On && diesel.IsMainFuseOn && lever.Value == 1)
-                                diesel.IsEngineOn = true;
-                            else if (lever.Value == 0)
-                                diesel.IsEngineOn = false;
-                            break;
-
-                        case Levers.HeadlightSwitch:
-                            diesel.HeadlightSwitch = lever.Value;
-                            break;
-
-                        case Levers.Horn:
-                            diesel.Horn = lever.Value;
-                            break;
-
-                        case Levers.MainFuse:
-                            diesel.IsMainFuseOn = lever.Value == 1;
-                            if (lever.Value == 0)
-                                diesel.IsEngineOn = false;
-                            break;
-
-                        case Levers.SideFuse_1:
-                            diesel.IsSideFuse1On = lever.Value == 1;
-                            if (lever.Value == 0)
-                                diesel.IsEngineOn = false;
-                            break;
-
-                        case Levers.SideFuse_2:
-                            diesel.IsSideFuse2On = lever.Value == 1;
-                            if (lever.Value == 0)
-                                diesel.IsEngineOn = false;
-                            break;
-
-                        case Levers.SideFuse_3:
-                            diesel.IsSideFuse3On = lever.Value == 1;
-                            if (lever.Value == 0)
-                                diesel.IsEngineOn = false;
-                            break;
-
-                        case Levers.Window1:
-                            diesel.Window1 = lever.Value;
-                            break;
-
-                        case Levers.Window2:
-                            diesel.Window2 = lever.Value;
-                            break;
-
-                        case Levers.Window3:
-                            diesel.Window3 = lever.Value;
-                            break;
-
-                        case Levers.Window4:
-                            diesel.Window4 = lever.Value;
-                            break;
-                    }
-                    break;
-                case TrainCarType.LocoSteamHeavy:
-                case TrainCarType.LocoSteamHeavyBlue:
-                    if (train.Steamer == null)
-                        train.Steamer = new Steamer();
-
-                    Steamer steamer = train.Steamer;
-                    switch (lever.Lever)
-                    {
-                        case Levers.FireDoor:
-                            steamer.FireDoorPos = lever.Value;
-                            break;
-
-                        case Levers.WaterDump:
-                            steamer.WaterDump = lever.Value;
-                            break;
-
-                        case Levers.SteamRelease:
-                            steamer.SteamRelease = lever.Value;
-                            break;
-
-                        case Levers.Blower:
-                            steamer.Blower = lever.Value;
-                            break;
-
-                        case Levers.BlankValve:
-                            steamer.BlankValve = lever.Value;
-                            break;
-
-                        case Levers.Draft:
-                            steamer.Draft = lever.Value;
-                            break;
-
-                        case Levers.FireOut:
-                            steamer.FireOut = lever.Value;
-                            break;
-
-                        case Levers.Injector:
-                            steamer.Injector = lever.Value;
-                            break;
-
-                        case Levers.LightLever:
-                            steamer.LightLever = lever.Value;
-                            break;
-
-                        case Levers.HeadlightSwitch:
-                            steamer.LightSwitch = lever.Value;
-                            break;
-                    }
-                    break;
-            }
+            if (train.Controls == null)
+                train.Controls = new SerializableDictionary<string, float>();
+            SerializableDictionary<string, float> controls = train.Controls;
+            if (lever.Name == "C engine_thottle")
+                lever.Name = "C throttle";
+            controls[lever.Name] = lever.Value;
         }
     }
 }

@@ -2,6 +2,8 @@
 using DV.Logic.Job;
 using DVMultiplayer.Darkrift;
 using UnityEngine;
+using DVMP.DTO.Train;
+using DVMP.DTO;
 
 namespace DVMultiplayer.DTO.Train
 {
@@ -37,18 +39,9 @@ namespace DVMultiplayer.DTO.Train
         public float CarHealth { get; set; }
         public string CarHealthData { get; set; } = "";
 
-        // Locomotive (Only set if item is locomotive)
-        public float Throttle { get; set; } = 0;
-        public float Brake { get; set; } = 0;
-        public float IndepBrake { get; set; } = 0;
-        public float Sander { get; set; } = 0;
-        public float Reverser { get; set; } = 0;
-
         // Specific Train states
-        public Shunter Shunter { get; set; } = new Shunter();
-
-        public Diesel Diesel { get; set; } = new Diesel();
-        public Steamer Steamer { get; set; } = new Steamer();
+        public LocoStuff LocoStuff { get; set; } = new LocoStuff();
+        public SerializableDictionary<string, float> Controls { get; set; } = new SerializableDictionary<string, float>();
         public MultipleUnit MultipleUnit { get; set; } = new MultipleUnit();
 
         // Cargo based trains
@@ -87,11 +80,8 @@ namespace DVMultiplayer.DTO.Train
 
             if (IsLoco)
             {
-                Throttle = e.Reader.ReadSingle();
-                Brake = e.Reader.ReadSingle();
-                IndepBrake = e.Reader.ReadSingle();
-                Sander = e.Reader.ReadSingle();
-                Reverser = e.Reader.ReadSingle();
+                Controls = e.Reader.ReadSerializable<SerializableDictionary<string, float>>();
+                LocoStuff = e.Reader.ReadSerializable<LocoStuff>();
             }
             else
             {
@@ -103,16 +93,8 @@ namespace DVMultiplayer.DTO.Train
             switch (CarType)
             {
                 case TrainCarType.LocoShunter:
-                    Shunter = e.Reader.ReadSerializable<Shunter>();
-                    MultipleUnit = e.Reader.ReadSerializable<MultipleUnit>();
-                    break;
                 case TrainCarType.LocoDiesel:
-                    Diesel = e.Reader.ReadSerializable<Diesel>();
                     MultipleUnit = e.Reader.ReadSerializable<MultipleUnit>();
-                    break;
-                case TrainCarType.LocoSteamHeavy:
-                case TrainCarType.LocoSteamHeavyBlue:
-                    Steamer = e.Reader.ReadSerializable<Steamer>();
                     break;
             }
 
@@ -148,11 +130,8 @@ namespace DVMultiplayer.DTO.Train
 
             if (IsLoco)
             {
-                e.Writer.Write(Throttle);
-                e.Writer.Write(Brake);
-                e.Writer.Write(IndepBrake);
-                e.Writer.Write(Sander);
-                e.Writer.Write(Reverser);
+                e.Writer.Write(Controls);
+                e.Writer.Write(LocoStuff);
             }
             else
             {
@@ -164,16 +143,8 @@ namespace DVMultiplayer.DTO.Train
             switch (CarType)
             {
                 case TrainCarType.LocoShunter:
-                    e.Writer.Write(Shunter);
-                    e.Writer.Write(MultipleUnit);
-                    break;
                 case TrainCarType.LocoDiesel:
-                    e.Writer.Write(Diesel);
                     e.Writer.Write(MultipleUnit);
-                    break;
-                case TrainCarType.LocoSteamHeavy:
-                case TrainCarType.LocoSteamHeavyBlue:
-                    e.Writer.Write(Steamer);
                     break;
             }
             e.Writer.Write(updatedAt);
