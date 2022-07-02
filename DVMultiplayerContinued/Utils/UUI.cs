@@ -111,9 +111,11 @@ namespace DVMultiplayer.Utils
         TopCenter,
         TopRight,
         TopStretch,
-        MiddleRight,
+        BottomLeft,
+        BottomRight,
         BottomCenter,
         MiddleLeft,
+        MiddleRight,
         MiddleCenter,
     }
 }

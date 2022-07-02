@@ -15,6 +15,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Junction\Switch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)NetworkTags.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\Disconnect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Player\License.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\Location.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\NPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\PlayerLoaded.cs" />

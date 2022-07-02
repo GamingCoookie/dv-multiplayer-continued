@@ -309,7 +309,7 @@ internal class NetworkJobsManager : SingletonBehaviour<NetworkJobsManager>
                 if (!job.IsTaken)
                 {
                     job.IsTaken = true;
-                    SingletonBehaviour<CoroutineManager>.Instance.Run(ExpireJobAfterTime(job));
+                    job.CanTakeJob = false;
                 }
                 IsChangedByNetwork = false;
             }
@@ -555,13 +555,6 @@ internal class NetworkJobsManager : SingletonBehaviour<NetworkJobsManager>
         }
     }
     #endregion
-
-    private IEnumerator ExpireJobAfterTime(Job job)
-    {
-        // Wait 2 minutes so the user can still accept the job
-        yield return new WaitForSeconds(2 * 60);
-        job.CanTakeJob = false;
-    }
 
     internal void ExpireJobsUnTakenInStation(StationController station)
     {

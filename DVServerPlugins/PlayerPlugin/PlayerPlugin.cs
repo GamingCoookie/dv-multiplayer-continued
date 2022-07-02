@@ -16,6 +16,7 @@ namespace PlayerPlugin
     {
         private readonly Dictionary<IClient, Player> players = new Dictionary<IClient, Player>();
         private SetSpawn playerSpawn;
+        private double money;
         private IClient playerConnecting = null;
         private readonly BufferQueue buffer = new BufferQueue();
         Timer pingSendTimer;
@@ -37,7 +38,6 @@ namespace PlayerPlugin
             pingSendTimer.Elapsed += PingSendMessage;
             pingSendTimer.AutoReset = true;
             pingSendTimer.Start();
-
         }
 
         private void PingSendMessage(object sender, ElapsedEventArgs e)
@@ -71,8 +71,7 @@ namespace PlayerPlugin
                 });
 
                 using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_DISCONNECT, writer))
-                    foreach (IClient client in ClientManager.GetAllClients().Where(client => client != e.Client))
-                        client.SendMessage(outMessage, SendMode.Reliable);
+                    ReliableSendToOthers(outMessage, e.Client);
             }
         }
 
@@ -94,6 +93,10 @@ namespace PlayerPlugin
 
                 switch (tag)
                 {
+                    case NetworkTags.PLAYER_BUY_LICENSE:
+                        ForwardPacket(message, e.Client);
+                        break;
+					 
                     case NetworkTags.PLAYER_LOCATION_UPDATE:
                         LocationUpdateMessage(message, e.Client);
                         break;
@@ -103,11 +106,15 @@ namespace PlayerPlugin
                         break;
 
                     case NetworkTags.PLAYER_SPAWN_SET:
-                        SetSpawn(message);
+                        SetSpawn(message, e.Client);
                         break;
 
                     case NetworkTags.PLAYER_LOADED:
                         SetPlayerLoaded(message, e.Client);
+                        break;
+
+                    case NetworkTags.PLAYER_MONEY_UPDATE:
+                        MoneyUpdate(message, e.Client);
                         break;
                 }
             }
@@ -118,8 +125,7 @@ namespace PlayerPlugin
             if (players.TryGetValue(sender, out Player player))
             {
                 player.isLoaded = true;
-                foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
-                    client.SendMessage(message, SendMode.Reliable);
+                ReliableSendToOthers(message, sender);
             }
             else
                 Logger.Error($"Client with ID {sender.ID} not found");
@@ -194,8 +200,7 @@ namespace PlayerPlugin
                             });
 
                             using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN, writer))
-                                foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
-                                    client.SendMessage(outMessage, SendMode.Reliable);
+                                ReliableSendToOthers(outMessage, sender);
                         }
                     }
                     
@@ -222,6 +227,15 @@ namespace PlayerPlugin
                                 sender.SendMessage(outMessage, SendMode.Reliable);
                         }
                     }
+
+                    // Send money info
+                    using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                    {
+                        writer.Write(money);
+
+                        using (Message message = Message.Create((ushort)NetworkTags.PLAYER_MONEY_UPDATE, writer))
+                            sender.SendMessage(message, SendMode.Reliable);
+                    }
                 }
             }
             if (succesfullyConnected)
@@ -235,11 +249,12 @@ namespace PlayerPlugin
             }
         }
 
-        private void SetSpawn(Message message)
+        private void SetSpawn(Message message, IClient sender)
         {
             using (DarkRiftReader reader = message.GetReader())
             {
                 playerSpawn = reader.ReadSerializable<SetSpawn>();
+                money = reader.ReadDouble();
             }
         }
 
@@ -262,11 +277,25 @@ namespace PlayerPlugin
                     writer.Write(newLocation);
 
                     using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_LOCATION_UPDATE, writer))
-                        foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
-                            client.SendMessage(outMessage, SendMode.Unreliable);
+                        UnreliableSendToOthers(outMessage, sender);
                 }
                 
             }
+        }
+
+        private void MoneyUpdate(Message message, IClient sender)
+        {
+            using (DarkRiftReader reader = message.GetReader())
+            {
+                money = reader.ReadDouble();
+            }
+
+            ReliableSendToOthers(message, sender);
+        }
+
+        private void ForwardPacket(Message message, IClient sender)
+        {
+            ReliableSendToOthers(message, sender);
         }
 
         private List<string> GetMissingMods(string[] modList1, string[] modList2)
@@ -278,6 +307,17 @@ namespace PlayerPlugin
                     missingMods.Add(mod);
             }
             return missingMods;
+        }
+        private void UnreliableSendToOthers(Message message, IClient sender)
+        {
+            foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
+                client.SendMessage(message, SendMode.Unreliable);
+        }
+
+        private void ReliableSendToOthers(Message message, IClient sender)
+        {
+            foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
+                client.SendMessage(message, SendMode.Reliable);
         }
     }
 

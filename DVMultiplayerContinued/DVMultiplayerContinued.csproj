@@ -187,7 +187,9 @@
     <Compile Include="Patches\Jobs\StaticJobDefinitionPatch.cs" />
     <Compile Include="Patches\Jobs\StopGeneratingJobsAsClientAfterChain.cs" />
     <Compile Include="Patches\PassengerJobs\PassengerJobsModPatch.cs" />
+    <Compile Include="Patches\Player\CareerManagerPatch.cs" />
     <Compile Include="Patches\Player\MapMarkerPatch.cs" />
+    <Compile Include="Patches\Player\ShopPatch.cs" />
     <Compile Include="Patches\Train\ControlImplBasePatch.cs" />
     <Compile Include="Patches\Train\FixBogiesForceSleepNRE.cs" />
     <Compile Include="Patches\Train\DisallowDeleteIfPlayerInTrain.cs" />

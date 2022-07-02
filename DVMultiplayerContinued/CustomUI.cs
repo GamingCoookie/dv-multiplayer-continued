@@ -19,6 +19,7 @@ namespace DVMultiplayer
         internal static MenuScreen ModMismatchScreen;
         internal static MenuScreen NetworkUI;
         internal static MenuScreen PopupUI;
+        internal static MenuScreen YesNoPopupUI;
         internal static MenuScreen prevScreen;
         internal static MenuScreen SaveFavoriteMenuUI;
         internal static MenuScreen UsernameRequestMenuUI;
@@ -41,6 +42,7 @@ namespace DVMultiplayer
                 GenerateModMismatchScreenUI();
                 GenerateNetworkUI();
                 GeneratePopUp();
+                GenerateYesNoPopUp();
                 GenerateRequestUsernameUI();
                 ReplaceMainMenuButton();
 
@@ -104,6 +106,15 @@ namespace DVMultiplayer
             Open(PopupUI, false);
         }
 
+        internal static void OpenYesNoPopup(string title, string label1, string label2)
+        {
+            SingletonBehaviour<CanvasSpawner>.Instance.AllowOutsideClickClose = false;
+            YesNoPopupUI.transform.Find("Title").GetComponent<TextMeshProUGUI>().text = title;
+            YesNoPopupUI.transform.Find("Label Message 1").GetComponent<TextMeshProUGUI>().text = label1;
+            YesNoPopupUI.transform.Find("Label Message 2").GetComponent<TextMeshProUGUI>().text = label2;
+            Open(YesNoPopupUI, false);
+        }
+
         private static void GenerateModMismatchScreenUI()
         {
             GameObject canvas = SingletonBehaviour<CanvasSpawner>.Instance.CanvasGO;
@@ -152,6 +163,24 @@ namespace DVMultiplayer
             GameObject menu = Object.Instantiate(menuBuilder, canvas.transform);
             Object.DestroyImmediate(menuBuilder);
             PopupUI = menu.GetComponent<MenuScreen>();
+        }
+
+        private static void GenerateYesNoPopUp()
+        {
+            GameObject canvas = SingletonBehaviour<CanvasSpawner>.Instance.CanvasGO;
+            GameObject menuBuilder = CreateMenu(new MenuBuilder("DVMultiplayer Two Button Popup", "Popup", 800, 500));
+            ButtonBuilder yesButtonBuilder = new ButtonBuilder("Yes", "Yes", menuBuilder.transform, new Rect(-150f, -390f, 304, 91f), RectTransformAnchoring.BottomLeft, new Vector2(.5f, .5f), TextAlignmentOptions.Center);
+            ButtonBuilder noButtonBuilder = new ButtonBuilder("No", "No", menuBuilder.transform, new Rect(150f, -390f, 304, 91f), RectTransformAnchoring.BottomRight, new Vector2(.5f, .5f), TextAlignmentOptions.Center);
+
+            CreateSection(new Rect(30f, -320, 740, 200), RectTransformAnchoring.TopLeft, menuBuilder.transform, new Vector2(0, 0));
+            CreateLabel("Message 1", "TEST", menuBuilder.transform, new Rect(32, -250, 738, 145), FontStyles.UpperCase, TextAlignmentOptions.Center, RectTransformAnchoring.TopLeft, new Vector2(0, 0), Color.white);
+            CreateLabel("Message 2", "TEST", menuBuilder.transform, new Rect(32, -330, 738, 145), FontStyles.UpperCase, TextAlignmentOptions.Center, RectTransformAnchoring.TopLeft, new Vector2(0, 0), Color.white);
+            CreateButton(yesButtonBuilder);
+            CreateButton(noButtonBuilder);
+
+            GameObject menu = Object.Instantiate(menuBuilder, canvas.transform);
+            Object.DestroyImmediate(menuBuilder);
+            YesNoPopupUI = menu.GetComponent<MenuScreen>();
         }
 
         private static void GenerateHostNetworkUI()

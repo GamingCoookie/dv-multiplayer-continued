@@ -3,6 +3,7 @@
     public enum NetworkTags : ushort
     {
         TEST_TAG,
+        PLAYER_BUY_LICENSE,
         PLAYER_SPAWN,
         PLAYER_LOCATION_UPDATE,
         PLAYER_DISCONNECT,
@@ -12,6 +13,7 @@
         PLAYER_INIT,
         PLAYER_LOADED,
         PLAYER_SET_ROLE, // Set Player Role (Host or Client)
+        PLAYER_MONEY_UPDATE,
         TRAIN_LEVER,
         TRAIN_SWITCH,
         TRAIN_LOCATION_UPDATE,

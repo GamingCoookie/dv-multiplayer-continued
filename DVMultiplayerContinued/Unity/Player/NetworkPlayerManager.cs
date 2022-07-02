@@ -5,6 +5,7 @@ using DV;
 using DV.TerrainSystem;
 using DVMultiplayer;
 using DVMultiplayer.DTO.Player;
+using DVMP.DTO.Player;
 using DVMultiplayer.Networking;
 using DVMultiplayer.Utils;
 using DVMultiplayer.Utils.Game;
@@ -16,14 +17,16 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
+internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 {
-    private Dictionary<ushort, GameObject> localPlayers = new Dictionary<ushort, GameObject>();
+    public Dictionary<ushort, GameObject> localPlayers = new Dictionary<ushort, GameObject>();
     private readonly Dictionary<ushort, NPlayer> serverPlayers = new Dictionary<ushort, NPlayer>();
+    public bool IsChangeByNetwork { get; internal set; }
     private SetSpawn spawnData;
     private Coroutine playersLoaded;
     private bool modMismatched = false;
     public bool newPlayerConnecting;
+    public int CanBuyLicense = 0;
     //private bool _RoleHasBeenSet = false;
 
     public bool IsSynced { get; private set; }
@@ -131,6 +134,10 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
             switch ((NetworkTags)message.Tag)
             {
+                case NetworkTags.PLAYER_BUY_LICENSE:
+                    StartCoroutine(OnPlayerBuyLicense(message));
+                    break;
+				 
                 case NetworkTags.PLAYER_DISCONNECT:
                     OnPlayerDisconnect(message);
                     break;
@@ -141,6 +148,10 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
                 case NetworkTags.PLAYER_MODS_MISMATCH:
                     OnModMismatch(message);
+                    break;
+
+                case NetworkTags.PLAYER_MONEY_UPDATE:
+                    OnMoneyUpdate(message);
                     break;
 
                 case NetworkTags.PLAYER_LOCATION_UPDATE:
@@ -235,6 +246,92 @@ public class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                     Main.mod.Logger.Error($"[MOD MISMATCH] You installed mods the host doesn't have, these are: {string.Join(", ", extraMods)}");
 
                 modMismatched = true;
+            }
+        }
+    }
+
+    private void OnMoneyUpdate(Message message)
+    {
+        Main.Log($"[CLIENT] < PLAYER_MONEY_UPDATE");
+        IsChangeByNetwork = true;
+        SingletonBehaviour<Inventory>.Instance.SetMoney(message.GetReader().ReadDouble());
+        IsChangeByNetwork = false;
+    }
+
+    private void OnLocalMoneyChanged(double oldMoney, double newMoney)
+    {
+        if (IsChangeByNetwork || !IsSynced)
+            return;
+        Main.Log($"[CLIENT] > PLAYER_MONEY_UPDATE");
+        using (DarkRiftWriter writer = DarkRiftWriter.Create())
+        {
+            writer.Write(newMoney);
+
+            using (Message message = Message.Create((ushort)NetworkTags.PLAYER_MONEY_UPDATE, writer))
+                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
+        }
+    }
+
+    private IEnumerator OnPlayerBuyLicense(Message message)
+    {
+        Main.Log($"[CLIENT] < PLAYER_BUY_LICENSE");
+        using (DarkRiftReader reader = message.GetReader())
+        {
+            License license = reader.ReadSerializable<License>();
+            if (NetworkManager.IsHost() && license.PurchaseAllowed == 0)
+            {
+                CustomUI.YesNoPopupUI.transform.Find("Button Yes").GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    license.PurchaseAllowed = 1;
+                });
+                CustomUI.YesNoPopupUI.transform.Find("Button No").GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    license.PurchaseAllowed = 2;
+                });
+
+                CustomUI.OpenYesNoPopup($"\"{serverPlayers[license.PlayerID].Username}\" wants to buy {license.LicenseName}", $"License cost: {license.Price}", $"Current wallet: {SingletonBehaviour<Inventory>.Instance.PlayerMoney + license.Price}");
+                UUI.UnlockMouse(true);
+                TutorialController.movementAllowed = false;
+                AppUtil.Instance.PauseGame();
+                yield return new WaitUntil(() => license.PurchaseAllowed != 0);
+                Main.Log($"Purchase allowed: {license.PurchaseAllowed}");
+                using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                {
+                    License returnAnswer = new License
+                    {
+                        PlayerID = license.PlayerID,
+                        PurchaseAllowed = license.PurchaseAllowed
+                    };
+
+                    writer.Write(returnAnswer);
+                    Main.Log($"[CLIENT] > PLAYER_BUY_LICENSE");
+                    using (Message returnMessage = Message.Create((ushort)NetworkTags.PLAYER_BUY_LICENSE, writer))
+                        SingletonBehaviour<UnityClient>.Instance.SendMessage(returnMessage, SendMode.Reliable);
+                }
+                AppUtil.Instance.UnpauseGame();
+                TutorialController.movementAllowed = true;
+                UUI.UnlockMouse(false);
+                CustomUI.Close();
+            }
+            else
+            {
+                if (license.PlayerID == NetworkManager.client.ID && license.PurchaseAllowed != 0)
+                    CanBuyLicense = license.PurchaseAllowed; // 1 is basically true
+
+                else if (license.PurchaseAllowed != 0)
+                {
+                    AppUtil.Instance.UnpauseGame();
+                    TutorialController.movementAllowed = true;
+                    UUI.UnlockMouse(false);
+                    CustomUI.Close();
+                }
+                else
+                {
+                    CustomUI.OpenPopup($"Somebody wants a license", $"{serverPlayers[license.PlayerID].Username} wants to buy {license.LicenseName}");
+                    UUI.UnlockMouse(true);
+                    TutorialController.movementAllowed = false;
+                    AppUtil.Instance.PauseGame();
+                }
             }
         }
     }
