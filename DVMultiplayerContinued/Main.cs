@@ -1,11 +1,11 @@
 ﻿using DVMultiplayer.Networking;
 using DVMultiplayer.Patches.PassengerJobs;
+using DVMultiplayerContinued.Unity.Player;
 using DVMultiplayerContinued.Patches.CustomCarLoader;
 using HarmonyLib;
 using System;
 using System.Linq;
 using System.Reflection;
-using UnityModManagerNet;
 using static UnityModManagerNet.UnityModManager;
 
 namespace DVMultiplayer
@@ -68,6 +68,7 @@ namespace DVMultiplayer
 #if DEBUG
                 DebugUI.Update();
 #endif
+                GameChat.Update();
                 OnGameUpdate?.Invoke();
             }
         }
@@ -79,6 +80,7 @@ namespace DVMultiplayer
 #if DEBUG
                 DebugUI.OnGUI();
 #endif
+                GameChat.OnGUI();
                 OnGameFixedGUI?.Invoke();
             }
         }

@@ -96,7 +96,11 @@ namespace PlayerPlugin
                     case NetworkTags.PLAYER_BUY_LICENSE:
                         ForwardPacket(message, e.Client);
                         break;
-					 
+
+                    case NetworkTags.PLAYER_CHAT_MESSAGE:
+                        ForwardPacket(message, e.Client);
+                        break;
+
                     case NetworkTags.PLAYER_LOCATION_UPDATE:
                         LocationUpdateMessage(message, e.Client);
                         break;

@@ -4,6 +4,7 @@
     {
         TEST_TAG,
         PLAYER_BUY_LICENSE,
+        PLAYER_CHAT_MESSAGE,
         PLAYER_SPAWN,
         PLAYER_LOCATION_UPDATE,
         PLAYER_DISCONNECT,

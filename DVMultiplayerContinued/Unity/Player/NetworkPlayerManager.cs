@@ -9,6 +9,7 @@ using DVMP.DTO.Player;
 using DVMultiplayer.Networking;
 using DVMultiplayer.Utils;
 using DVMultiplayer.Utils.Game;
+using DVMultiplayerContinued.Unity.Player;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -137,7 +138,11 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 case NetworkTags.PLAYER_BUY_LICENSE:
                     StartCoroutine(OnPlayerBuyLicense(message));
                     break;
-				 
+
+                case NetworkTags.PLAYER_CHAT_MESSAGE:
+                    ChatMessageReceived(message);
+                    break;
+
                 case NetworkTags.PLAYER_DISCONNECT:
                     OnPlayerDisconnect(message);
                     break;
@@ -182,6 +187,15 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
        _RoleHasBeenSet = true;
     }
     */
+
+    private void ChatMessageReceived(Message message)
+    {
+        using (DarkRiftReader reader = message.GetReader())
+        {
+            ChatMessage chatMessage = reader.ReadSerializable<ChatMessage>();
+            GameChat.AppendNewMessage(chatMessage.Message);
+        }
+    }
 
     private void SetPlayerLoaded(Message message)
     {
@@ -347,6 +361,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 if (disconnectedPlayer.PlayerId != SingletonBehaviour<UnityClient>.Instance.ID && localPlayers.ContainsKey(disconnectedPlayer.PlayerId))
                 {
                     Main.Log($"[CLIENT] < PLAYER_DISCONNECT: Username: {localPlayers[disconnectedPlayer.PlayerId].GetComponent<NetworkPlayerSync>().Username}");
+                    GameChat.PutSystemMessage($"{localPlayers[disconnectedPlayer.PlayerId].GetComponent<NetworkPlayerSync>().Username} disconnected from the server");
                     if (localPlayers[disconnectedPlayer.PlayerId])
                         Destroy(localPlayers[disconnectedPlayer.PlayerId]);
 
@@ -368,6 +383,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         if (NetworkManager.IsHost())
         {
             Main.Log("[CLIENT] > PLAYER_SPAWN_SET");
+            GameChat.PutSystemMessage($"The server has been launched!");
             using (DarkRiftWriter writer = DarkRiftWriter.Create())
             {
                 KeyValuePair<string, Vector3> closestStation = SavedPositions.Stations.Where(pair => pair.Value == SavedPositions.Stations.Values.OrderBy(x => Vector3.Distance(x, pos)).First()).FirstOrDefault();
@@ -377,9 +393,15 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                     Position = closestStation.Value
                 });
 
+                writer.Write(SingletonBehaviour<Inventory>.Instance.PlayerMoney);
+
                 using (Message message = Message.Create((ushort)NetworkTags.PLAYER_SPAWN_SET, writer))
                     SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
             }
+        }
+        else
+        {
+            GameChat.PutSystemMessage($"You have connected to a server!");
         }
         
 
@@ -567,7 +589,10 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 {
                     Location playerPos = reader.ReadSerializable<Location>();
                     Main.Log($"[CLIENT] < PLAYER_SPAWN: Username: {player.Username} ");
-
+                    if (IsSynced)
+                        GameChat.PutSystemMessage($"{player.Username} has connected!");
+                    else
+                        GameChat.PutSystemMessage($"{player.Username} is already here!");
                     Vector3 pos = playerPos.Position + WorldMover.currentMove;
                     pos = new Vector3(pos.x, pos.y + 1, pos.z);
                     Quaternion rotation = Quaternion.identity;
@@ -631,6 +656,22 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
             using (Message message = Message.Create((ushort)NetworkTags.PLAYER_LOCATION_UPDATE, writer))
                 SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Unreliable);
+        }
+    }
+
+    internal void SendChatMessage(string chatMessage)
+    {
+        chatMessage = chatMessage.Insert(0, $"{GetLocalPlayerSync().Username}> ");
+        GameChat.AppendNewMessage(chatMessage);
+        using (DarkRiftWriter writer = DarkRiftWriter.Create())
+        {
+            writer.Write<ChatMessage>(new ChatMessage()
+            {
+                Message = chatMessage
+            });
+
+            using (Message message = Message.Create((ushort)NetworkTags.PLAYER_CHAT_MESSAGE, writer))
+                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
         }
     }
 
