@@ -19,14 +19,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)Player\NPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\PlayerLoaded.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\SetSpawn.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SerializableDictionary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\CarDamage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\CarMUChange.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\CarRemoval.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\CarsAuthChange.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Train\Diesel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\MultipleUnit.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Train\Shunter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Train\Steamer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Train\LocoStuff.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\TrainCarChange.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\TrainCargoChanged.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\TrainCouplerCockChange.cs" />
