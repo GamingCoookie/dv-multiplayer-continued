@@ -12,7 +12,8 @@ namespace DVMultiplayerContinued.Unity.Player
 {
     internal static class GameChat
     {
-        private static bool openChat = false;
+        private static bool openChatLine = false;
+        private static bool openChat = true;
         private static string text = "";
         private static int remainingLength;
         public static List<string> messages = new List<string>();
@@ -22,9 +23,15 @@ namespace DVMultiplayerContinued.Unity.Player
         private static int line_length;
         private static int line_count;
 
-        internal static void Initialize()
+        internal static void Setup()
         {
             Main.Log($"Initializing Chat");
+            Main.OnGameUpdate += Update;
+            Main.OnGameFixedGUI += OnGUI;
+        }
+
+        internal static void Initialize()
+        {
             labelStyle = new GUIStyle(GUI.skin.label);
             inputStyle = new GUIStyle(GUI.skin.textField);
 
@@ -36,17 +43,19 @@ namespace DVMultiplayerContinued.Unity.Player
             line_length = Convert.ToInt32(Math.Floor(Screen.width * 0.29f / characterInfo.advance));
             line_count = Convert.ToInt32(Math.Floor((Screen.height * 0.3f - 20) / 20));
             PutSystemMessage($"Mod successfully loaded. Have fun. :)");
+            PutSystemMessage($"You can minimize this window by hitting T and then clicking on the little button" +
+                $" at the top right");
             initalized = true;
         }
 
         internal static void Update()
         {
-            if (!openChat && SingletonBehaviour<AppUtil>.Instance.isCursorNeeded)
+            if (!openChatLine && SingletonBehaviour<AppUtil>.Instance.isCursorNeeded)
                 return;
             if (Input.GetKeyUp(KeyCode.T))
             {
-                openChat = !openChat;
-                if (openChat == true)
+                openChatLine = !openChatLine;
+                if (openChatLine == true)
                 {
                     UUI.UnlockMouse(true);
                 }
@@ -57,9 +66,9 @@ namespace DVMultiplayerContinued.Unity.Player
             }
             if (Input.GetKeyUp(KeyCode.Return))
             {
-                if (!openChat)
+                if (!openChatLine)
                     return;
-                openChat = false;
+                openChatLine = false;
                 UUI.UnlockMouse(false);
                 text = text.Trim();
                 if (SingletonBehaviour<NetworkPlayerManager>.Exists && text.Length > 0)
@@ -78,21 +87,26 @@ namespace DVMultiplayerContinued.Unity.Player
         {
             if (!initalized)
                 Initialize();
+            if (GUI.Button(new Rect(Screen.width * 0.99f, Screen.height * 0.05f, 20, 20), ""))
+                openChat = !openChat;
 
-            GUI.Box(new Rect(Screen.width * 0.7f, Screen.height * 0.05f, Screen.width * 0.3f, Screen.height * 0.3f), "Multiplayer Continued Chat");
-            float ypos = Screen.height * 0.05f + 20;
-            
-            foreach (string message in messages)
+            if (openChat)
             {
-                GUI.Label(new Rect(Screen.width * 0.705f, ypos, Screen.width * 0.29f, 20), message, labelStyle);
-                ypos += 20; 
-            }
+                GUI.Box(new Rect(Screen.width * 0.7f, Screen.height * 0.05f, Screen.width * 0.3f, Screen.height * 0.3f), "Multiplayer Continued Chat");
+                float ypos = Screen.height * 0.05f + 20;
 
-            if (openChat == true)
-            {
-                text = GUI.TextField(new Rect(Screen.width * 0.7f, Screen.height * 0.35f - 20, Screen.width * 0.27f, 20), text, 160, inputStyle);
-                remainingLength = 160 - text.Length;
-                GUI.Label(new Rect(Screen.width * 0.98f, Screen.height * 0.35f - 20, Screen.width * 0.03f, 20), remainingLength.ToString(), labelStyle);
+                foreach (string message in messages)
+                {
+                    GUI.Label(new Rect(Screen.width * 0.705f, ypos, Screen.width * 0.29f, 20), message, labelStyle);
+                    ypos += 20;
+                }
+
+                if (openChatLine == true)
+                {
+                    text = GUI.TextField(new Rect(Screen.width * 0.7f, Screen.height * 0.35f - 20, Screen.width * 0.27f, 20), text, 160, inputStyle);
+                    remainingLength = 160 - text.Length;
+                    GUI.Label(new Rect(Screen.width * 0.98f, Screen.height * 0.35f - 20, Screen.width * 0.03f, 20), remainingLength.ToString(), labelStyle);
+                }
             }
         }
 

@@ -68,7 +68,6 @@ namespace DVMultiplayer
 #if DEBUG
                 DebugUI.Update();
 #endif
-                GameChat.Update();
                 OnGameUpdate?.Invoke();
             }
         }
@@ -80,7 +79,6 @@ namespace DVMultiplayer
 #if DEBUG
                 DebugUI.OnGUI();
 #endif
-                GameChat.OnGUI();
                 OnGameFixedGUI?.Invoke();
             }
         }
@@ -91,6 +89,7 @@ namespace DVMultiplayer
             CustomUI.Initialize();
             FavoritesManager.CreateFavoritesFileIfNotExists();
             NetworkManager.Initialize();
+            GameChat.Setup();
             isInitialized = true;
         }
 
