@@ -45,9 +45,9 @@ namespace DVMultiplayer
             ModEntry passengerJobsModEntry = FindMod("PassengerJobs");
             if (passengerJobsModEntry != null && passengerJobsModEntry.Enabled)
                 PassengerJobsModInitializer.Initialize(passengerJobsModEntry, harmony);
-            ModEntry customCarLoaderModEntry = FindMod("DVCustomCarLoader");
-            if (customCarLoaderModEntry != null && customCarLoaderModEntry.Enabled)
-                CustomCarLoaderInitializer.Initialize(customCarLoaderModEntry, harmony);
+            //ModEntry customCarLoaderModEntry = FindMod("DVCustomCarLoader");
+            //if (customCarLoaderModEntry != null && customCarLoaderModEntry.Enabled)
+                //CustomCarLoaderInitializer.Initialize(customCarLoaderModEntry, harmony);
             return true;
         }
 

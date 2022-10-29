@@ -11,7 +11,7 @@ using UnityEngine;
 
 internal class NetworkTrainPosSync : MonoBehaviour
 {
-    private TrainCar trainCar;
+    internal TrainCar trainCar;
     internal WorldTrain serverState;
     private bool isStationary;
 

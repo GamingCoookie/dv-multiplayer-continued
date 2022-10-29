@@ -23,11 +23,11 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
     public List<WorldTrain> serverCarStates { get; set; } = new List<WorldTrain>();
     public bool IsChangeByNetwork { get; internal set; }
     public bool IsChangeByNetwork2 { get; set; }
-    public bool IsSynced { get; private set; }
+    public bool IsSynced { get; internal set; }
     public bool SaveCarsLoaded { get; internal set; }
     public bool IsSpawningTrains { get; set; } = false;
     public bool IsDisconnecting { get; set; } = false;
-    private readonly BufferQueue buffer = new BufferQueue();
+    internal readonly BufferQueue buffer = new BufferQueue();
 
     protected override void Awake()
     {
@@ -1181,7 +1181,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         SendNewCarsSpawned(new TrainCar[] { car });
     }
 
-    private void SendNewCarsSpawned(IEnumerable<TrainCar> cars)
+    internal void SendNewCarsSpawned(IEnumerable<TrainCar> cars)
     {
         using (DarkRiftWriter writer = DarkRiftWriter.Create())
         {
@@ -2179,7 +2179,22 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 
     private TrainCar InitializeNewTrainCar(WorldTrain serverState)
     {
-        GameObject carPrefab = CarTypes.GetCarPrefab(serverState.CarType);
+        GameObject carPrefab = null;
+        if (serverState.CarType != TrainCarType.NotSet)
+            carPrefab = CarTypes.GetCarPrefab(serverState.CarType);
+        else
+        {
+            Main.Log($"Custom car!");
+            if (DVCustomCarLoader.CarTypeInjector.TryGetCustomCarById(serverState.CCLCarId, out DVCustomCarLoader.CustomCar customCar))
+            {
+                Main.Log($"car indentifier: {serverState.CCLCarId}, custom car type: {customCar.CarType}");
+                carPrefab = customCar.CarPrefab;
+            }
+            else
+            {
+                Main.Log($"car by identifier {serverState.CCLCarId} not found!");
+            }
+        }
         TrainCar newTrain;
         TrainBogie bogie1 = serverState.Bogies[0];
         TrainBogie bogie2 = serverState.Bogies[serverState.Bogies.Length - 1];
@@ -2549,7 +2564,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
             return null;
     }
 
-    private void AddNetworkingScripts(TrainCar car, WorldTrain selectedTrain)
+    internal void AddNetworkingScripts(TrainCar car, WorldTrain selectedTrain)
     {
         if (!car.GetComponent<NetworkTrainSync>() && (car.IsLoco || car.carType == TrainCarType.CabooseRed))
             car.gameObject.AddComponent<NetworkTrainSync>();

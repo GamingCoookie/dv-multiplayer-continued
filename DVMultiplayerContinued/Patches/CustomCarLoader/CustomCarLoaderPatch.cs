@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using DarkRift;
 using DarkRift.Client.Unity;
 using DV.CabControls;
@@ -24,7 +25,7 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
     {
         public static void Initialize(ModEntry customCarLoaderEntry, Harmony harmony)
         {
-            Main.Log("Patching own methods for CCL compatability...");
+            Main.Log("Patching for CCL compatability...");
             try
             {
                 Main.Log($"Patching NetworkTrainSync.Awake");
@@ -47,10 +48,37 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                 MethodInfo NTMGSCD = AccessTools.Method(typeof(NetworkTrainManager), nameof(NetworkTrainManager.GenerateServerCarsData));
                 MethodInfo NTMGSCDPatch = AccessTools.Method(typeof(NetworkTrainManager_GenerateServerCarsData_Patch), nameof(NetworkTrainManager_GenerateServerCarsData_Patch.Postfix));
                 harmony.Patch(NTMGSCD, postfix: new HarmonyMethod(NTMGSCDPatch));
+                Main.Log($"Patching NetworkTrainManager.SendNewCarsSpawned");
+                MethodInfo SendNewCarsSpawned = AccessTools.Method(typeof(NetworkTrainManager), nameof(NetworkTrainManager.SendNewCarsSpawned));
+                MethodInfo SendNewCarsSpawnedPrefix = AccessTools.Method(typeof(DVMultiplayerContinued_SendNewCarsSpawned_Patch), "Prefix");
+                harmony.Patch(SendNewCarsSpawned, prefix: new HarmonyMethod(SendNewCarsSpawnedPrefix));
+                Main.Log($"Patching NetworkTrainPosSync.CoroUpdateLocation");
+                MethodInfo CoroUpdateLocation = AccessTools.Method(typeof(NetworkTrainPosSync), nameof(NetworkTrainPosSync.CoroUpdateLocation));
+                MethodInfo CoroUpdateLocationPostfix = AccessTools.Method(typeof(DVMultiplayerContinued_CoroUpdateLocation_Patch), "Postfix");
+                harmony.Patch(CoroUpdateLocation, postfix: new HarmonyMethod(CoroUpdateLocationPostfix));
+                Main.Log($"Patching NetworkTrainManager.SendCarLocationUpdate");
+                MethodInfo SendCarLocationUpdate = AccessTools.Method(typeof(NetworkTrainManager), nameof(NetworkTrainManager.SendCarLocationUpdate));
+                MethodInfo SendCarLocationUpdatePrefix = AccessTools.Method(typeof(DVMultiplayerContinued_SendCarLocationUpdate_Patch), "Prefix");
+                harmony.Patch(SendCarLocationUpdate, prefix: new HarmonyMethod(SendCarLocationUpdatePrefix));
+                Main.Log($"Patching CustomLocoSimDiesel&Steam.SimulateTick");
+                MethodInfo DieselSimulateTick = AccessTools.Method(typeof(CustomLocoSimDiesel), "SimulateTick");
+                MethodInfo DieselSimulateTickPrefix = AccessTools.Method(typeof(SimulationPatches), "DieselSimTickPatch");
+                MethodInfo SteamSimulateTick = AccessTools.Method(typeof(CustomLocoSimSteam), "SimulateTick");
+                MethodInfo SteamSimulateTickPrefix = AccessTools.Method(typeof(SimulationPatches), "SteamSimTickPatch");
+                harmony.Patch(DieselSimulateTick, prefix: new HarmonyMethod(DieselSimulateTickPrefix));
+                harmony.Patch(SteamSimulateTick, prefix: new HarmonyMethod(SteamSimulateTickPrefix));
+                Main.Log($"Patching NetworkTrainPosSync.LoadLocoDamage");
+                MethodInfo LoadLocoDamage = AccessTools.Method(typeof(NetworkTrainPosSync), "LoadLocoDamage");
+                MethodInfo LoadLocoDamagePostFix = AccessTools.Method(typeof(NetworkTrainPosSync_LoadLocoDamage_Patch), "Postfix");
+                harmony.Patch(LoadLocoDamage, postfix: new HarmonyMethod(LoadLocoDamagePostFix));
+                Main.Log($"Patching NetworkTrainManager.SendInitializedCars");
+                MethodInfo SendInitCars = AccessTools.Method(typeof(NetworkTrainManager), "SendInitializedCars");
+                MethodInfo SendInitCarsPrefix = AccessTools.Method(typeof(NetworkTrainManager_SendInitCars_Patch), "Prefix");
+                harmony.Patch(SendInitCars, prefix: new HarmonyMethod(SendInitCarsPrefix));
             }
             catch (Exception ex)
             {
-                Main.Log($"Patching own methods for CCL compatability failed. Error: {ex.Message}");
+                Main.Log($"Patching methods for CCL compatability. Error: {ex.Message}");
             }
         }
     }
@@ -227,6 +255,7 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                     {
                         Main.Log($"Found CustomLocoSimSteam");
                         CustomLocoSimSteam customSteamSim = car.GetComponent<CustomLocoSimSteam>();
+                        train.CarHealthData = car.GetComponent<CustomDamageControllerSteam>().GetDamageSaveData().ToString(Newtonsoft.Json.Formatting.None);
                         train.LocoStuff = new LocoStuff()
                         {
                             BoilerPressure = customSteamSim.boilerPressure.value,
@@ -238,9 +267,9 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                             TenderCoalLevel = customSteamSim.tenderFuel.value,
                             TenderWaterLevel = customSteamSim.tenderWater.value
                         };
-                        Main.Log($"Get {car.ID} ControlImplBases");
+                        //Main.Log($"Get {car.ID} ControlImplBases");
                         ControlImplBase[] ctrls = car.interior.GetComponentsInChildren<ControlImplBase>();
-                        Main.Log($"Found {ctrls.Length} ControlImplBases");
+                        //Main.Log($"Found {ctrls.Length} ControlImplBases");
                         foreach (ControlImplBase control in ctrls)
                         {
                             train.Controls[control.name] = control.Value;
@@ -250,16 +279,18 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                     {
                         Main.Log($"Found CustomLocoSimDiesel");
                         CustomLocoSimDiesel customDieselSim = car.GetComponent<CustomLocoSimDiesel>();
+                        train.CarHealthData = car.GetComponent<DamageControllerCustomDiesel>().GetDamageSaveData().ToString(Newtonsoft.Json.Formatting.None);
                         train.LocoStuff = new LocoStuff()
                         {
                             FuelLevel = customDieselSim.fuel.value,
                             OilLevel = customDieselSim.oil.value,
+                            RPM = customDieselSim.engineRPM.value,
                             SandLevel = customDieselSim.sand.value,
                             Temp = customDieselSim.engineTemp.value
                         };
-                        Main.Log($"Get {car.ID} ControlImplBases");
+                        //Main.Log($"Get {car.ID} ControlImplBases");
                         ControlImplBase[] ctrls = car.interior.GetComponentsInChildren<ControlImplBase>();
-                        Main.Log($"Found {ctrls.Length} ControlImplBases");
+                        //Main.Log($"Found {ctrls.Length} ControlImplBases");
                         foreach (ControlImplBase control in ctrls)
                         {
                             train.Controls[control.name] = control.Value;
@@ -268,6 +299,202 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                 }
             }
             __result = data;
+        }
+    }
+
+    class DVMultiplayerContinued_SendNewCarsSpawned_Patch
+    {
+        static bool Prefix(NetworkTrainManager __instance, IEnumerable<TrainCar> cars)
+        {
+            using (DarkRiftWriter writer = DarkRiftWriter.Create())
+            {
+                foreach (TrainCar car in cars)
+                {
+                    __instance.AddNetworkingScripts(car, null);
+                }
+
+                WorldTrain[] newServerTrains = __instance.GenerateServerCarsData(cars).ToArray();
+                foreach (WorldTrain newServerTrain in newServerTrains)
+                {
+                    if (DVCustomCarLoader.CarTypeInjector.TryGetCustomCarByType(newServerTrain.CarType, out DVCustomCarLoader.CustomCar customCar))
+                    {
+                        Main.Log($"custom car identifier: {customCar.identifier}");
+                        newServerTrain.CCLCarId = customCar.identifier;
+                        newServerTrain.CarType = TrainCarType.NotSet;
+                    }
+                    else
+                        Main.Log("What the fuck there's no custom car identifier!");
+                }
+                __instance.serverCarStates.AddRange(newServerTrains);
+                __instance.localCars.AddRange(cars);
+                writer.Write(newServerTrains);
+                Main.Log($"[CLIENT] > TRAINS_INIT: {newServerTrains.Length}");
+
+                using (Message message = Message.Create((ushort)NetworkTags.TRAINS_INIT, writer))
+                    SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
+            }
+            return false;
+        }
+    }
+
+    class DVMultiplayerContinued_CoroUpdateLocation_Patch
+    {
+        static void Postfix(NetworkTrainPosSync __instance, TrainLocation location)
+        {
+            if (__instance.hasLocalPlayerAuthority)
+                return;
+
+            CustomLocoSimDiesel customDiesel = __instance.trainCar.GetComponent<CustomLocoSimDiesel>();
+            if (customDiesel)
+            {
+                customDiesel.engineRPM.SetValue(location.RPM);
+                customDiesel.engineTemp.SetValue(location.Temperature);
+            }
+        }
+    }
+
+    class DVMultiplayerContinued_SendCarLocationUpdate_Patch
+    {
+        static bool Prefix(NetworkTrainManager __instance, TrainCar trainCar, bool reliable = false)
+        {
+            if (!__instance.IsSynced)
+                return false;
+
+            //Main.Log($"[CLIENT] > TRAIN_LOCATION_UPDATE: TrainID: {trainCar.ID}");
+
+            using (DarkRiftWriter writer = DarkRiftWriter.Create())
+            {
+                List<TrainLocation> locations = new List<TrainLocation>();
+                foreach (TrainCar car in trainCar.trainset.cars)
+                {
+                    List<TrainBogie> bogies = new List<TrainBogie>();
+                    foreach (Bogie bogie in car.Bogies)
+                    {
+                        bogies.Add(new TrainBogie()
+                        {
+                            TrackName = bogie.HasDerailed ? "" : bogie.track.name,
+                            Derailed = bogie.HasDerailed,
+                            PositionAlongTrack = bogie.HasDerailed ? 0 : bogie.traveller.pointRelativeSpan + bogie.traveller.curPoint.span,
+                        });
+                    }
+
+                    TrainLocation loc = new TrainLocation()
+                    {
+                        TrainId = car.CarGUID,
+                        Forward = car.transform.forward,
+                        Position = car.transform.position - WorldMover.currentMove,
+                        Rotation = car.transform.rotation,
+                        Bogies = bogies.ToArray(),
+                        IsStationary = car.isStationary,
+                        Velocity = car.rb.velocity,
+                        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                    };
+
+                    LocoControllerShunter controllerShunter = car.GetComponent<LocoControllerShunter>();
+                    LocoControllerDiesel controllerDiesel = car.GetComponent<LocoControllerDiesel>();
+                    CustomLocoSimDiesel customDiesel = car.GetComponent<CustomLocoSimDiesel>();
+
+                    if (controllerShunter)
+                    {
+                        loc.RPM = controllerShunter.GetEngineRPM();
+                        loc.Temperature = controllerShunter.GetEngineTemp();
+                    }
+                    else if (controllerDiesel)
+                    {
+                        loc.RPM = controllerDiesel.GetEngineRPM();
+                        loc.Temperature = controllerDiesel.GetEngineTemp();
+                    }
+                    else if (customDiesel)
+                    {
+                        loc.RPM = customDiesel.engineRPM.value;
+                        loc.Temperature = customDiesel.engineTemp.value;
+                    }
+
+                    locations.Add(loc);
+                }
+
+                writer.Write(locations.ToArray());
+
+                using (Message message = Message.Create((ushort)NetworkTags.TRAIN_LOCATION_UPDATE, writer))
+                    SingletonBehaviour<UnityClient>.Instance.SendMessage(message, reliable ? SendMode.Reliable : SendMode.Unreliable);
+            }
+            return false;
+        }
+    }
+
+    class SimulationPatches
+    {
+        static bool DieselSimTickPatch(CustomLocoSimDiesel __instance)
+        {
+            if (NetworkManager.IsClient())
+            {
+                NetworkTrainPosSync networking = __instance.GetComponent<NetworkTrainPosSync>();
+                if (networking)
+                {
+                    return networking.hasLocalPlayerAuthority;
+                }
+            }
+            return true;
+        }
+
+        static bool SteamSimTickPatch(CustomLocoSimSteam __instance)
+        {
+            if (NetworkManager.IsClient())
+            {
+                NetworkTrainPosSync networking = __instance.GetComponent<NetworkTrainPosSync>();
+                if (networking)
+                {
+                    return networking.hasLocalPlayerAuthority;
+                }
+            }
+            return true;
+        }
+    }
+
+    class NetworkTrainPosSync_LoadLocoDamage_Patch
+    {
+        static void Postfix(NetworkTrainPosSync __instance, string carHealthData)
+        {
+            DamageControllerCustomDiesel customDamageDiesel = __instance.trainCar.GetComponent<DamageControllerCustomDiesel>();
+            CustomDamageControllerSteam customDamageSteam = __instance.trainCar.GetComponent<CustomDamageControllerSteam>();
+            if (customDamageDiesel != null)
+                customDamageDiesel.LoadDamagesState(JObject.Parse(carHealthData));
+            else if (customDamageSteam != null)
+                customDamageSteam.LoadDamagesState(JObject.Parse(carHealthData));
+        }
+    }
+
+    class NetworkTrainManager_SendInitCars_Patch
+    {
+        static bool Prefix(NetworkTrainManager __instance)
+        {
+            using (DarkRiftWriter writer = DarkRiftWriter.Create())
+            {
+                __instance.serverCarStates.Clear();
+                Main.Log($"Host synching trains with server. Train amount: {__instance.localCars.Count}");
+                __instance.serverCarStates.AddRange(__instance.GenerateServerCarsData(__instance.localCars));
+
+                Main.Log($"[CLIENT] > TRAIN_HOSTSYNC: AmountOfTrains: {__instance.serverCarStates.Count}");
+
+                foreach (WorldTrain serverCarState in __instance.serverCarStates)
+                {
+                    if (DVCustomCarLoader.CarTypeInjector.TryGetCustomCarByType(serverCarState.CarType, out DVCustomCarLoader.CustomCar customCar))
+                    {
+                        Main.Log($"custom car identifier: {customCar.identifier}");
+                        serverCarState.CCLCarId = customCar.identifier;
+                        serverCarState.CarType = TrainCarType.NotSet;
+                    }
+                    else
+                        Main.Log("What the fuck there's no custom car identifier!");
+                }
+
+                writer.Write(__instance.serverCarStates.ToArray());
+
+                using (Message message = Message.Create((ushort)NetworkTags.TRAIN_HOST_SYNC, writer))
+                    SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
+            }
+            __instance.IsSynced = true;
+            return false;
         }
     }
 }

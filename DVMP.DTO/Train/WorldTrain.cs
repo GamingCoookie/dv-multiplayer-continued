@@ -12,6 +12,7 @@ namespace DVMultiplayer.DTO.Train
         public string Guid { get; set; }
         public string Id { get; set; } = "";
         public TrainCarType CarType { get; set; } = TrainCarType.NotSet;
+        public string CCLCarId { get; set; } = "";
         public bool IsLoco { get; set; }
         public bool IsRemoved { get; set; } = false;
 
@@ -55,6 +56,7 @@ namespace DVMultiplayer.DTO.Train
             Guid = e.Reader.ReadString();
             Id = e.Reader.ReadString();
             CarType = (TrainCarType)e.Reader.ReadUInt32();
+            CCLCarId = e.Reader.ReadString();
             IsLoco = e.Reader.ReadBoolean();
             IsRemoved = e.Reader.ReadBoolean();
 
@@ -105,6 +107,7 @@ namespace DVMultiplayer.DTO.Train
             e.Writer.Write(Guid);
             e.Writer.Write(Id);
             e.Writer.Write((uint)CarType);
+            e.Writer.Write(CCLCarId);
             e.Writer.Write(IsLoco);
             e.Writer.Write(IsRemoved);
 
