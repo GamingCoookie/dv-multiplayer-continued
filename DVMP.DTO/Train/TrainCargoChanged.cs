@@ -10,6 +10,8 @@ namespace DVMultiplayer.DTO.Train
         public CargoType Type { get; set; } = CargoType.None;
         public string WarehouseId { get; set; } = "";
         public bool IsLoading { get; set; }
+        public string YardID { get; set; } = "";
+        public string TrackID { get; set; } = "";
 
         public void Deserialize(DeserializeEvent e)
         {
@@ -18,6 +20,8 @@ namespace DVMultiplayer.DTO.Train
             Type = (CargoType)e.Reader.ReadUInt32();
             WarehouseId = e.Reader.ReadString();
             IsLoading = e.Reader.ReadBoolean();
+            YardID = e.Reader.ReadString();
+            TrackID = e.Reader.ReadString();
         }
 
         public void Serialize(SerializeEvent e)
@@ -27,6 +31,8 @@ namespace DVMultiplayer.DTO.Train
             e.Writer.Write((uint)Type);
             e.Writer.Write(WarehouseId);
             e.Writer.Write(IsLoading);
+            e.Writer.Write(YardID);
+            e.Writer.Write(TrackID);
         }
     }
 }

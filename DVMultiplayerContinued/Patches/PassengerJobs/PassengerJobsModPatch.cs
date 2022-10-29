@@ -1,5 +1,8 @@
-﻿using DV.Logic.Job;
+﻿using DarkRift;
+using DarkRift.Client.Unity;
+using DV.Logic.Job;
 using DVMultiplayer.Networking;
+using DVMultiplayer.DTO.Train;
 using HarmonyLib;
 using PassengerJobsMod;
 using System;
@@ -51,6 +54,16 @@ namespace DVMultiplayer.Patches.PassengerJobs
                 MethodInfo GetJobTypeFromDefinition = AccessTools.Method(typeof(NetworkJobsManager), "GetJobTypeFromDefinition");
                 MethodInfo GetJobTypeFromDefinitionPostfix = AccessTools.Method(typeof(PassengerJobs_GetJobTypeFromDefinition_Patch), "Postfix");
                 harmony.Patch(GetJobTypeFromDefinition, postfix: new HarmonyMethod(GetJobTypeFromDefinitionPostfix));
+
+                Main.Log("Patching DVMultiplayerContinued.NetworkTrainManager.OnCargoChangeMessage");
+                MethodInfo OnCargoChangeMessage = AccessTools.Method(typeof(NetworkTrainManager), nameof(NetworkTrainManager.OnCargoChangeMessage));
+                MethodInfo OnCargoChangeMessagePrefix = AccessTools.Method(typeof(DVMultiplayer_OnCargoChangeMessage_Patch), "Prefix");
+                harmony.Patch(OnCargoChangeMessage, prefix: new HarmonyMethod(OnCargoChangeMessagePrefix));
+
+                Main.Log("Patching DVMultiplayerContinued.NetworkTrainManager.CargoStateChanged");
+                MethodInfo CargoStateChanged = AccessTools.Method(typeof(NetworkTrainManager), nameof(NetworkTrainManager.CargoStateChanged));
+                MethodInfo CargoStateChangedPrefix = AccessTools.Method(typeof(DVMultiplayer_CargoStateChanged_Patch), "Prefix");
+                harmony.Patch(CargoStateChanged, prefix: new HarmonyMethod(CargoStateChangedPrefix));
             }
             catch(Exception ex)
             {
@@ -128,6 +141,75 @@ namespace DVMultiplayer.Patches.PassengerJobs
                 {
                     __result = (definition as StaticPassengerJobDefinition).subType;
                 }
+            }
+        }
+    }
+
+    class DVMultiplayer_OnCargoChangeMessage_Patch
+    {
+        static bool Prefix(NetworkTrainManager __instance, Message message)
+        {
+            if (__instance.buffer.NotSyncedAddToBuffer(__instance.IsSynced, __instance.OnCargoChangeMessage, message))
+                return false;
+
+            using (DarkRiftReader reader = message.GetReader())
+            {
+                while (reader.Position < reader.Length)
+                {
+                    TrainCargoChanged data = reader.ReadSerializable<TrainCargoChanged>();
+                    if (data.WarehouseId != "")
+                        return true;
+                    Main.Log($"[CLIENT] < TRAIN_CARGO_CHANGE: Car: {data.Id} {(data.IsLoading ? $"Loaded {data.Type.GetCargoName()}" : "Unloaded")}");
+                    WorldTrain train = __instance.serverCarStates.FirstOrDefault(t => t.Guid == data.Id);
+                    if (train != null)
+                    {
+                        train.CargoType = data.Type;
+                        train.CargoAmount = data.Amount;
+                    }
+
+                    TrainCar car = __instance.localCars.FirstOrDefault(t => t.CarGUID == data.Id);
+                    if (car)
+                    {
+                        __instance.IsChangeByNetwork = true;
+                        Main.Log(data.YardID + " " + data.TrackID);
+                        WarehouseMachine warehouse = PlatformManager.GetController(data.YardID, data.TrackID).LogicMachine;
+                        if (warehouse != null)
+                        {
+                            if (data.IsLoading)
+                                car.logicCar.LoadCargo(data.Amount, data.Type, warehouse);
+                            else
+                                car.logicCar.UnloadCargo(car.logicCar.LoadedCargoAmount, car.logicCar.CurrentCargoTypeInCar, warehouse);
+                            __instance.IsChangeByNetwork = false;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    class DVMultiplayer_CargoStateChanged_Patch
+    {
+        static bool Prefix(TrainCar trainCar, CargoType type, bool isLoaded)
+        {
+            if (trainCar.logicCar.CurrentTrack.ID.trackType == "LP")
+            {
+                string yardID = trainCar.logicCar.CurrentTrack.ID.yardId;
+                string trackID = trainCar.logicCar.CurrentTrack.ID.FullDisplayID;
+                SendCargoStateChange(trainCar.CarGUID, trainCar.LoadedCargoAmount, type, yardID, trackID, isLoaded);
+                return false;
+            }
+            return true;
+        }
+
+        static void SendCargoStateChange(string carId, float loadedCargoAmount, CargoType loadedCargo, string yardID, string trackID, bool isLoaded)
+        {
+            Main.Log($"[CLIENT] > TRAIN_CARGO_CHANGE: Car: {carId} {(isLoaded ? $"Loaded {loadedCargo.GetCargoName()}" : "Unloaded")}");
+            using (DarkRiftWriter writer = DarkRiftWriter.Create())
+            {
+                writer.Write(new TrainCargoChanged() { Id = carId, Amount = loadedCargoAmount, Type = loadedCargo, YardID = yardID, TrackID = trackID, IsLoading = isLoaded });
+                using (Message message = Message.Create((ushort)NetworkTags.TRAIN_CARGO_CHANGE, writer))
+                    SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
             }
         }
     }

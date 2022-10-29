@@ -159,7 +159,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         WarehouseMachine warehouse = null;
         if (trainCar.IsCargoLoadedUnloadedByMachine)
             warehouse = trainCar.logicCar.CargoOriginWarehouse;
-
         SendCargoStateChange(trainCar.CarGUID, trainCar.LoadedCargoAmount, type, warehouse != null ? warehouse.ID : "", isLoaded);
     }
 
@@ -992,7 +991,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         }
     }
 
-    private void OnCargoChangeMessage(Message message)
+    internal void OnCargoChangeMessage(Message message)
     {
         if (buffer.NotSyncedAddToBuffer(IsSynced, OnCargoChangeMessage, message))
             return;
@@ -1013,14 +1012,16 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 TrainCar car = localCars.FirstOrDefault(t => t.CarGUID == data.Id);
                 if (car)
                 {
-
                     IsChangeByNetwork = true;
                     WarehouseMachineController warehouse = WarehouseMachineController.allControllers.FirstOrDefault(w => w.warehouseMachine.ID == data.WarehouseId);
-                    if (data.IsLoading)
-                        car.logicCar.LoadCargo(data.Amount, data.Type, warehouse.warehouseMachine);
-                    else
-                        car.logicCar.UnloadCargo(car.logicCar.LoadedCargoAmount, car.logicCar.CurrentCargoTypeInCar, warehouse.warehouseMachine);
-                    IsChangeByNetwork = false;
+                    if (warehouse != null)
+                    {
+                        if (data.IsLoading)
+                            car.logicCar.LoadCargo(data.Amount, data.Type, warehouse.warehouseMachine);
+                        else
+                            car.logicCar.UnloadCargo(car.logicCar.LoadedCargoAmount, car.logicCar.CurrentCargoTypeInCar, warehouse.warehouseMachine);
+                        IsChangeByNetwork = false;
+                    }
                 }
             }
         }
@@ -1732,9 +1733,6 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         Main.Log($"[CLIENT] > TRAIN_CARGO_CHANGE: Car: {carId} {(isLoaded ? $"Loaded {loadedCargo.GetCargoName()}" : "Unloaded")}");
         using (DarkRiftWriter writer = DarkRiftWriter.Create())
         {
-            if (warehouseId == null)
-                warehouseId = "";
-
             writer.Write(new TrainCargoChanged() { Id = carId, Amount = loadedCargoAmount, Type = loadedCargo, WarehouseId = warehouseId, IsLoading = isLoaded });
             using (Message message = Message.Create((ushort)NetworkTags.TRAIN_CARGO_CHANGE, writer))
                 SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
