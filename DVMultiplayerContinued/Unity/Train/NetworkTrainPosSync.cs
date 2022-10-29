@@ -861,6 +861,24 @@ internal class NetworkTrainPosSync : MonoBehaviour
         newPos = location.Position;
         newRot = location.Rotation;
         isStationary = !(velocity.magnitude > 0);
+        LocoControllerShunter controllerShunter = trainCar.GetComponent<LocoControllerShunter>();
+        LocoControllerDiesel controllerDiesel = trainCar.GetComponent<LocoControllerDiesel>();
+        LocoControllerSteam controllerSteam = trainCar.GetComponent<LocoControllerSteam>();
+
+        if (controllerShunter)
+        {
+            controllerShunter.sim.engineRPM.SetValue(location.RPM);
+            controllerShunter.sim.engineTemp.SetValue(location.Temperature);
+        }
+        else if (controllerDiesel)
+        {
+            controllerDiesel.sim.engineRPM.SetValue(location.RPM);
+            controllerDiesel.sim.engineTemp.SetValue(location.Temperature);
+        }
+        else if (controllerSteam)
+        {
+            controllerSteam.sim.temperature.SetValue(location.Temperature);
+        }
     }
 
     //private void SyncVelocityAndSpeedUpIfDesyncedOnFrontCar(TrainLocation location)

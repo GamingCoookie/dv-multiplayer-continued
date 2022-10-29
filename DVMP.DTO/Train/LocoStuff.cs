@@ -11,6 +11,7 @@ namespace DVMultiplayer.DTO.Train
         public bool FireOn { get; set; } = false;
         public float FuelLevel { get; set; } = 0f;
         public float OilLevel { get; set; } = 0f;
+        public float RPM { get; set; } = 0f;
         public float SandLevel { get; set; } = 0f;
         public float Temp { get; set; } = 0f;
         public float TenderCoalLevel { get; set; } = 0f;
@@ -25,6 +26,7 @@ namespace DVMultiplayer.DTO.Train
             FireOn = e.Reader.ReadBoolean();
             FuelLevel = e.Reader.ReadSingle();
             OilLevel = e.Reader.ReadSingle();
+            RPM = e.Reader.ReadSingle();
             SandLevel = e.Reader.ReadSingle();
             Temp = e.Reader.ReadSingle();
             TenderCoalLevel = e.Reader.ReadSingle();
@@ -40,6 +42,7 @@ namespace DVMultiplayer.DTO.Train
             e.Writer.Write(FireOn);
             e.Writer.Write(FuelLevel);
             e.Writer.Write(OilLevel);
+            e.Writer.Write(RPM);
             e.Writer.Write(SandLevel);
             e.Writer.Write(Temp);
             e.Writer.Write(TenderCoalLevel);

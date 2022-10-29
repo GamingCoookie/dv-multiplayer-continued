@@ -194,6 +194,7 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                 CustomLocoSimDiesel customDieselSim = train.GetComponent<CustomLocoSimDiesel>();
                 customDieselSim.fuel.SetValue(serverState.LocoStuff.FuelLevel);
                 customDieselSim.oil.SetValue(serverState.LocoStuff.OilLevel);
+                customDieselSim.engineRPM.SetValue(serverState.LocoStuff.RPM);
                 customDieselSim.sand.SetValue(serverState.LocoStuff.SandLevel);
                 customDieselSim.engineTemp.SetValue(serverState.LocoStuff.Temp);
             }

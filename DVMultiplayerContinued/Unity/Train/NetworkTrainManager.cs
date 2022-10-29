@@ -1380,6 +1380,25 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
                 };
 
+                LocoControllerShunter controllerShunter = car.GetComponent<LocoControllerShunter>();
+                LocoControllerDiesel controllerDiesel = car.GetComponent<LocoControllerDiesel>();
+                LocoControllerSteam controllerSteam = car.GetComponent<LocoControllerSteam>();
+
+                if (controllerShunter)
+                {
+                    loc.RPM = controllerShunter.GetEngineRPM();
+                    loc.Temperature = controllerShunter.GetEngineTemp();
+                }
+                else if (controllerDiesel)
+                {
+                    loc.RPM = controllerDiesel.GetEngineRPM();
+                    loc.Temperature = controllerDiesel.GetEngineTemp();
+                }
+                else if (controllerSteam)
+                {
+                    loc.Temperature = controllerSteam.GetFireTemperature();
+                }
+
                 locations.Add(loc);
             }
 
@@ -1501,6 +1520,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         EngineOn = shunter.GetEngineRunning(),
                         FuelLevel = shunter.GetFuelAmount(),
                         OilLevel = shunter.GetOilAmount(),
+                        RPM = shunter.GetEngineRPM(),
                         SandLevel = shunter.GetSandAmount(),
                         Temp = shunter.GetEngineTemp()
                     };
@@ -1514,6 +1534,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                         EngineOn = diesel.GetEngineRunning(),
                         FuelLevel = diesel.GetFuelAmount(),
                         OilLevel = diesel.GetOilAmount(),
+                        RPM = diesel.GetEngineRPM(),
                         SandLevel = diesel.GetSandAmount(),
                         Temp = diesel.GetEngineTemp()
                     };
@@ -2045,6 +2066,8 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     sim.fuel.SetValue(locoStuff.FuelLevel);
                     Main.Log($"Sync Oil to {locoStuff.OilLevel}");
                     sim.oil.SetValue(locoStuff.OilLevel);
+                    Main.Log($"Sync RPM to {locoStuff.RPM}");
+                    sim.engineRPM.SetValue(locoStuff.RPM);
                     Main.Log($"Sync Sand to {locoStuff.SandLevel}");
                     sim.sand.SetValue(locoStuff.SandLevel);
                     Main.Log($"Sync Temperature to {locoStuff.Temp}");
@@ -2076,6 +2099,8 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     sim.fuel.SetValue(locoStuff.FuelLevel);
                     Main.Log($"Sync Oil to {locoStuff.OilLevel}");
                     sim.oil.SetValue(locoStuff.OilLevel);
+                    Main.Log($"Sync RPM to {locoStuff.RPM}");
+                    sim.engineRPM.SetValue(locoStuff.RPM);
                     Main.Log($"Sync Sand to {locoStuff.SandLevel}");
                     sim.sand.SetValue(locoStuff.SandLevel);
                     Main.Log($"Sync Temperature to {locoStuff.Temp}");
