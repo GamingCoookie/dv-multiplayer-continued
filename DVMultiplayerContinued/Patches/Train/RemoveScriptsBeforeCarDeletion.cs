@@ -21,6 +21,8 @@ namespace DVMultiplayer.Patches
                     Object.DestroyImmediate(trainCar.GetComponent<NetworkTrainPosSync>());
                 if (trainCar.GetComponent<NetworkTrainSync>())
                     Object.DestroyImmediate(trainCar.GetComponent<NetworkTrainSync>());
+                if (trainCar.GetComponent<NetworkTrainMUSync>())
+                    Object.DestroyImmediate(trainCar.GetComponent<NetworkTrainMUSync>());
                 if (trainCar.frontCoupler.GetComponent<NetworkTrainCouplerSync>())
                     Object.DestroyImmediate(trainCar.frontCoupler.GetComponent<NetworkTrainCouplerSync>());
                 if (trainCar.rearCoupler.GetComponent<NetworkTrainCouplerSync>())
