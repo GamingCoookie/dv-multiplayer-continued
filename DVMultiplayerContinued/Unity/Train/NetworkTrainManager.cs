@@ -1433,7 +1433,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         {
             UpdateServerStateLeverChange(serverCarStates.FirstOrDefault(t => t.Guid == train.CarGUID), value, name);
         }
-        //Main.Log($"[CLIENT] > TRAIN_LEVER: TrainID: {train.ID}, Lever: {lever}, value: {value}");
+        //Main.Log($"[CLIENT] > TRAIN_LEVER: TrainID: {train.ID}, Lever: {name}, value: {value}");
 
         using (DarkRiftWriter writer = DarkRiftWriter.Create())
         {
@@ -2053,7 +2053,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     {
                         foreach (var control in serverState.Controls.Keys)
                         {
+#if DEBUG
                             Main.Log($"SetValue of {control}");
+#endif
                             ControlImplBase cimplbase = train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == control);
                             if (cimplbase != null)
                                 cimplbase.Value = serverState.Controls[control];
@@ -2086,7 +2088,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     {
                         foreach (var control in serverState.Controls.Keys)
                         {
+#if DEBUG
                             Main.Log($"SetValue of {control}");
+#endif
                             ControlImplBase cimplbase = train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == control);
                             if (cimplbase != null)
                                 cimplbase.Value = serverState.Controls[control];
@@ -2118,7 +2122,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     {
                         foreach (var control in serverState.Controls.Keys)
                         {
+#if DEBUG
                             Main.Log($"SetValue of {control}");
+#endif
                             ControlImplBase cimplbase = train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == control);
                             if (cimplbase != null)
                                 cimplbase.Value = serverState.Controls[control];
@@ -2155,7 +2161,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                     {
                         foreach (var control in controls.Keys)
                         {
+#if DEBUG
                             Main.Log($"SetValue of {control}");
+#endif
                             train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == control).Value = controls[control];
                         }
                     }
@@ -2167,7 +2175,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 {
                     foreach (var control in controls.Keys)
                     {
+#if DEBUG
                         Main.Log($"SetValue of {control}");
+#endif
                         ControlImplBase cimplbase = train.interior.GetComponentsInChildren<ControlImplBase>().FirstOrDefault(s => s.name == control);
                         if (cimplbase != null)
                             cimplbase.Value = serverState.Controls[control];

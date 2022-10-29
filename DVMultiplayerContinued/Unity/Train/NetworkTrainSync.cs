@@ -38,9 +38,9 @@ public class NetworkTrainSync : MonoBehaviour
 
     public void Update()
     {
-        WorldTrain serverState = SingletonBehaviour<NetworkTrainManager>.Instance.serverCarStates.First(s => s.Guid == loco.CarGUID);
-        //Main.Log($"{serverState.AuthorityPlayerId}");
 #if DEBUG
+        WorldTrain serverState = SingletonBehaviour<NetworkTrainManager>.Instance.serverCarStates.FirstOrDefault(s => s.Guid == loco.CarGUID);
+        //Main.Log($"{serverState.AuthorityPlayerId}");
         NetworkPlayerSync playerSync = new NetworkPlayerSync();
         if (SingletonBehaviour<NetworkPlayerManager>.Instance.GetLocalPlayerSync().Id == serverState.AuthorityPlayerId)
         {
