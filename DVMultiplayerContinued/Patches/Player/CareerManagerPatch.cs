@@ -26,8 +26,11 @@ namespace DVMultiplayerContinued.Patches.Player
         {
             internal static bool Prefix(InputAction input, CareerManagerLicensePayingScreen __instance)
             {
+                if (!NetworkManager.IsClient())
+                    return true;
+
                 NetworkPlayerManager npm = SingletonBehaviour<NetworkPlayerManager>.Instance;
-                if (!NetworkManager.IsClient() || input != InputAction.Confirm ||
+                if (NetworkManager.IsHost() || input != InputAction.Confirm ||
                     __instance.cashReg.DepositedCash != double.Parse(__instance.licensePriceText.text.TrimStart(new char[] { '$' })) ||
                     npm.IsChangeByNetwork)
                 {
