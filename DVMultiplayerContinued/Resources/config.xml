@@ -25,7 +25,6 @@
       <logWriter name="FileWriter1" type="FileWriter" levels="trace, info, warning, error, fatal">
         <settings file="Mods/DVMultiplayerContinued/Logs/{0:dd-MM-yyyy}/{0:HH-mm-ss-fff}.log" />
       </logWriter>
-      <logWriter name="UnityModManagerWriter1" type="UnityModManagerWriter" levels="info, warning, error, fatal" />
     </logWriters>
   </logging>
 

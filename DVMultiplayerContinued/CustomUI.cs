@@ -169,8 +169,8 @@ namespace DVMultiplayer
         {
             GameObject canvas = SingletonBehaviour<CanvasSpawner>.Instance.CanvasGO;
             GameObject menuBuilder = CreateMenu(new MenuBuilder("DVMultiplayer Two Button Popup", "Popup", 800, 500));
-            ButtonBuilder yesButtonBuilder = new ButtonBuilder("Yes", "Yes", menuBuilder.transform, new Rect(-150f, -390f, 304, 91f), RectTransformAnchoring.BottomLeft, new Vector2(.5f, .5f), TextAlignmentOptions.Center);
-            ButtonBuilder noButtonBuilder = new ButtonBuilder("No", "No", menuBuilder.transform, new Rect(150f, -390f, 304, 91f), RectTransformAnchoring.BottomRight, new Vector2(.5f, .5f), TextAlignmentOptions.Center);
+            ButtonBuilder yesButtonBuilder = new ButtonBuilder("Yes", "Yes", menuBuilder.transform, new Rect(-150f, -390f, 304, 91f), RectTransformAnchoring.MiddleLeft, new Vector2(.5f, .5f), TextAlignmentOptions.Center);
+            ButtonBuilder noButtonBuilder = new ButtonBuilder("No", "No", menuBuilder.transform, new Rect(150f, -390f, 304, 91f), RectTransformAnchoring.MiddleRight, new Vector2(.5f, .5f), TextAlignmentOptions.Center);
 
             CreateSection(new Rect(30f, -320, 740, 200), RectTransformAnchoring.TopLeft, menuBuilder.transform, new Vector2(0, 0));
             CreateLabel("Message 1", "TEST", menuBuilder.transform, new Rect(32, -250, 738, 145), FontStyles.UpperCase, TextAlignmentOptions.Center, RectTransformAnchoring.TopLeft, new Vector2(0, 0), Color.white);
