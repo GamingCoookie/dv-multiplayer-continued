@@ -2,7 +2,7 @@
     "Id": "DVMultiplayerContinued",
     "DisplayName": "Derail Valley Multiplayer Continued",
     "Author": "Patrick van Halm & GamingCoookie",
-    "Version": "1.4.0-dev-221029",
+    "Version": "1.4.0",
     "LoadAfter": [ "PassengerJobs", "DVCustomCarLoader" ],
     "AssemblyName": "DVMultiplayerContinued.dll",
     "EntryMethod": "DVMultiplayer.Main.Load",
