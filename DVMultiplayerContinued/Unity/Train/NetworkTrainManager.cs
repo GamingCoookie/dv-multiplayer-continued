@@ -2190,8 +2190,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
     private TrainCar InitializeNewTrainCar(WorldTrain serverState)
     {
         GameObject carPrefab = null;
-        if (serverState.CarType != TrainCarType.NotSet)
-            carPrefab = CarTypes.GetCarPrefab(serverState.CarType);
+        //if (serverState.CarType != TrainCarType.NotSet)
+        carPrefab = CarTypes.GetCarPrefab(serverState.CarType);
+        /*
         else
         {
             Main.Log($"Custom car!");
@@ -2205,6 +2206,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 Main.Log($"car by identifier {serverState.CCLCarId} not found!");
             }
         }
+        */
         TrainCar newTrain;
         TrainBogie bogie1 = serverState.Bogies[0];
         TrainBogie bogie2 = serverState.Bogies[serverState.Bogies.Length - 1];

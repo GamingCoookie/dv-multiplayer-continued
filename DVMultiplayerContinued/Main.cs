@@ -48,6 +48,7 @@ namespace DVMultiplayer
             //ModEntry customCarLoaderModEntry = FindMod("DVCustomCarLoader");
             //if (customCarLoaderModEntry != null && customCarLoaderModEntry.Enabled)
                 //CustomCarLoaderInitializer.Initialize(customCarLoaderModEntry, harmony);
+            // Check NetworkTrainManager.SyncCarsFromServerState when reenabling
             return true;
         }
 
