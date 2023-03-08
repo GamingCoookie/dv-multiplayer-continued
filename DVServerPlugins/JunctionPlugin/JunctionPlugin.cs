@@ -2,17 +2,19 @@
 using DarkRift.Server;
 using DVMultiplayer.DTO.Junction;
 using DVMultiplayer.Networking;
+using DVMP.DTO.ServerSave;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace JunctionPlugin
 {
-    public class JunctionPlugin : Plugin
+    public class JunctionPlugin : Plugin, IPluginSave
     {
         public override bool ThreadSafe => true;
 
-        public override Version Version => new Version("1.0.6");
+        public override Version Version => new Version("1.4.1");
 
         private readonly List<Switch> switchStates;
 
@@ -20,6 +22,17 @@ namespace JunctionPlugin
         {
             switchStates = new List<Switch>();
             ClientManager.ClientConnected += OnClientConnected;
+        }
+
+        public string SaveData()
+        {
+            return JsonConvert.SerializeObject(switchStates);
+        }
+
+        public void LoadData(string json)
+        {
+            switchStates.Clear();
+            switchStates.AddRange((List<Switch>)JsonConvert.DeserializeObject(json));
         }
 
         private void OnClientConnected(object sender, ClientConnectedEventArgs e)

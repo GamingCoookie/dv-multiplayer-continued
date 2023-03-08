@@ -4,6 +4,8 @@ using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Train;
 using DVMP.DTO;
 using DVMultiplayer.Networking;
+using DVMP.DTO.ServerSave;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +14,11 @@ using UnityEngine;
 
 namespace TrainPlugin
 {
-    public class TrainPlugin : Plugin
+    public class TrainPlugin : Plugin, IPluginSave
     {
         public override bool ThreadSafe => false;
 
-        public override Version Version => new Version("1.6.48");
+        public override Version Version => new Version("1.4.1");
 
         private readonly List<WorldTrain> worldTrains;
         private readonly List<IClient> playerHasInitializedTrain;
@@ -30,6 +32,17 @@ namespace TrainPlugin
             playerHasInitializedTrain = new List<IClient>();
             ClientManager.ClientConnected += OnClientConnected;
             ClientManager.ClientDisconnected += OnClientDisconnect;
+        }
+
+        public string SaveData()
+        {
+            return JsonConvert.SerializeObject(worldTrains);
+        }
+
+        public void LoadData(string json)
+        {
+            worldTrains.Clear();
+            worldTrains.AddRange((List<WorldTrain>)JsonConvert.DeserializeObject(json));
         }
 
         private void OnClientDisconnect(object sender, ClientDisconnectedEventArgs e)

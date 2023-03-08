@@ -2,16 +2,19 @@
 using DarkRift.Server;
 using DVMultiplayer.DTO.Job;
 using DVMultiplayer.Networking;
+using DVMP.DTO.ServerSave;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
+using DVMultiplayer.DTO.Player;
 
 namespace JobsPlugin
 {
-    public class JobsPlugin : Plugin
+    public class JobsPlugin : Plugin, IPluginSave
     {
         public override bool ThreadSafe => true;
-        public override Version Version => new Version("1.0.10");
+        public override Version Version => new Version("1.4.1");
         private readonly List<Chain> chains;
         private readonly List<Job> jobs;
 
@@ -20,6 +23,20 @@ namespace JobsPlugin
             chains = new List<Chain>();
             jobs = new List<Job>();
             ClientManager.ClientConnected += OnClientConnected;
+        }
+
+        public string SaveData()
+        {
+            return JsonConvert.SerializeObject(chains) + ";" + JsonConvert.SerializeObject(jobs);
+        }
+
+        public void LoadData(string json)
+        {
+            string[] jsons = json.Split(';');
+            chains.Clear();
+            chains.AddRange((List<Chain>)JsonConvert.DeserializeObject(jsons[0]));
+            jobs.Clear();
+            jobs.AddRange((List<Job>)JsonConvert.DeserializeObject(jsons[1]));
         }
 
         private void OnClientConnected(object sender, ClientConnectedEventArgs e)
@@ -184,7 +201,7 @@ namespace JobsPlugin
                 List<Job> jobsToSend = new List<Job>();
                 foreach(Chain chain in chainsToSend)
                 {
-                    jobsToSend.AddRange(jobs.Where(j => j.ChainId == chain.Id && !j.IsCompleted));
+                    jobsToSend.AddRange(jobs.Where(j => j.ChainId == chain.Id && !j.IsCompleted && !j.IsTaken));
                 }
                 writer.Write(chainsToSend);
                 writer.Write(jobsToSend.ToArray());

@@ -1,5 +1,6 @@
 ﻿using DarkRift;
 using DarkRift.Server;
+using DVMP.DTO.ServerSave;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -17,19 +18,6 @@ namespace DVServer
         INITIALIZING,
         READY,
         SHUTDOWN
-    }
-
-    public interface IPluginSave
-    {
-        string Name { get; }
-        object SaveData();
-        void LoadData(string data);
-    }
-
-    public interface ISaveManager
-    {
-        bool Save(List<IPluginSave> plugins, bool force = false);
-        void Load(List<IPluginSave> plugins);
     }
 
     public static class ServerManager
@@ -73,7 +61,17 @@ namespace DVServer
 
         internal static void Save(bool force = false)
         {
-            SaveManager?.Save(_RegisteredPlugins,force);
+            bool? saved;
+            try
+            {
+                saved = SaveManager?.Save(_RegisteredPlugins, force);
+            }
+            catch (Exception ex)
+            {
+                saved = false;
+            }
+            if ((bool)saved)
+                Console.WriteLine("Saved successfully");
         }
         internal static void Load()
         {
@@ -92,9 +90,8 @@ namespace DVServer
             {
                 return JsonConvert.DeserializeObject<T>(data);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-
             }
             return default;
         }

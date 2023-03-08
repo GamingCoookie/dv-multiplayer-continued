@@ -1,17 +1,17 @@
-﻿using System;
+﻿using DarkRift.Server;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using DarkRift.Server;
 using System.Threading;
 using System.IO;
 using System.Collections.Specialized;
+using DVMP.DTO.ServerSave;
 
 namespace DVServer
 {
-    class Program
+    class DedicatedServer
     {
         /// <summary>
         ///     The server instance.
@@ -31,7 +31,7 @@ namespace DVServer
             string configFile;
             if (arguments.Length == 0)
             {
-                configFile = "Server.config";
+                configFile = "Resources/Server.config";
             }
             else if (arguments.Length == 1)
             {
@@ -75,6 +75,19 @@ namespace DVServer
             ServerManager.Init();
             server = new DarkRiftServer(spawnData);
             server.StartServer();
+            ServerSaveManager manager = new ServerSaveManager();
+            ServerManager.RegisterSaveManager(manager);
+            foreach (ServerSpawnData.PluginsSettings.PluginSettings plugin in spawnData.Plugins.Plugins)
+            {
+                try
+                {
+                    ServerManager.RegisterPlugin((IPluginSave)server.PluginManager.GetPluginByName(plugin.Type));
+                    Console.WriteLine($"Registered {plugin.Type} for the save manager");
+                }
+                catch (InvalidCastException)
+                {
+                }
+            }
             ServerManager.Load();
             ServerManager.Start();
             ServerManager.SetServerStatus(SERVER_STATUS.READY);
@@ -111,6 +124,41 @@ namespace DVServer
                 server.ExecuteCommand(input);
             }
         }
+    }
+
+    public class ServerSaveManager : ISaveManager
+    {
+        string saveLocation = "ServerSave.json";
+        string data = "";
+        public bool Save(List<IPluginSave> plugins, bool force = false)
+        {
+            PlayerPlugin.PlayerPlugin playerPlugin = (PlayerPlugin.PlayerPlugin)plugins.First(p => p.Name == "PlayerPlugin");
+            if (playerPlugin.playerSpawn.Position == null)
+                return false;
+            foreach (IPluginSave plugin in plugins)
+            {
+                data += plugin.SaveData() + "$&$";
+            }
+            File.WriteAllText(saveLocation, data);
+            return true;
+        }
+
+        public void Load(List<IPluginSave> plugins)
+        {
+            try
+            {
+                data = File.ReadAllText(saveLocation);
+                string[] tmp = data.Split('$', '&', '$');
+                foreach (IPluginSave plugin in plugins)
+                {
+                    plugin.LoadData(tmp[plugins.BinarySearch(plugin)]);
+                }
+                Console.WriteLine("Server Save Data successfully loaded.");
+            }
+            catch (FileNotFoundException)
+            {
+            }
+        } 
     }
 }
 

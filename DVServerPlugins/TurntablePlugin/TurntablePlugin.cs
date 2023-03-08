@@ -2,6 +2,8 @@
 using DarkRift.Server;
 using DVMultiplayer.DTO.Turntable;
 using DVMultiplayer.Networking;
+using DVMP.DTO.ServerSave;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,17 +11,28 @@ using UnityEngine;
 
 namespace TurntablePlugin
 {
-    public class TurntablePlugin : Plugin
+    public class TurntablePlugin : Plugin, IPluginSave
     {
         public override bool ThreadSafe => true;
 
-        public override Version Version => new Version("1.0.11");
+        public override Version Version => new Version("1.4.1");
 
         private readonly List<Turntable> turntableStates = new List<Turntable>();
 
         public TurntablePlugin(PluginLoadData pluginLoadData) : base(pluginLoadData)
         {
             ClientManager.ClientConnected += OnClientConnected;
+        }
+
+        public string SaveData()
+        {
+            return JsonConvert.SerializeObject(turntableStates);
+        }
+
+        public void LoadData(string json)
+        {
+            turntableStates.Clear();
+            turntableStates.AddRange((List<Turntable>)JsonConvert.DeserializeObject(json));
         }
 
         private void OnClientConnected(object sender, ClientConnectedEventArgs e)

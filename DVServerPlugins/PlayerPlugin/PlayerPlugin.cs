@@ -3,6 +3,8 @@ using DarkRift.Server;
 using DVMultiplayer.Darkrift;
 using DVMultiplayer.DTO.Player;
 using DVMultiplayer.Networking;
+using DVMP.DTO.ServerSave;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +14,11 @@ using UnityEngine;
 
 namespace PlayerPlugin
 {
-    public class PlayerPlugin : Plugin
+    public class PlayerPlugin : Plugin, IPluginSave
     {
+        new public string Name { get; } = "PlayerPlugin";
         private readonly Dictionary<IClient, Player> players = new Dictionary<IClient, Player>();
-        private SetSpawn playerSpawn;
+        public SetSpawn playerSpawn { get; private set; }
         private double money;
         private IClient playerConnecting = null;
         private readonly BufferQueue buffer = new BufferQueue();
@@ -28,7 +31,7 @@ namespace PlayerPlugin
 
         public override bool ThreadSafe => true;
 
-        public override Version Version => new Version("2.6.20");
+        public override Version Version => new Version("1.4.1");
 
         public PlayerPlugin(PluginLoadData pluginLoadData) : base(pluginLoadData)
         {
@@ -38,6 +41,18 @@ namespace PlayerPlugin
             pingSendTimer.Elapsed += PingSendMessage;
             pingSendTimer.AutoReset = true;
             pingSendTimer.Start();
+        }
+
+        public string SaveData()
+        {
+            return JsonConvert.SerializeObject(playerSpawn.Position) + ";" + JsonConvert.SerializeObject(money);
+        }
+
+        public void LoadData(string json)
+        {
+            string[] jsons = json.Split(';');
+            playerSpawn.Position = (Vector3)JsonConvert.DeserializeObject(jsons[0]);
+            money = (double)JsonConvert.DeserializeObject(jsons[1]);
         }
 
         private void PingSendMessage(object sender, ElapsedEventArgs e)
@@ -56,22 +71,36 @@ namespace PlayerPlugin
 
         private void ClientDisconnected(object sender, ClientDisconnectedEventArgs e)
         {
-            using (DarkRiftWriter writer = DarkRiftWriter.Create())
+            players.Remove(e.Client);
+            if (players.Count > 0)
             {
-                players.Remove(e.Client);
-                if (e.Client == playerConnecting)
+                // Tell other players that someone left
+                Logger.Trace("[SERVER] > PLAYER_DISCONNECT");
+                using (DarkRiftWriter writer = DarkRiftWriter.Create())
                 {
-                    playerConnecting = null;
-                    buffer.RunNext();
+                    if (e.Client == playerConnecting)
+                    {
+                        playerConnecting = null;
+                        buffer.RunNext();
+                    }
+
+                    writer.Write(new Disconnect()
+                    {
+                        PlayerId = e.Client.ID
+                    });
+
+                    using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_DISCONNECT, writer))
+                        ReliableSendToOthers(outMessage, e.Client);
                 }
-
-                writer.Write(new Disconnect()
+                // Make next player in line the new host
+                Logger.Trace("[SERVER] > PLAYER_SET_ROLE");
+                using (DarkRiftWriter writer = DarkRiftWriter.Create())
                 {
-                    PlayerId = e.Client.ID
-                });
+                    writer.Write(true);
 
-                using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_DISCONNECT, writer))
-                    ReliableSendToOthers(outMessage, e.Client);
+                    using (Message message = Message.Create((ushort)NetworkTags.PLAYER_SET_ROLE, writer))
+                        players.Keys.First().SendMessage(message, SendMode.Reliable);
+                }
             }
         }
 
@@ -94,11 +123,11 @@ namespace PlayerPlugin
                 switch (tag)
                 {
                     case NetworkTags.PLAYER_BUY_LICENSE:
-                        ForwardPacket(message, e.Client);
+                        ProcessPacket(message, e.Client);
                         break;
 
                     case NetworkTags.PLAYER_CHAT_MESSAGE:
-                        ForwardPacket(message, e.Client);
+                        ProcessPacket(message, e.Client);
                         break;
 
                     case NetworkTags.PLAYER_LOCATION_UPDATE:
@@ -167,11 +196,11 @@ namespace PlayerPlugin
                 if (missingMods.Count != 0 || extraMods.Count != 0)
                 {
                     succesfullyConnected = false;
+                    Logger.Trace("[SERVER] > PLAYER_MODS_MISMATCH");
                     using (DarkRiftWriter writer = DarkRiftWriter.Create())
                     {
                         writer.Write(missingMods.ToArray());
                         writer.Write(extraMods.ToArray());
-
                         using (Message msg = Message.Create((ushort)NetworkTags.PLAYER_MODS_MISMATCH, writer))
                             sender.SendMessage(msg, SendMode.Reliable);
                     }
@@ -181,14 +210,15 @@ namespace PlayerPlugin
                     // Announce new player to other players
                     if (playerSpawn != null)
                     {
+                        Logger.Trace("[SERVER] > PLAYER_SPAWN_SET");
                         using (DarkRiftWriter writer = DarkRiftWriter.Create())
                         {
                             writer.Write(playerSpawn);
-
                             using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN_SET, writer))
                                 sender.SendMessage(outMessage, SendMode.Reliable);
                         }
 
+                        Logger.Trace("[SERVER] > PLAYER_SPAWN");
                         using (DarkRiftWriter writer = DarkRiftWriter.Create())
                         {
                             writer.Write(new NPlayer()
@@ -202,7 +232,6 @@ namespace PlayerPlugin
                             {
                                 Position = playerSpawn.Position
                             });
-
                             using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN, writer))
                                 ReliableSendToOthers(outMessage, sender);
                         }
@@ -211,6 +240,7 @@ namespace PlayerPlugin
                     // Announce other players to new player
                     foreach (Player p in players.Values)
                     {
+                        Logger.Trace("[SERVER] > PLAYER_SPAWN");
                         using (DarkRiftWriter writer = DarkRiftWriter.Create())
                         {
                             writer.Write(new NPlayer()
@@ -233,6 +263,7 @@ namespace PlayerPlugin
                     }
 
                     // Send money info
+                    Logger.Trace("[SERVER] > PLAYER_MONEY_UPDATE");
                     using (DarkRiftWriter writer = DarkRiftWriter.Create())
                     {
                         writer.Write(money);
@@ -240,6 +271,42 @@ namespace PlayerPlugin
                         using (Message message = Message.Create((ushort)NetworkTags.PLAYER_MONEY_UPDATE, writer))
                             sender.SendMessage(message, SendMode.Reliable);
                     }
+
+                    // Tell client they are just client
+                    Logger.Trace("[SERVER] > PLAYER_SET_ROLE");
+                    using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                    {
+                        writer.Write(false);
+
+                        using (Message message = Message.Create((ushort)NetworkTags.PLAYER_SET_ROLE, writer))
+                            sender.SendMessage(message, SendMode.Reliable);
+                    }
+                }
+            }
+            else
+            {
+                // New player is host
+                if (playerSpawn != null)
+                {
+                    Logger.Trace("[SERVER] > PLAYER_SPAWN_SET");
+                    using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                    {
+                        writer.Write(playerSpawn);
+                        using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN_SET, writer))
+                            sender.SendMessage(outMessage, SendMode.Reliable);
+                    }
+
+                    Logger.Trace("[SERVER] > PLAYER_SET_ROLE");
+                }
+
+                using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                {
+                    writer.Write(true);
+                    if (playerSpawn != null)
+                        writer.Write(true);
+
+                    using (Message message = Message.Create((ushort)NetworkTags.PLAYER_SET_ROLE, writer))
+                        sender.SendMessage(message, SendMode.Reliable);
                 }
             }
             if (succesfullyConnected)
@@ -297,7 +364,7 @@ namespace PlayerPlugin
             ReliableSendToOthers(message, sender);
         }
 
-        private void ForwardPacket(Message message, IClient sender)
+        private void ProcessPacket(Message message, IClient sender)
         {
             ReliableSendToOthers(message, sender);
         }
