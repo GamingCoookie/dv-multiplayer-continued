@@ -88,7 +88,13 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>SET BUILDFOLDER=$(SolutionDir)Build\Plugins
-xcopy $(TargetDir)*.dll %25BUILDFOLDER%25 /Y /I</PostBuildEvent>
+    <PostBuildEvent Condition="'$(OS)' == 'Windows_NT'">
+      SET BUILDFOLDER=$(SolutionDir)Build\Plugins
+      xcopy $(TargetDir)*.dll %25BUILDFOLDER%25 /Y /I
+    </PostBuildEvent>
+    <PostBuildEvent Condition="'$(OS)' != 'Windows_NT'">
+      export BUILDFOLDER="$(SolutionDir)Build/Plugins"
+      cp $(TargetDir)*.dll "$BUILDFOLDER"
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
