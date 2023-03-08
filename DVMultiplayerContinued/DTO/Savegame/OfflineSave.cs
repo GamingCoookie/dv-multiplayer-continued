@@ -15,8 +15,8 @@ namespace DVMultiplayer.DTO.Savegame
         public string SaveDataTurntables { get; set; } = "";
         public string SaveDataDestroyedLocoDebt { get; internal set; }
         public string SaveDataStagedJobDebt { get; internal set; }
-        public string SaveDataDeletedJoblessCarsDept { get; internal set; }
-        public string SaveDataInsuranceDept { get; internal set; }
+        public string SaveDataDeletedJoblessCarsDebt { get; internal set; }
+        public string SaveDataInsuranceDebt { get; internal set; }
         public Vector3 SaveDataPosition { get; internal set; }
     }
 }
