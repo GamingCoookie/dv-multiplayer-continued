@@ -42,7 +42,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     }
 
 
-    private GameObject GetNewPlayerObject(Vector3 pos, Quaternion rotation, string username)
+    private GameObject GetNewPlayerObject(Vector3 pos, Quaternion rotation, string username, string hexColor)
     {
         GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         player.name = username;
@@ -50,6 +50,9 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         player.transform.rotation = rotation;
         player.transform.localScale = new Vector3(0.7f, 1f, 0.7f);
         player.GetComponent<CapsuleCollider>().enabled = false;
+        ColorUtility.TryParseHtmlString(hexColor, out Color color);
+        if (color != null)
+            player.GetComponent<Renderer>().material.color = color;
         player.AddComponent<NetworkPlayerSync>();
 
         GameObject nametagCanvas = new GameObject("Nametag Canvas");
@@ -396,7 +399,8 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
             {
                 Id = SingletonBehaviour<UnityClient>.Instance.ID,
                 Username = PlayerManager.PlayerTransform.GetComponent<NetworkPlayerSync>().Username,
-                Mods = Main.GetEnabledMods()
+                Mods = Main.GetEnabledMods(),
+                Color = Main.Settings.ColorString
             });
 
             using (Message message = Message.Create((ushort)NetworkTags.PLAYER_INIT, writer))
@@ -651,7 +655,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                     Quaternion rotation = Quaternion.identity;
                     if (playerPos.Rotation.HasValue)
                         rotation = playerPos.Rotation.Value;
-                    GameObject playerObject = GetNewPlayerObject(pos, rotation, player.Username);
+                    GameObject playerObject = GetNewPlayerObject(pos, rotation, player.Username, player.Color);
                     WorldMover.Instance.AddObjectToMove(playerObject.transform);
 
                     NetworkPlayerSync playerSync = playerObject.GetComponent<NetworkPlayerSync>();
@@ -659,6 +663,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                     playerSync.Username = player.Username;
                     playerSync.Mods = player.Mods;
                     playerSync.IsLoaded = player.IsLoaded;
+                    playerSync.Color = player.Color;
 
                     localPlayers.Add(player.Id, playerObject);
                     serverPlayers.Add(player.Id, player);

@@ -7,12 +7,16 @@ using System;
 using System.Linq;
 using System.Reflection;
 using static UnityModManagerNet.UnityModManager;
+using DVMultiplayerContinued;
+using UnityModManagerNet;
 
 namespace DVMultiplayer
 {
     public class Main
     {
         public static ModEntry mod;
+        public static Settings Settings;
+        private static Harmony harmony;
         public static event Action OnGameFixedGUI;
         public static event Action OnGameUpdate;
         public static bool isInitialized = false;
@@ -32,15 +36,16 @@ namespace DVMultiplayer
             "DVOptimizer"
         };
 
-        private static Harmony harmony;
-
         private static bool Load(ModEntry entry)
         {
             isInitialized = false;
             harmony = new Harmony(entry.Info.Id);
             mod = entry;
+            Settings = UnityModManager.ModSettings.Load<Settings>(mod);
             mod.OnFixedGUI = OnFixedGUI;
             mod.OnUpdate = OnUpdate;
+            mod.OnGUI = OnGUI;
+            mod.OnSaveGUI = OnSaveGUI;
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             ModEntry passengerJobsModEntry = FindMod("PassengerJobs");
             if (passengerJobsModEntry != null && passengerJobsModEntry.Enabled)
@@ -82,6 +87,16 @@ namespace DVMultiplayer
 #endif
                 OnGameFixedGUI?.Invoke();
             }
+        }
+
+        private static void OnGUI(ModEntry mod)
+        {
+            Settings.Draw(mod);
+        }
+
+        private static void OnSaveGUI(ModEntry mod)
+        {
+            Settings.Save(mod);
         }
 
         private static void Initialize()

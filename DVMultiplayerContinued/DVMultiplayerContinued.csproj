@@ -214,6 +214,7 @@
     <Compile Include="Patches\UI\EnableMovementOutsidePauseMenus.cs" />
     <Compile Include="Patches\UI\StopGamePauseInMenus.cs" />
     <Compile Include="Patches\Jobs\StopGeneratingJobsAsClient.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="Unity\Debt\NetworkDebtManager.cs" />
     <Compile Include="Unity\Jobs\NetworkJobsManager.cs" />
     <Compile Include="Unity\Jobs\NetworkJobsSync.cs" />
