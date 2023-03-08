@@ -3,9 +3,11 @@ using DarkRift.Client;
 using DarkRift.Client.Unity;
 using DarkRift.Server.Unity;
 using DVMultiplayer.Utils;
+using DVMultiplayerContinued.Unity.Player;
 using System;
 using System.Collections;
 using System.IO;
+using System.Net.Sockets;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -17,7 +19,8 @@ namespace DVMultiplayer.Networking
         public static XmlUnityServer server;
         private static NetworkingUI UI;
         private static GameObject networkManager;
-        private static bool isHost;
+        internal static bool isHost;
+        private static bool isTrueHost;
         private static bool isClient;
         private static bool isConnecting;
         private static string host;
@@ -76,6 +79,8 @@ namespace DVMultiplayer.Networking
             {
                 disabler.enabled = true;
             }
+            isHost = false;
+            isTrueHost = false;
             isClient = false;
             client.Close();
         }
@@ -125,9 +130,11 @@ namespace DVMultiplayer.Networking
                 return;
 
             Main.Log($"Disconnecting client");
+
             try
             {
                 client.Disconnect();
+                GameChat.PutSystemMessage("You've disconnected from a server");
             }
             catch (Exception ex)
             {
@@ -154,6 +161,7 @@ namespace DVMultiplayer.Networking
             catch (Exception ex)
             {
                 Main.mod.Logger.Error(ex.Message);
+                server.Close();
             }
         }
 
@@ -163,6 +171,7 @@ namespace DVMultiplayer.Networking
             yield return new WaitUntil(() => server.CheckTCPSocketReady());
             Main.Log($"Server should be started connecting client now");
             isHost = true;
+            isTrueHost = true;
             host = "127.0.0.1";
             ClientConnect();
         }
@@ -240,13 +249,11 @@ namespace DVMultiplayer.Networking
             }
         }
 
-        /*
         internal static void SetIsHost(bool isHost)
         {
             Main.Log("[CLIENT] Set Role "+(isHost ? "HOST":"CLIENT"));
             NetworkManager.isHost = isHost;
         }
-        */
         
         private static void InitializeUnityScripts()
         {
@@ -291,6 +298,7 @@ namespace DVMultiplayer.Networking
             Main.Log($"[DISCONNECTING] NetworkSaveGameManager Deinitializing");
             networkManager.GetComponent<NetworkSaveGameManager>().PlayerDisconnect();
             yield return new WaitUntil(() => networkManager.GetComponent<NetworkSaveGameManager>().IsOfflineSaveLoaded);
+            Main.Log("Offline Save Loaded");
             Object.DestroyImmediate(networkManager.GetComponent<NetworkSaveGameManager>());
         }
 
@@ -304,12 +312,21 @@ namespace DVMultiplayer.Networking
         }
 
         /// <summary>
-        /// Gets the value if the current local user is hosting a server.
+        /// Gets the value if the current local user has controlling authority over a server.
         /// </summary>
-        /// <returns>If the user is hosting a server</returns>
+        /// <returns>If the user has lordship of a server</returns>
         public static bool IsHost()
         {
             return isHost;
+        }
+
+        /// <summary>
+        /// Gets the value if the current local user is hosting a server.
+        /// </summary>
+        /// <returns>If the user is hosting a server</returns>
+        public static bool IsTrueHost()
+        {
+            return isTrueHost;
         }
     }
 }

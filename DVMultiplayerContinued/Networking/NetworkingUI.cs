@@ -255,12 +255,12 @@ namespace DVMultiplayer.Networking
                 UI.transform.Find("Button Host").GetComponent<Button>().interactable = !(TutorialController.tutorialPartOneInProgress || TutorialController.tutorialPartTwoInProgress);
                 UI.transform.Find("Button Host").GetComponent<UIElementTooltip>().TooltipNonInteractableText = TutorialController.tutorialPartOneInProgress || TutorialController.tutorialPartTwoInProgress ? "Finish the tutorial first" : "";
 
-                if (NetworkManager.IsClient() && NetworkManager.IsHost())
+                if (NetworkManager.IsClient() && NetworkManager.IsTrueHost())
                 {
                     HostConnectedMenuUI.transform.Find("Label Username").GetComponent<TextMeshProUGUI>().text = $"Connected as: {NetworkManager.username}";
                     CustomUI.Open(HostConnectedMenuUI);
                 }
-                else if (NetworkManager.IsClient() && !NetworkManager.IsHost()) 
+                else if (NetworkManager.IsClient() && !NetworkManager.IsTrueHost())
                 {
                     ClientConnectedMenuUI.transform.Find("Label Username").GetComponent<TextMeshProUGUI>().text = $"Connected as: {NetworkManager.username}";
                     CustomUI.Open(ClientConnectedMenuUI);

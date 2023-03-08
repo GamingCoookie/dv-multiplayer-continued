@@ -28,7 +28,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     private bool modMismatched = false;
     public bool newPlayerConnecting;
     public int CanBuyLicense = 0;
-    //private bool _RoleHasBeenSet = false;
+    private bool _RoleHasBeenSet = false;
 
     public bool IsSynced { get; private set; }
 
@@ -170,13 +170,14 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 case NetworkTags.PLAYER_LOADED:
                     SetPlayerLoaded(message);
                     break;
-                //case NetworkTags.PLAYER_SET_ROLE:
-                //    SetPlayerRole(message);
-                //    break;
+
+                case NetworkTags.PLAYER_SET_ROLE:
+                    SetPlayerRole(message);
+                    break;
             }
         }
     }
-    /*
+
     private void SetPlayerRole(Message message)
     {
         using (DarkRiftReader reader = message.GetReader())
@@ -184,9 +185,8 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
             NetworkManager.SetIsHost(reader.ReadBoolean());
                 
         }
-       _RoleHasBeenSet = true;
+        _RoleHasBeenSet = true;
     }
-    */
 
     private void ChatMessageReceived(Message message)
     {
@@ -379,25 +379,9 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     {
         newPlayerConnecting = true;
         serverPlayers.Add(SingletonBehaviour<UnityClient>.Instance.ID, new NPlayer());
-        Vector3 pos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
         if (NetworkManager.IsHost())
         {
-            Main.Log("[CLIENT] > PLAYER_SPAWN_SET");
             GameChat.PutSystemMessage($"The server has been launched!");
-            using (DarkRiftWriter writer = DarkRiftWriter.Create())
-            {
-                KeyValuePair<string, Vector3> closestStation = SavedPositions.Stations.Where(pair => pair.Value == SavedPositions.Stations.Values.OrderBy(x => Vector3.Distance(x, pos)).First()).FirstOrDefault();
-                Main.Log($"Requesting spawn at: {closestStation.Key}");
-                writer.Write(new SetSpawn()
-                {
-                    Position = closestStation.Value
-                });
-
-                writer.Write(SingletonBehaviour<Inventory>.Instance.PlayerMoney);
-
-                using (Message message = Message.Create((ushort)NetworkTags.PLAYER_SPAWN_SET, writer))
-                    SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
-            }
         }
         else
         {
@@ -430,7 +414,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
         GamePreferences.Set(Preferences.CommsRadioSpawnMode, false);
         GamePreferences.RegisterToPreferenceUpdated(Preferences.CommsRadioSpawnMode, DisableSpawnMode);
-        /*
+
         CustomUI.OpenPopup("Connecting", "Syncing with Server");
         DateTime waitStart = DateTime.Now;
 
@@ -453,15 +437,16 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
             CustomUI.Open(CustomUI.ModMismatchScreen, false, false);
             NetworkManager.Disconnect();
             yield break;
-        } 
-        */
+        }
+
+        CustomUI.Close();
+
+        // Create offline save
+        Main.Log($"[CLIENT] Creating offline save");
+        SingletonBehaviour<NetworkSaveGameManager>.Instance.CreateOfflineBackup();
 
         if (!NetworkManager.IsHost())
         {
-            // Create offline save
-            Main.Log($"[CLIENT] Creating offline save");
-            SingletonBehaviour<NetworkSaveGameManager>.Instance.CreateOfflineBackup();
-
             CustomUI.OpenPopup("Connecting", "Loading savegame");
             Main.Log($"[CLIENT] Receiving savegame");
             AppUtil.Instance.PauseGame();
@@ -515,7 +500,6 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
             Main.Log($"Syncing jobs");
             SingletonBehaviour<NetworkJobsManager>.Instance.SendJobsRequest();
             yield return new WaitUntil(() => SingletonBehaviour<NetworkJobsManager>.Instance.IsSynced);
-            SingletonBehaviour<NetworkJobsManager>.Instance.OnFinishLoading();
 
             AppUtil.Instance.UnpauseGame();
             yield return new WaitUntil(() => !AppUtil.IsPaused);
@@ -524,12 +508,81 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         }
         else
         {
-            Main.Log($"Save should be loaded. Run OnFinishedLoading in NetworkTrainManager");
-            SingletonBehaviour<NetworkTrainManager>.Instance.OnFinishedLoading();
-            yield return new WaitUntil(() => SingletonBehaviour<NetworkTrainManager>.Instance.SaveCarsLoaded);
+            if (spawnData != null)
+            {
+                CustomUI.OpenPopup("Connecting", "Loading savegame");
+                Main.Log($"[CLIENT] Receiving savegame");
+                AppUtil.Instance.PauseGame();
+                // Expire single player jobs
+                SingletonBehaviour<NetworkJobsManager>.Instance.PlayerConnect();
 
-            Main.Log($"Run OnFinishedLoading in NetworkJobsManager");
-            SingletonBehaviour<NetworkJobsManager>.Instance.OnFinishLoading();
+                // Teleport player
+                AppUtil.Instance.UnpauseGame();
+                yield return new WaitUntil(() => !AppUtil.IsPaused);
+                yield return new WaitForEndOfFrame();
+                PlayerManager.TeleportPlayer(spawnData.Position + WorldMover.currentMove, PlayerManager.PlayerTransform.rotation, null, false);
+                UUI.UnlockMouse(true);
+
+                // Wait till world is loaded
+                yield return new WaitUntil(() => SingletonBehaviour<TerrainGrid>.Instance.IsInLoadedRegion(PlayerManager.PlayerTransform.position));
+                AppUtil.Instance.PauseGame();
+                yield return new WaitUntil(() => AppUtil.IsPaused);
+
+                // Remove all Cars
+                SingletonBehaviour<CarsSaveManager>.Instance.DeleteAllExistingCars();
+
+                // Load Junction data from server that changed since uptime
+                Main.Log($"Syncing Junctions");
+                SingletonBehaviour<NetworkJunctionManager>.Instance.SyncJunction();
+                yield return new WaitUntil(() => SingletonBehaviour<NetworkJunctionManager>.Instance.IsSynced);
+
+                // Load Turntable data from server that changed since uptime
+                Main.Log($"Syncing Turntables");
+                SingletonBehaviour<NetworkTurntableManager>.Instance.SyncTurntables();
+                yield return new WaitUntil(() => SingletonBehaviour<NetworkTurntableManager>.Instance.IsSynced);
+
+                // Load Train data from server that changed since uptime
+                Main.Log($"Syncing traincars");
+                SingletonBehaviour<NetworkTrainManager>.Instance.SendInitCarsRequest();
+                yield return new WaitUntil(() => SingletonBehaviour<NetworkTrainManager>.Instance.IsSynced);
+                SingletonBehaviour<NetworkSaveGameManager>.Instance.ResetDebts();
+
+                // Load Job data from server that changed since uptime
+                Main.Log($"Syncing jobs");
+                SingletonBehaviour<NetworkJobsManager>.Instance.SendJobsRequest();
+                yield return new WaitUntil(() => SingletonBehaviour<NetworkJobsManager>.Instance.IsSynced);
+
+                AppUtil.Instance.UnpauseGame();
+                yield return new WaitUntil(() => !AppUtil.IsPaused);
+                yield return new WaitForEndOfFrame();
+                CustomUI.Close();
+            }
+            else
+            {
+                Main.Log("[CLIENT] > PLAYER_SPAWN_SET");
+                using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                {
+                    Vector3 pos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
+                    KeyValuePair<string, Vector3> closestStation = SavedPositions.Stations.Where(pair => pair.Value == SavedPositions.Stations.Values.OrderBy(x => Vector3.Distance(x, pos)).First()).FirstOrDefault();
+                    Main.Log($"Requesting spawn at: {closestStation.Key}");
+                    writer.Write(new SetSpawn()
+                    {
+                        Position = closestStation.Value
+                    });
+
+                    writer.Write(SingletonBehaviour<Inventory>.Instance.PlayerMoney);
+
+                    using (Message message = Message.Create((ushort)NetworkTags.PLAYER_SPAWN_SET, writer))
+                        SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
+                }
+
+                Main.Log($"Save should be loaded. Run OnFinishedLoading in NetworkTrainManager");
+                SingletonBehaviour<NetworkTrainManager>.Instance.OnFinishedLoading();
+                yield return new WaitUntil(() => SingletonBehaviour<NetworkTrainManager>.Instance.SaveCarsLoaded);
+
+                Main.Log($"Run OnFinishedLoading in NetworkJobsManager");
+                SingletonBehaviour<NetworkJobsManager>.Instance.OnFinishLoading();
+            }
         }
         SendIsLoaded();
         Main.Log($"Finished loading everything. Unlocking mouse and allow movement");

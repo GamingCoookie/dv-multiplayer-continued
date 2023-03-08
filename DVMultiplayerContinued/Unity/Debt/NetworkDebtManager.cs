@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 class NetworkDebtManager : SingletonBehaviour<NetworkDebtManager>
 {
-    public bool IsChangeByNetwork { get; private set; } = false;
+    public bool IsChangeByNetwork { get; internal set; } = false;
 
     protected override void Awake()
     {
