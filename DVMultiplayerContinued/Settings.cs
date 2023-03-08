@@ -11,9 +11,9 @@ namespace DVMultiplayerContinued
     public class Settings : UnityModManager.ModSettings, IDrawable
     {
         public string ColorString = "#FFFFFF";
-        [Header("Each color value is between 0 and 1.")]
+        [Header("Each color value from 0 to 255.")]
         [Draw("Player Color")]
-        public Color Color = Color.white;
+        public Color32 Color = new Color32(255, 255, 255, 255);
 
         public void OnChange()
         {
