@@ -21,6 +21,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Player\NPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\PlayerLoaded.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\SetSpawn.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Saving.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SerializableDictionary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\CarDamage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Train\CarMUChange.cs" />

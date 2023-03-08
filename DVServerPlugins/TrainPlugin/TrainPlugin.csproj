@@ -43,6 +43,9 @@
       <HintPath>..\..\lib\DarkRift.Server.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.13.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\UnityEngine.CoreModule.dll</HintPath>
@@ -60,6 +63,9 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="UnityEngine.SharedInternalsModule">
+      <HintPath>..\..\lib\UnityEngine.SharedInternalsModule.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="TrainPlugin.cs" />
@@ -76,6 +82,9 @@
       <Name>PlayerPlugin</Name>
       <Private>False</Private>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

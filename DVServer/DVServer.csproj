@@ -42,20 +42,20 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\DarkRift.Server.dll</HintPath>
     </Reference>
-	<Reference Include="DV.Logic.Job">
-		<SpecificVersion>False</SpecificVersion>
-		<HintPath>..\lib\Assembly-CSharp.dll</HintPath>
-	</Reference>
-	<Reference Include="UnityEngine">
-		<SpecificVersion>False</SpecificVersion>
-		<HintPath>..\lib\UnityEngine.dll</HintPath>
-	</Reference>
-	<Reference Include="UnityEngine.CoreModule">
-		<SpecificVersion>False</SpecificVersion>
-		<HintPath>..\lib\UnityEngine.CoreModule.dll</HintPath>
-	</Reference>
+    <Reference Include="DV.Logic.Job">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>packages\Newtonsoft.Json.13.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -68,17 +68,45 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Darkrift\BufferQueue.cs" />
-    <Compile Include="Darkrift\WriterExtends.cs" />
     <Compile Include="DVServerMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerManager.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="..\DVMP.DTO\DVMP.DTO.projitems" Label="Shared" />
+  <ItemGroup>
+    <ProjectReference Include="..\DVMultiplayerContinued\DVMultiplayerContinued.csproj">
+      <Project>{cf3cddf7-aec2-4b54-af12-f8a84e807e3d}</Project>
+      <Name>DVMultiplayerContinued</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DVServerPlugins\PlayerPlugin\PlayerPlugin.csproj">
+      <Project>{b065403b-a846-4f7e-82ce-18df9639171f}</Project>
+      <Name>PlayerPlugin</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>SET BUILDFOLDER="$(SolutionDir)DVServer\Build"
+
+if not exist %25BUILDFOLDER%25 (
+  mkdir %25BUILDFOLDER%25
+) else (
+  del /S /Q %25BUILDFOLDER%25\*
+  if exist %25BUILDFOLDER%25\Resources rd /S /Q %25BUILDFOLDER%25\Resources
+  if exist %25BUILDFOLDER%25\Plugins rd /S /Q %25BUILDFOLDER%25\Plugins
+  if exist %25BUILDFOLDER%25\Data rd /S /Q %25BUILDFOLDER%25\Data
+  if exist %25BUILDFOLDER%25\Logs rd /S /Q %25BUILDFOLDER%25\Logs
+)
+mkdir %25BUILDFOLDER%25\Plugins</PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>SET BUILDFOLDER="$(SolutionDir)DVServer\Build"
+xcopy "$(TargetDir)*.dll" %25BUILDFOLDER%25 /Y /I
+xcopy "$(TargetDir)*.pdb" %25BUILDFOLDER%25 /Y /I
+xcopy "$(TargetDir)*.exe" %25BUILDFOLDER%25 /Y /I
+xcopy "$(SolutionDir)\Build\Plugins\*Plugin.dll" %25BUILDFOLDER%25\Plugins /Y /I /E
+xcopy "$(SolutionDir)\Build\DVMultiplayerContinued.dll" %25BUILDFOLDER%25 /Y /I /E
+xcopy "$(SolutionDir)DVServer\Resources\Server.config" %25BUILDFOLDER%25\Resources /Y /I /E</PostBuildEvent>
+  </PropertyGroup>
 </Project>
