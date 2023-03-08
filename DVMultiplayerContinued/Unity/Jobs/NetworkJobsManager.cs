@@ -331,6 +331,11 @@ internal class NetworkJobsManager : SingletonBehaviour<NetworkJobsManager>
                 {
                     Job[] chainJobs = cjobs.Where(j => j.ChainId == chain.Id).ToArray();
                     Main.Log($"Job chain with ID {chain.Id} loading, amount of jobs in chain: {chainJobs.Length}");
+                    if (chainJobs.Length == 0)
+                    {
+                        Main.Log($"Ignoring job chain");
+                        continue;
+                    }
                     JobChainSaveData jobSaveData = JsonConvert.DeserializeObject<JobChainSaveData>(chain.Data, JobSaveManager.serializeSettings);
                     GameObject chainGO = SingletonBehaviour<JobSaveManager>.Instance.LoadJobChain(jobSaveData);
                     if (chainGO)
