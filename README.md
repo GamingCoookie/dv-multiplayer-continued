@@ -25,6 +25,9 @@ When hosting make sure you have port forwarded the port: 4296 UDP and 4296 TCP (
 When connecting make sure you have the IP of the person you want to connect to. The port should be 4296 unless the host changed it.
 
 ## Supported mods
+* Passenger Jobs
+
+For everything else:
 As of currently this mod has no real mod syncing this will maybe be added later but for now this is not the case. So if you use mods with the current save file please back the save file up so there are no game breaking issues that can corrupt your save game. You can test out if mods are compatible but remember to back your normal save up. I'm not reliable for your corrupted saves! [Skip tutorial? Use this save game](https://www.nexusmods.com/derailvalley/mods/88).
 
 ## Features
@@ -47,16 +50,15 @@ Features have been split into sections to show different parts of the mod. The s
 
 | **Feature**                  |      **State**     | **Version Introduced** |
 |------------------------------|:------------------:|------------------------|
-| DE2 (Shunter)                | :hourglass:        | 1.0.0                  |
-| DE6 (Diesel)                 | :hourglass:        | 1.3.5                  |
-| SH282 (Steamer)              | :hourglass:        | 1.3.5                  |
+| DE2 (Shunter)                | :heavy_check_mark: | 1.0.0                  |
+| DE6 (Diesel)                 | :heavy_check_mark: | 1.3.5                  |
+| SH282 (Steamer)              | :heavy_check_mark: | 1.3.5                  |
 | Coupling                     | :hourglass:        | 1.0.0                  |
 | Decoupling                   | :hourglass:        | 1.0.0                  |
-| Multiple Unit Working        | :x:                |                        |
+| Multiple Unit Working        | :hourglass:        | 1.4.0                  |
 | Player                       | :hourglass:        | 1.0.0                  |
 | Turntable                    | :hourglass:        | *1.3.0* ([#16](https://github.com/Patrick-van-Halm/dv-multiplayer-mod/issues/16)) |
 | Junctions                    | :hourglass:        | 1.0.0                  |
-| Jobs                         | :x:                |                        |
 | World                        | :hourglass:        | 1.0.0                  |
 
 ### Multiplayer Features
@@ -65,7 +67,7 @@ Features have been split into sections to show different parts of the mod. The s
 |------------------------------|:------------------:|------------------------|
 | Name Tags                    | :heavy_check_mark: | 1.2.1                  |
 | Custom UI                    | :heavy_check_mark: | *1.3.0* ([#26](https://github.com/Patrick-van-Halm/dv-multiplayer-mod/pull/26)) |
-| Show Players on Map          | :x:                |                        |
+| Show Players on Map          | :heavy_check_mark: | 1.4.0                  |
 | SteamAPI Integration         | :x:                |                        |
 
 ### Reporting Issues
