@@ -362,3 +362,9 @@ MigrationBackup/
 FodyWeavers.xsd
 Build/
 Local/
+
+### Rider
+# User-specific stuff
+.idea/
+*.iml
+*.ipr
