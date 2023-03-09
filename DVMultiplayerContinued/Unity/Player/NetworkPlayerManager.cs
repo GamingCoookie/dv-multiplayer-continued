@@ -42,7 +42,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     }
 
 
-    private GameObject GetNewPlayerObject(Vector3 pos, Quaternion rotation, string username, ushort packedColor)
+    private GameObject GetNewPlayerObject(Vector3 pos, Quaternion rotation, string username, uint packedColor)
     {
         GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         player.name = username;

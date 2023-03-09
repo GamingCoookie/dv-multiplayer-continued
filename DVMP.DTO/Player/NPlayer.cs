@@ -8,7 +8,7 @@ namespace DVMultiplayer.DTO.Player
         public string Username { get; set; }
         public string[] Mods { get; set; }
         public bool IsLoaded { get; set; }
-        public ushort Color { get; set; }
+        public uint Color { get; set; }
 
         public void Deserialize(DeserializeEvent e)
         {
@@ -16,7 +16,7 @@ namespace DVMultiplayer.DTO.Player
             Username = e.Reader.ReadString();
             Mods = e.Reader.ReadStrings();
             IsLoaded = e.Reader.ReadBoolean();
-            Color = e.Reader.ReadUInt16();
+            Color = e.Reader.ReadUInt32();
         }
 
         public void Serialize(SerializeEvent e)

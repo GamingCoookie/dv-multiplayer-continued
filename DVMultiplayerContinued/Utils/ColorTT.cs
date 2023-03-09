@@ -4,21 +4,18 @@ namespace DVMultiplayer.Utils
 {
     public static class ColorTT
     {
-        public static ushort Pack(this Color32 color)
+        public static uint Pack(this Color32 color)
         {
-            ushort packed = 0;
-            packed |= (ushort)(color.r << 8);
-            packed |= color.g;
-            packed |= (ushort)(color.b >> 8);
-            return packed;
+            return ((uint)color.r << 24) | ((uint)color.g << 16) | ((uint)color.b << 8) | color.a;
         }
 
-        public static Color32 Unpack(ushort packedColor)
+        public static Color32 Unpack(uint packedColor)
         {
-            byte r = (byte)(packedColor >> 8);
-            byte g = (byte)(packedColor & 0xFF);
-            byte b = (byte)((packedColor << 8) >> 8);
-            return new Color32(r, g, b, 255);
+            byte r = (byte)(packedColor >> 24);
+            byte g = (byte)(packedColor >> 16);
+            byte b = (byte)(packedColor >> 8);
+            byte a = (byte)packedColor;
+            return new Color32(r, g, b, a);
         }
     }
 }
