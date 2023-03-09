@@ -237,6 +237,7 @@
     <Compile Include="Unity\UI\InputButton.cs" />
     <Compile Include="Unity\UI\InputScreen.cs" />
     <Compile Include="Unity\UI\TextField.cs" />
+    <Compile Include="Utils\ColorTT.cs" />
     <Compile Include="Utils\Game\SavedPositions.cs" />
     <Compile Include="Utils\UGameObject.cs" />
     <Compile Include="Utils\UUI.cs" />
