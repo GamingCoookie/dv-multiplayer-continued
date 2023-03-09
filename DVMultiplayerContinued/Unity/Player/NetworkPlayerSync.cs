@@ -12,45 +12,49 @@ internal class NetworkPlayerSync : MonoBehaviour
     private Vector3 prevPosition;
     private Vector3 newPosition;
     internal bool IsLoaded;
-    private int ping = 0;
+    private int ping;
     private long updatedAt;
+    private Text pingText;
 
 #pragma warning disable IDE0051 // Remove unused private members
     private void Start()
     {
         newPosition = transform.position - WorldMover.currentMove;
+        prevPosition = newPosition;
     }
 
     private void Update()
     {
+        Vector3 position = transform.position;
         if (!IsLocal)
         {
-            if(Vector3.Distance(transform.position, newPosition + WorldMover.currentMove) >= 2)
+            if (Vector3.Distance(position, newPosition + WorldMover.currentMove) >= 2)
             {
                 transform.position = newPosition + WorldMover.currentMove;
             }
-            else if (transform.position != newPosition + WorldMover.currentMove)
+            else if (position != newPosition + WorldMover.currentMove)
             {
                 float increment = 15;
                 if (Train)
                 {
                     increment = Train.GetVelocity().magnitude * 3.6f;
-                    if (increment <= .1f)
+                    if (increment <= 0.1f)
                         increment = 1;
                 }
+
                 float step = increment * Time.deltaTime;
-                transform.position = Vector3.MoveTowards(transform.position, newPosition + WorldMover.currentMove, step);
+                transform.position = Vector3.MoveTowards(position, newPosition + WorldMover.currentMove, step);
             }
-            //transform.position = newPosition + WorldMover.currentMove;
-            transform.GetChild(0).Find("Ping").GetComponent<Text>().text = $"{ping}ms";
+
+            if (!pingText) pingText = transform.GetChild(0).Find("Ping").GetComponent<Text>();
+            pingText.text = $"{ping}ms";
             return;
         }
 
-        if (prevPosition == null || Vector3.Distance(prevPosition, transform.position) > 1e-5)
+        if (Vector3.Distance(prevPosition, position) > 1e-5)
         {
-            // Main.DebugLog("Player location changed sending new location");
-            SingletonBehaviour<NetworkPlayerManager>.Instance.UpdateLocalPositionAndRotation(transform.position, transform.rotation);
-            prevPosition = transform.position;
+            SingletonBehaviour<NetworkPlayerManager>.Instance.UpdateLocalPositionAndRotation(position, transform.rotation);
+            prevPosition = position;
         }
     }
 #pragma warning restore IDE0051 // Remove unused private members
