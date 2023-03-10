@@ -237,6 +237,7 @@
     <Compile Include="Unity\UI\InputButton.cs" />
     <Compile Include="Unity\UI\InputScreen.cs" />
     <Compile Include="Unity\UI\TextField.cs" />
+    <Compile Include="Utils\ColorTT.cs" />
     <Compile Include="Utils\Game\SavedPositions.cs" />
     <Compile Include="Utils\UGameObject.cs" />
     <Compile Include="Utils\UUI.cs" />
@@ -281,25 +282,42 @@
       <UserProperties info_1json__JsonSchema="https://json.schemastore.org/config" />
     </VisualStudio>
   </ProjectExtensions>
-  <PropertyGroup>
-    <PreBuildEvent>SET BUILDFOLDER="$(SolutionDir)Build"
-
-if not exist %25BUILDFOLDER%25 (
-  mkdir %25BUILDFOLDER%25
-) else (
-  del /S /Q %25BUILDFOLDER%25\*
-  if exist %25BUILDFOLDER%25\Resources rd /S /Q %25BUILDFOLDER%25\Resources
-  if exist %25BUILDFOLDER%25\Plugins rd /S /Q %25BUILDFOLDER%25\Plugins
-  if exist %25BUILDFOLDER%25\Data rd /S /Q %25BUILDFOLDER%25\Data
-  if exist %25BUILDFOLDER%25\Logs rd /S /Q %25BUILDFOLDER%25\Logs
-)
-mkdir %25BUILDFOLDER%25\Plugins</PreBuildEvent>
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <PreBuildEvent>
+      SET BUILDFOLDER="$(SolutionDir)Build"
+      if not exist %25BUILDFOLDER%25 (
+      mkdir %25BUILDFOLDER%25
+      ) else (
+      del /S /Q %25BUILDFOLDER%25\*
+      if exist %25BUILDFOLDER%25\Resources rd /S /Q %25BUILDFOLDER%25\Resources
+      if exist %25BUILDFOLDER%25\Plugins rd /S /Q %25BUILDFOLDER%25\Plugins
+      if exist %25BUILDFOLDER%25\Data rd /S /Q %25BUILDFOLDER%25\Data
+      if exist %25BUILDFOLDER%25\Logs rd /S /Q %25BUILDFOLDER%25\Logs
+      )
+      mkdir %25BUILDFOLDER%25\Plugins
+    </PreBuildEvent>
+    <PostBuildEvent>
+      SET BUILDFOLDER="$(SolutionDir)Build"
+      xcopy "$(TargetDir)*.dll" %25BUILDFOLDER%25 /Y /I
+      xcopy "$(TargetDir)*.pdb" %25BUILDFOLDER%25 /Y /I
+      xcopy "$(TargetDir)info.json" %25BUILDFOLDER%25
+      xcopy "$(TargetDir)Resources\*" %25BUILDFOLDER%25\Resources /Y /I /E
+    </PostBuildEvent>
   </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>SET BUILDFOLDER="$(SolutionDir)Build"
-xcopy "$(TargetDir)*.dll" %25BUILDFOLDER%25 /Y /I
-xcopy "$(TargetDir)*.pdb" %25BUILDFOLDER%25 /Y /I
-xcopy "$(TargetDir)info.json" %25BUILDFOLDER%25
-xcopy "$(TargetDir)Resources\*" %25BUILDFOLDER%25\Resources /Y /I /E</PostBuildEvent>
+  <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
+    <PreBuildEvent>
+      export BUILDFOLDER="$(SolutionDir)Build"
+      if [ -d "$BUILDFOLDER" ]; then
+        rm -rf "$BUILDFOLDER"
+      fi
+      mkdir -p "$BUILDFOLDER/Plugins"
+    </PreBuildEvent>
+    <PostBuildEvent>
+      export BUILDFOLDER="$(SolutionDir)Build"
+      cp $(TargetDir)*.dll "$BUILDFOLDER/"
+      cp $(TargetDir)*.pdb "$BUILDFOLDER/"
+      cp $(TargetDir)info.json "$BUILDFOLDER/"
+      cp -r $(TargetDir)Resources "$BUILDFOLDER/"
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>

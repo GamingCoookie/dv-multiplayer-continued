@@ -17,7 +17,7 @@ namespace PlayerPlugin
     public class PlayerPlugin : Plugin, IPluginSave
     {
         new public string Name { get; } = "PlayerPlugin";
-        private readonly Dictionary<IClient, Player> players = new Dictionary<IClient, Player>();
+        private readonly Dictionary<IClient, NPlayer> players = new Dictionary<IClient, NPlayer>();
         public SetSpawn playerSpawn { get; private set; }
         private double money;
         private IClient playerConnecting = null;
@@ -155,9 +155,9 @@ namespace PlayerPlugin
 
         private void SetPlayerLoaded(Message message, IClient sender)
         {
-            if (players.TryGetValue(sender, out Player player))
+            if (players.TryGetValue(sender, out NPlayer player))
             {
-                player.isLoaded = true;
+                player.IsLoaded = true;
                 ReliableSendToOthers(message, sender);
             }
             else
@@ -190,9 +190,9 @@ namespace PlayerPlugin
             bool succesfullyConnected = true;
             if (players.Count > 0)
             {
-                Player host = players.Values.First();
-                List<string> missingMods = GetMissingMods(host.mods, player.Mods);
-                List<string> extraMods = GetMissingMods(player.Mods, host.mods);
+                NPlayer host = players.Values.First();
+                List<string> missingMods = GetMissingMods(host.Mods, player.Mods);
+                List<string> extraMods = GetMissingMods(player.Mods, host.Mods);
                 if (missingMods.Count != 0 || extraMods.Count != 0)
                 {
                     succesfullyConnected = false;
@@ -221,16 +221,10 @@ namespace PlayerPlugin
                         Logger.Trace("[SERVER] > PLAYER_SPAWN");
                         using (DarkRiftWriter writer = DarkRiftWriter.Create())
                         {
-                            writer.Write(new NPlayer()
-                            {
-                                Id = player.Id,
-                                Username = player.Username,
-                                Mods = player.Mods
-                            });
-
-                            writer.Write(new Location()
-                            {
-                                Position = playerSpawn.Position
+                            writer.Write(new NPlayer(player) {
+                                Location = new Location {
+                                    Position = playerSpawn.Position
+                                }
                             });
                             using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN, writer))
                                 ReliableSendToOthers(outMessage, sender);
@@ -238,24 +232,12 @@ namespace PlayerPlugin
                     }
                     
                     // Announce other players to new player
-                    foreach (Player p in players.Values)
+                    foreach (NPlayer p in players.Values)
                     {
                         Logger.Trace("[SERVER] > PLAYER_SPAWN");
                         using (DarkRiftWriter writer = DarkRiftWriter.Create())
                         {
-                            writer.Write(new NPlayer()
-                            {
-                                Id = p.id,
-                                Username = p.username,
-                                Mods = p.mods,
-                                IsLoaded = p.isLoaded
-                            });
-
-                            writer.Write(new Location()
-                            {
-                                Position = p.position,
-                                Rotation = p.rotation
-                            });
+                            writer.Write(p);
 
                             using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_SPAWN, writer))
                                 sender.SendMessage(outMessage, SendMode.Reliable);
@@ -315,7 +297,7 @@ namespace PlayerPlugin
                     sender.Disconnect();
                 else
                 {
-                    players.Add(sender, new Player(player.Id, player.Username, player.Mods));
+                    players.Add(sender, player);
                 }
             }
         }
@@ -331,15 +313,13 @@ namespace PlayerPlugin
 
         private void LocationUpdateMessage(Message message, IClient sender)
         {
-            if (players.TryGetValue(sender, out Player player))
+            if (players.TryGetValue(sender, out NPlayer player))
             {
                 Location newLocation;
                 using (DarkRiftReader reader = message.GetReader())
                 {
                     newLocation = reader.ReadSerializable<Location>();
-                    player.position = newLocation.Position;
-                    if (newLocation.Rotation.HasValue)
-                        player.rotation = newLocation.Rotation.Value;
+                    player.Location = newLocation;
                 }
 
                 using (DarkRiftWriter writer = DarkRiftWriter.Create())
@@ -350,7 +330,6 @@ namespace PlayerPlugin
                     using (Message outMessage = Message.Create((ushort)NetworkTags.PLAYER_LOCATION_UPDATE, writer))
                         UnreliableSendToOthers(outMessage, sender);
                 }
-                
             }
         }
 
@@ -389,31 +368,6 @@ namespace PlayerPlugin
         {
             foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
                 client.SendMessage(message, SendMode.Reliable);
-        }
-    }
-
-    internal class Player
-    {
-        public readonly ushort id;
-        public readonly string username;
-        public readonly string[] mods;
-        public Vector3 position;
-        public Quaternion rotation;
-        internal bool isLoaded;
-        public Player(ushort id, string username, string[] mods)
-        {
-            this.id = id;
-            this.username = username;
-            this.mods = mods;
-
-            isLoaded = false;
-            position = new Vector3();
-            rotation = new Quaternion();
-        }
-
-        public override string ToString()
-        {
-            return $"Player '{username}'/{id}";
         }
     }
 }

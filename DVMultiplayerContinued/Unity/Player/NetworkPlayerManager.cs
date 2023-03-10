@@ -42,7 +42,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     }
 
 
-    private GameObject GetNewPlayerObject(Vector3 pos, Quaternion rotation, string username, string hexColor)
+    private GameObject GetNewPlayerObject(Vector3 pos, Quaternion rotation, string username, uint packedColor)
     {
         GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         player.name = username;
@@ -50,9 +50,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         player.transform.rotation = rotation;
         player.transform.localScale = new Vector3(0.7f, 1f, 0.7f);
         player.GetComponent<CapsuleCollider>().enabled = false;
-        ColorUtility.TryParseHtmlString(hexColor, out Color color);
-        if (color != null)
-            player.GetComponent<Renderer>().material.color = color;
+        player.GetComponent<Renderer>().material.color = ColorTT.Unpack(packedColor);
         player.AddComponent<NetworkPlayerSync>();
 
         GameObject nametagCanvas = new GameObject("Nametag Canvas");
@@ -395,19 +393,19 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         Main.Log("[CLIENT] > PLAYER_INIT");
         using (DarkRiftWriter writer = DarkRiftWriter.Create())
         {
-            writer.Write<NPlayer>(new NPlayer()
-            {
+            writer.Write(new NPlayer {
                 Id = SingletonBehaviour<UnityClient>.Instance.ID,
+                Location = new Location(),
                 Username = PlayerManager.PlayerTransform.GetComponent<NetworkPlayerSync>().Username,
                 Mods = Main.GetEnabledMods(),
-                Color = Main.Settings.ColorString
+                Color = Main.Settings.Color.Pack()
             });
 
             using (Message message = Message.Create((ushort)NetworkTags.PLAYER_INIT, writer))
                 SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
         }
 
-        Main.Log($"Wait for connection initializiation is finished");
+        Main.Log("Waiting for connection initialization to finish");
         SingletonBehaviour<CoroutineManager>.Instance.Run(WaitForInit());
     }
 
@@ -644,7 +642,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
                 if (player.Id != SingletonBehaviour<UnityClient>.Instance.ID)
                 {
-                    Location playerPos = reader.ReadSerializable<Location>();
+                    Location playerPos = player.Location;
                     Main.Log($"[CLIENT] < PLAYER_SPAWN: Username: {player.Username} ");
                     if (IsSynced)
                         GameChat.PutSystemMessage($"{player.Username} has connected!");

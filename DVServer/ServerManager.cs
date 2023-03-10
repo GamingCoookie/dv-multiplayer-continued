@@ -61,18 +61,17 @@ namespace DVServer
 
         internal static void Save(bool force = false)
         {
-            bool? saved;
             try
             {
-                saved = SaveManager?.Save(_RegisteredPlugins, force);
+                SaveManager?.Save(_RegisteredPlugins, force);
+                Console.WriteLine("Saved successfully");
             }
             catch (Exception ex)
             {
-                saved = false;
+                Console.WriteLine($"Failed to save: {ex.Message}");
             }
-            if ((bool)saved)
-                Console.WriteLine("Saved successfully");
         }
+
         internal static void Load()
         {
             SaveManager?.Load(_RegisteredPlugins);
