@@ -23,11 +23,15 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
 {
     public static class CustomCarLoaderInitializer
     {
+
+        public static string[] Cars { get; private set; }
+        
         public static void Initialize(ModEntry customCarLoaderEntry, Harmony harmony)
         {
-            Main.Log("Patching for CCL compatability...");
+            Main.Log("Patching for CCL compatibility...");
             try
             {
+                Cars = CustomCarManager.CustomCarTypes.Select(car => car.identifier).ToArray();
                 Main.Log($"Patching NetworkTrainSync.Awake");
                 MethodInfo NetworkTrainSyncAwake = AccessTools.Method(typeof(NetworkTrainSync), nameof(NetworkTrainSync.Awake));
                 MethodInfo NetworkTrainSyncAwakePostfix = AccessTools.Method(typeof(NetworkTrainSync_Awake_Patch), nameof(NetworkTrainSync_Awake_Patch.Postfix));

@@ -191,17 +191,33 @@ namespace PlayerPlugin
             if (players.Count > 0)
             {
                 NPlayer host = players.Values.First();
-                List<string> missingMods = GetMissingMods(host.Mods, player.Mods);
-                List<string> extraMods = GetMissingMods(player.Mods, host.Mods);
-                if (missingMods.Count != 0 || extraMods.Count != 0)
+                string[] missingMods = host.Mods.Except(player.Mods).ToArray();
+                string[] extraMods = player.Mods.Except(host.Mods).ToArray();
+                string[] missingCars = host.CustomCars.Except(player.CustomCars).ToArray();
+                string[] extraCars = player.CustomCars.Except(host.CustomCars).ToArray();
+                if (missingMods.Length != 0 || extraMods.Length != 0)
                 {
                     succesfullyConnected = false;
                     Logger.Trace("[SERVER] > PLAYER_MODS_MISMATCH");
                     using (DarkRiftWriter writer = DarkRiftWriter.Create())
                     {
+                        writer.Write(true);
                         writer.Write(missingMods.ToArray());
                         writer.Write(extraMods.ToArray());
-                        using (Message msg = Message.Create((ushort)NetworkTags.PLAYER_MODS_MISMATCH, writer))
+                        using (Message msg = Message.Create((ushort)NetworkTags.PLAYER_MISMATCH, writer))
+                            sender.SendMessage(msg, SendMode.Reliable);
+                    }
+                }
+                else if (missingCars.Length != 0 || extraCars.Length != 0)
+                {
+                    succesfullyConnected = false;
+                    Logger.Trace("[SERVER] > PLAYER_CARS_MISMATCH");
+                    using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                    {
+                        writer.Write(false);
+                        writer.Write(missingCars.ToArray());
+                        writer.Write(extraCars.ToArray());
+                        using (Message msg = Message.Create((ushort)NetworkTags.PLAYER_MISMATCH, writer))
                             sender.SendMessage(msg, SendMode.Reliable);
                     }
                 }
@@ -348,16 +364,6 @@ namespace PlayerPlugin
             ReliableSendToOthers(message, sender);
         }
 
-        private List<string> GetMissingMods(string[] modList1, string[] modList2)
-        {
-            List<string> missingMods = new List<string>();
-            foreach (string mod in modList1)
-            {
-                if (!modList2.Contains(mod))
-                    missingMods.Add(mod);
-            }
-            return missingMods;
-        }
         private void UnreliableSendToOthers(Message message, IClient sender)
         {
             foreach (IClient client in ClientManager.GetAllClients().Where(client => client != sender))
