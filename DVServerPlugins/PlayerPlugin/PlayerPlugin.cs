@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
 using UnityEngine;
-
+using System.ComponentModel;
 
 namespace PlayerPlugin
 {
@@ -45,6 +45,10 @@ namespace PlayerPlugin
 
         public string SaveData()
         {
+            if (playerSpawn.Position == null)
+            {
+                throw new Exception("[PlayerPlugin] No player spawn position yet, will not write a save");
+            }
             return JsonConvert.SerializeObject(playerSpawn.Position) + ";" + JsonConvert.SerializeObject(money);
         }
 
