@@ -393,9 +393,9 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         Main.Log("[CLIENT] > PLAYER_INIT");
         using (DarkRiftWriter writer = DarkRiftWriter.Create())
         {
-            writer.Write<NPlayer>(new NPlayer()
-            {
+            writer.Write(new NPlayer {
                 Id = SingletonBehaviour<UnityClient>.Instance.ID,
+                Location = new Location(),
                 Username = PlayerManager.PlayerTransform.GetComponent<NetworkPlayerSync>().Username,
                 Mods = Main.GetEnabledMods(),
                 Color = Main.Settings.Color.Pack()
@@ -405,7 +405,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
         }
 
-        Main.Log($"Wait for connection initializiation is finished");
+        Main.Log("Waiting for connection initialization to finish");
         SingletonBehaviour<CoroutineManager>.Instance.Run(WaitForInit());
     }
 
@@ -642,7 +642,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
 
                 if (player.Id != SingletonBehaviour<UnityClient>.Instance.ID)
                 {
-                    Location playerPos = reader.ReadSerializable<Location>();
+                    Location playerPos = player.Location;
                     Main.Log($"[CLIENT] < PLAYER_SPAWN: Username: {player.Username} ");
                     if (IsSynced)
                         GameChat.PutSystemMessage($"{player.Username} has connected!");
