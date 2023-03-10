@@ -57,8 +57,7 @@ namespace DVMultiplayerContinued.Patches.Train
                 }
                 if (MUWithSmallestLocoNumber != mu && Ctrls.IsMUControl(__instance.name))
                     return;
-                if (train.carType == TrainCarType.CabooseRed || train.IsLoco)
-                    ntm.SendNewLocoLeverValue(train, newValue, __instance.name);
+                ntm.SendNewLocoLeverValue(train, newValue, __instance.name);
             }
         }
 
