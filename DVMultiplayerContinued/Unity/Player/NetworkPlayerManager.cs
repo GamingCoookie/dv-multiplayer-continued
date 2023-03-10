@@ -152,8 +152,8 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                     SpawnNetworkPlayer(message);
                     break;
 
-                case NetworkTags.PLAYER_MODS_MISMATCH:
-                    OnModMismatch(message);
+                case NetworkTags.PLAYER_MISMATCH:
+                    OnMismatch(message);
                     break;
 
                 case NetworkTags.PLAYER_MONEY_UPDATE:
@@ -232,33 +232,36 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         }
     }
 
-    private void OnModMismatch(Message message)
+    private void OnMismatch(Message message)
     {
-        Main.Log("[CLIENT] Client disconnected due to mods mismatch");
         using (DarkRiftReader reader = message.GetReader())
         {
+            string what = reader.ReadBoolean() ? "mods" : "cars";
+            Main.Log($"[CLIENT] Client disconnected due to {what} mismatch");
             while (reader.Position < reader.Length)
             {
-                string[] missingMods = reader.ReadStrings();
-                string[] extraMods = reader.ReadStrings();
+                string[] missing = reader.ReadStrings();
+                string[] extra = reader.ReadStrings();
 
                 List<string> mismatches = new List<string>();
-                mismatches.AddRange(missingMods);
-                mismatches.AddRange(extraMods);
+                mismatches.AddRange(missing);
+                mismatches.AddRange(extra);
                 MenuScreen screen = CustomUI.ModMismatchScreen;
-                screen.transform.Find("Label Mismatched").GetComponent<TextMeshProUGUI>().text = "Your mods and the mods of the host mismatched.\n";
-                for (int i = 0; i < (mismatches.Count > 10 ? 10 : mismatches.Count); i++)
+                string text = $"Your {what} and the {what} of the host mismatched.\n";
+                for (int i = 0; i < Mathf.Min(mismatches.Count, 10); i++)
                 {
-                    screen.transform.Find("Label Mismatched").GetComponent<TextMeshProUGUI>().text += "[MISMATCH] " + mismatches[i] + "\n";
+                    text += "[MISMATCH] " + mismatches[i] + "\n";
                 }
                 if (mismatches.Count > 10)
-                    screen.transform.Find("Label Mismatched").GetComponent<TextMeshProUGUI>().text += $"And {mismatches.Count - 10} more mismatches.";
+                    text += $"And {mismatches.Count - 10} more mismatches.";
 
-                if (missingMods.Length > 0)
-                    Main.mod.Logger.Error($"[MOD MISMATCH] You are missing the following mods: {string.Join(", ", missingMods)}");
+                screen.transform.Find("Label Mismatched").GetComponent<TextMeshProUGUI>().text = text;
+                
+                if (missing.Length > 0)
+                    Main.mod.Logger.Error($"[MOD MISMATCH] You are missing the following {what}: {string.Join(", ", missing)}");
 
-                if (extraMods.Length > 0)
-                    Main.mod.Logger.Error($"[MOD MISMATCH] You installed mods the host doesn't have, these are: {string.Join(", ", extraMods)}");
+                if (extra.Length > 0)
+                    Main.mod.Logger.Error($"[MOD MISMATCH] You installed {what} the host doesn't have, these are: {string.Join(", ", extra)}");
 
                 modMismatched = true;
             }
@@ -398,6 +401,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                 Location = new Location(),
                 Username = PlayerManager.PlayerTransform.GetComponent<NetworkPlayerSync>().Username,
                 Mods = Main.GetEnabledMods(),
+                CustomCars = Main.GetCCLCars(),
                 Color = Main.Settings.Color.Pack()
             });
 
@@ -660,6 +664,7 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                     playerSync.Id = player.Id;
                     playerSync.Username = player.Username;
                     playerSync.Mods = player.Mods;
+                    playerSync.CustomCars = player.CustomCars;
                     playerSync.IsLoaded = player.IsLoaded;
                     playerSync.Color = player.Color;
 

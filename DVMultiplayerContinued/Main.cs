@@ -63,6 +63,11 @@ namespace DVMultiplayer
             return modEntries.Where(m => m.Active && m.Loaded).Select(m => m.Info.Id).Except(AllowedMods).ToArray();
         }
 
+        public static string[] GetCCLCars()
+        {
+            return !IsCCLEnabled ? Array.Empty<string>() : CustomCarLoaderInitializer.Cars;
+        }
+
         private static void OnUpdate(ModEntry entry, float time)
         {
             if (!isInitialized && enabled && PlayerManager.PlayerTransform && !LoadingScreenManager.IsLoading && SingletonBehaviour<CanvasSpawner>.Instance)
