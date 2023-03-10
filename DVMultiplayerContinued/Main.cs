@@ -22,7 +22,9 @@ namespace DVMultiplayer
         public static bool isInitialized = false;
         private static bool enabled = true;
         private static readonly ModEntry CCLMod = FindMod("DVCustomCarLoader");
+        private static readonly ModEntry HandbrakeMod = FindMod("HandBrake");
         private static bool IsCCLEnabled => CCLMod != null && CCLMod.Enabled;
+        internal static bool IsHandBrakeEnabled => HandbrakeMod != null && HandbrakeMod.Enabled;
 
 
         private static string[] ClientSideAllowedMods = new string[]
