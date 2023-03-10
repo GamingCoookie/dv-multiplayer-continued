@@ -2573,8 +2573,16 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 
     internal void AddNetworkingScripts(TrainCar car, WorldTrain selectedTrain)
     {
+        if (Main.IsHandBrakeEnabled)
+        {
+            if (!car.GetComponent<NetworkTrainSync>())
+                car.gameObject.AddComponent<NetworkTrainSync>();
+        }
+        else
+        {
         if (!car.GetComponent<NetworkTrainSync>() && (car.IsLoco || car.carType == TrainCarType.CabooseRed))
             car.gameObject.AddComponent<NetworkTrainSync>();
+        }
 
         if (!car.GetComponent<NetworkTrainMUSync>() && car.IsLoco && car.GetComponent<MultipleUnitModule>())
             car.gameObject.AddComponent<NetworkTrainMUSync>();
