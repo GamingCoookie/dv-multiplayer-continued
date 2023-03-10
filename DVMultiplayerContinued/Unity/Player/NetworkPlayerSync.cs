@@ -7,7 +7,7 @@ internal class NetworkPlayerSync : MonoBehaviour
     public bool IsLocal { get; set; } = false;
     public string Username { get; set; }
     public string[] Mods { get; set; }
-    public string Color { get; set; }
+    public uint Color { get; set; }
     internal ushort Id;
     private Vector3 prevPosition;
     private Vector3 newPosition;
