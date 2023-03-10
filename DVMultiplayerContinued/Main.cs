@@ -25,18 +25,34 @@ namespace DVMultiplayer
         private static bool IsCCLEnabled => CCLMod != null && CCLMod.Enabled;
 
 
-        private static string[] AllowedMods = new string[]
+        private static string[] ClientSideAllowedMods = new string[]
         {
-            "UnencryptedSaveGameMod",
-            "DVMouseSmoothing",
-            "DVSuperGauges",
-            "ZSounds",
-            "SkinManagerMod",
+            "BookletOrganizer",
             "CargoSwapMod",
             "DVDiscordPresenceMod",
-            "LocoLightsMod",
+            "DVDispatcherMod",
+            "DVExtraLights",
             "DVFPSLimiter",
-            "DVOptimizer"
+            "DVLightSniper",
+            "DVMouseSmoothing",
+            "DVOptimizer",
+            "DVRouteManager",
+            "DVSuperGauges",
+            "EasyTex",
+            "FeetsBeforeNextJunction",
+            "Gauge",
+            "HeadsUpDisplay",
+            "KeyboardNotches",
+            "LocoLightsMod",
+            "Mph",
+            "NumberManager",
+            "ProceduralSkyMod",
+            "RadioBridge",
+            "RedworkDE.DvTime",
+            "RemoteDispatch",
+            "SkinManagerMod",
+            "UnencryptedSaveGameMod",
+            "ZSounds"
         };
 
         private static bool Load(ModEntry entry)
@@ -60,7 +76,7 @@ namespace DVMultiplayer
 
         public static string[] GetEnabledMods()
         {
-            return modEntries.Where(m => m.Active && m.Loaded).Select(m => m.Info.Id).Except(AllowedMods).ToArray();
+            return modEntries.Where(m => m.Active && m.Loaded).Select(m => m.Info.Id).Except(ClientSideAllowedMods).ToArray();
         }
 
         public static string[] GetCCLCars()
