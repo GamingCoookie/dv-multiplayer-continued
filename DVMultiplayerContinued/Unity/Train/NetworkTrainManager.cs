@@ -16,6 +16,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Main = DVMultiplayer.Main;
+using DVCustomCarLoader;
+using DVMultiplayerContinued.Patches.CustomCarLoader;
 
 internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
 {
@@ -2189,18 +2191,9 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
         GameObject carPrefab = null;
         if (serverState.CarType != TrainCarType.NotSet)
             carPrefab = CarTypes.GetCarPrefab(serverState.CarType);
-        else
+        else if (Main.IsCCLEnabled)
         {
-            Main.Log($"Custom car!");
-            if (DVCustomCarLoader.CarTypeInjector.TryGetCustomCarById(serverState.CCLCarId, out DVCustomCarLoader.CustomCar customCar))
-            {
-                Main.Log($"car indentifier: {serverState.CCLCarId}, custom car type: {customCar.CarType}");
-                carPrefab = customCar.CarPrefab;
-            }
-            else
-            {
-                Main.Log($"car by identifier {serverState.CCLCarId} not found!");
-            }
+            carPrefab = CustomCarLoaderInitializer.GetCarPrefab(serverState);
         }
         TrainCar newTrain;
         TrainBogie bogie1 = serverState.Bogies[0];

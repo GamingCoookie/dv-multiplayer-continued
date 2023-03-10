@@ -88,6 +88,21 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                 Main.Log($"Patching methods for CCL compatability. Error: {ex.Message}");
             }
         }
+
+        public static GameObject GetCarPrefab(WorldTrain serverState)
+        {
+            Main.Log($"Custom car!");
+            if (DVCustomCarLoader.CarTypeInjector.TryGetCustomCarById(serverState.CCLCarId, out DVCustomCarLoader.CustomCar customCar))
+            {
+                Main.Log($"car indentifier: {serverState.CCLCarId}, custom car type: {customCar.CarType}");
+                return customCar.CarPrefab;
+            }
+            else
+            {
+                Main.Log($"car by identifier {serverState.CCLCarId} not found!");
+                return null;
+            }
+        }
     }
 
     class NetworkTrainSync_Awake_Patch
