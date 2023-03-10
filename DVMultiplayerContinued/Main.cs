@@ -21,6 +21,9 @@ namespace DVMultiplayer
         public static event Action OnGameUpdate;
         public static bool isInitialized = false;
         private static bool enabled = true;
+        private static readonly ModEntry CCLMod = FindMod("DVCustomCarLoader");
+        private static bool IsCCLEnabled => CCLMod != null && CCLMod.Enabled;
+
 
         private static string[] AllowedMods = new string[]
         {
@@ -50,10 +53,8 @@ namespace DVMultiplayer
             ModEntry passengerJobsModEntry = FindMod("PassengerJobs");
             if (passengerJobsModEntry != null && passengerJobsModEntry.Enabled)
                 PassengerJobsModInitializer.Initialize(passengerJobsModEntry, harmony);
-            //ModEntry customCarLoaderModEntry = FindMod("DVCustomCarLoader");
-            //if (customCarLoaderModEntry != null && customCarLoaderModEntry.Enabled)
-                //CustomCarLoaderInitializer.Initialize(customCarLoaderModEntry, harmony);
-            // Check NetworkTrainManager.SyncCarsFromServerState when reenabling
+            if (IsCCLEnabled)
+                CustomCarLoaderInitializer.Initialize(CCLMod, harmony);
             return true;
         }
 
