@@ -116,7 +116,14 @@ namespace DVMultiplayer
             else
                 mod.Logger.NativeLog($"[DEBUG] {msg}");
 
-            CommandTerminal.Terminal.Log($"[DEBUG] {msg}");
+            try
+            {
+                CommandTerminal.Terminal.Log($"[DEBUG] {msg}");
+            }
+            catch (Exception)
+            {
+                // Not important
+            }
         }
     }
 }
