@@ -333,26 +333,36 @@ internal class NetworkJobsManager : SingletonBehaviour<NetworkJobsManager>
                     Main.Log($"Job chain with ID {chain.Id} loading, amount of jobs in chain: {chainJobs.Length}");
                     if (chainJobs.Length == 0)
                     {
-                        Main.Log($"Ignoring job chain");
+                        Main.Log("Ignoring job chain");
                         continue;
                     }
                     JobChainSaveData jobSaveData = JsonConvert.DeserializeObject<JobChainSaveData>(chain.Data, JobSaveManager.serializeSettings);
-                    GameObject chainGO = SingletonBehaviour<JobSaveManager>.Instance.LoadJobChain(jobSaveData);
+                    JobSaveManager jobSaveManager = SingletonBehaviour<JobSaveManager>.Instance;
+                    jobSaveManager.jobBooklets = SingletonBehaviour<StorageController>.Instance.GetAllStorageItems()
+                        .Select(item => item.GetComponent<JobBooklet>())
+                        .Where(jb => jb != null)
+                        .ToList();
+                    GameObject chainGO = jobSaveManager.LoadJobChain(jobSaveData);
+                    jobSaveManager.jobBooklets = null;
                     if (chainGO)
                     {
-                        Main.Log("Job chain succesfully loaded");
+                        Main.Log("Job chain successfully loaded");
                         StaticJobDefinition[] chainJobDefinitions = chainGO.GetComponents<StaticJobDefinition>();
                         foreach (StaticJobDefinition definition in chainJobDefinitions)
                         {
                             Main.Log("Register job definition");
-                            Job job = chainJobs.FirstOrDefault(j => j.Type == (definition.job != null ? definition.job.jobType : GetJobTypeFromDefinition(definition)));
+                            Job job = chainJobs.FirstOrDefault(j => j.Type == (definition.job?.jobType ?? GetJobTypeFromDefinition(definition)));
+                            if (job == null)
+                            {
+                                Main.Log("Failed to find job");
+                                continue;
+                            }
                             job.Definition = definition;
                             Main.Log("Add to jobs list");
                             jobs.Add(job);
 
                             if (job.IsCurrentJob)
                             {
-
                                 Main.Log("Job is current registering job taken event");
                                 if (!job.IsTaken)
                                 {
@@ -362,6 +372,7 @@ internal class NetworkJobsManager : SingletonBehaviour<NetworkJobsManager>
                                 else
                                     job.CanTakeJob = false;
                             }
+
                             Main.Log("Job fully loaded");
                         }
                         Main.Log("Chain successfully loaded");
