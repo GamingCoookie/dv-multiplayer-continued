@@ -274,9 +274,9 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                             TenderCoalLevel = customSteamSim.tenderFuel.value,
                             TenderWaterLevel = customSteamSim.tenderWater.value
                         };
-                        //Main.Log($"Get {car.ID} ControlImplBases");
+                        Main.Log($"Get {car.ID} ControlImplBases");
                         ControlImplBase[] ctrls = car.interior.GetComponentsInChildren<ControlImplBase>();
-                        //Main.Log($"Found {ctrls.Length} ControlImplBases");
+                        Main.Log($"Found {ctrls.Length} ControlImplBases");
                         foreach (ControlImplBase control in ctrls)
                         {
                             train.Controls[control.name] = control.Value;
@@ -295,9 +295,9 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                             SandLevel = customDieselSim.sand.value,
                             Temp = customDieselSim.engineTemp.value
                         };
-                        //Main.Log($"Get {car.ID} ControlImplBases");
+                        Main.Log($"Get {car.ID} ControlImplBases");
                         ControlImplBase[] ctrls = car.interior.GetComponentsInChildren<ControlImplBase>();
-                        //Main.Log($"Found {ctrls.Length} ControlImplBases");
+                        Main.Log($"Found {ctrls.Length} ControlImplBases");
                         foreach (ControlImplBase control in ctrls)
                         {
                             train.Controls[control.name] = control.Value;

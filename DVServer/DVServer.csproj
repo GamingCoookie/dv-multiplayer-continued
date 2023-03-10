@@ -42,10 +42,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\DarkRift.Server.dll</HintPath>
     </Reference>
-    <Reference Include="DV.Logic.Job">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\lib\Assembly-CSharp.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\UnityEngine.dll</HintPath>
