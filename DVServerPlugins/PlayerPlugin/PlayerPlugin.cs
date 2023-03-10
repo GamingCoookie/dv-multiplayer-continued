@@ -225,7 +225,8 @@ namespace PlayerPlugin
                             {
                                 Id = player.Id,
                                 Username = player.Username,
-                                Mods = player.Mods
+                                Mods = player.Mods,
+                                Color = player.Color
                             });
 
                             writer.Write(new Location()
@@ -248,7 +249,8 @@ namespace PlayerPlugin
                                 Id = p.id,
                                 Username = p.username,
                                 Mods = p.mods,
-                                IsLoaded = p.isLoaded
+                                IsLoaded = p.isLoaded,
+                                Color = p.color,
                             });
 
                             writer.Write(new Location()
@@ -315,7 +317,7 @@ namespace PlayerPlugin
                     sender.Disconnect();
                 else
                 {
-                    players.Add(sender, new Player(player.Id, player.Username, player.Mods));
+                    players.Add(sender, new Player(player.Id, player.Username, player.Mods, player.Color));
                 }
             }
         }
@@ -400,11 +402,14 @@ namespace PlayerPlugin
         public Vector3 position;
         public Quaternion rotation;
         internal bool isLoaded;
-        public Player(ushort id, string username, string[] mods)
+        public readonly uint color;
+
+        public Player(ushort id, string username, string[] mods, uint color)
         {
             this.id = id;
             this.username = username;
             this.mods = mods;
+            this.color = color;
 
             isLoaded = false;
             position = new Vector3();
