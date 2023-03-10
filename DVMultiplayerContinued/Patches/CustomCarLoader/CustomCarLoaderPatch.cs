@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 using DarkRift;
 using DarkRift.Client.Unity;
 using DV.CabControls;
-using DVMultiplayer;
+using DVCustomCarLoader;
 using DVMultiplayer.Networking;
 using DVMultiplayer.DTO.Train;
 using DVCustomCarLoader.LocoComponents.Steam;
@@ -75,6 +75,9 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
                 MethodInfo SendInitCars = AccessTools.Method(typeof(NetworkTrainManager), "SendInitializedCars");
                 MethodInfo SendInitCarsPrefix = AccessTools.Method(typeof(NetworkTrainManager_SendInitCars_Patch), "Prefix");
                 harmony.Patch(SendInitCars, prefix: new HarmonyMethod(SendInitCarsPrefix));
+                MethodInfo RaiseCarSpawned = AccessTools.Method(typeof(CarSpawner_Patches), "RaiseCarSpawned");
+                MethodInfo RaiseCarSpawnedPostfix = AccessTools.Method(typeof(CarSpawner_Patches_RaiseCarSpawned), "Postfix");
+                harmony.Patch(RaiseCarSpawned, prefix: new HarmonyMethod(RaiseCarSpawnedPostfix));
             }
             catch (Exception ex)
             {
@@ -495,6 +498,16 @@ namespace DVMultiplayerContinued.Patches.CustomCarLoader
             }
             __instance.IsSynced = true;
             return false;
+        }
+    }
+
+    class CarSpawner_Patches_RaiseCarSpawned
+    {
+        static void Postfix(TrainCar car)
+        {
+            NetworkTrainManager ntm = SingletonBehaviour<NetworkTrainManager>.Instance;
+            if (ntm == null) return;
+            ntm.OnCarSpawned(car);
         }
     }
 }
