@@ -37,8 +37,8 @@ namespace DVMultiplayerContinued.Patches.RemoteDispatch
     {
         public static bool Prefix(ref JObject __result)
         {
+            if (!SingletonBehaviour<NetworkPlayerManager>.Exists) return true;
             NetworkPlayerManager npm = SingletonBehaviour<NetworkPlayerManager>.Instance;
-            if (npm == null) return true;
             List<JObject> players = new List<JObject>(npm.localPlayers.Count + 1);
 
             // Local player
@@ -73,8 +73,7 @@ namespace DVMultiplayerContinued.Patches.RemoteDispatch
     {
         public static bool Prefix()
         {
-            NetworkPlayerManager npm = SingletonBehaviour<NetworkPlayerManager>.Instance;
-            if (npm == null) return true;
+            if (!SingletonBehaviour<NetworkPlayerManager>.Exists) return true;
             Sessions.AddTag("player");
             return false;
         }
