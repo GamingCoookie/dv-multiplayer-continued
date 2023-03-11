@@ -1497,7 +1497,7 @@ internal class NetworkTrainManager : SingletonBehaviour<NetworkTrainManager>
                 writer.Write<WorldTrain>(serverState);
 
                 using (Message message = Message.Create((ushort)NetworkTags.TRAIN_SYNC, writer))
-                    SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
+                    SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Unreliable);
             }
         }
     }
