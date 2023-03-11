@@ -7,6 +7,7 @@ namespace DVMultiplayerContinued
     public class Settings : UnityModManager.ModSettings, IDrawable
     {
         public Color32 Color = new Color32(255, 255, 255, 255);
+        public string DefaultUsername = "";
 
         public void Draw(UnityModManager.ModEntry modEntry)
         {
@@ -18,6 +19,12 @@ namespace DVMultiplayerContinued
             string[] labels = { "Red", "Green", "Blue" };
             if (DrawMutiByte(ref values, labels))
                 Color = new Color32(values[0], values[1], values[2], 255);
+            GUILayout.EndHorizontal();
+
+            // Default Username
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Default Username");
+            DefaultUsername = GUILayout.TextField(DefaultUsername);
             GUILayout.EndHorizontal();
         }
 
