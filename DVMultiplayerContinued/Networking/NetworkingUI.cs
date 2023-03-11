@@ -129,7 +129,7 @@ namespace DVMultiplayer.Networking
             {
                 ConnectUI.transform.Find("TextField IP").GetComponentInChildren<TextMeshProUGUI>().text = "";
                 ConnectUI.transform.Find("TextField Port").GetComponentInChildren<TextMeshProUGUI>().text = "4296";
-                ConnectUI.transform.Find("TextField Username").GetComponentInChildren<TextMeshProUGUI>().text = "";
+                ConnectUI.transform.Find("TextField Username").GetComponentInChildren<TextMeshProUGUI>().text = Main.Settings.DefaultUsername;
                 ConnectUI.transform.Find("Button Save as Favorite").Find("image").GetComponent<Image>().SetSprite("UI_Unfavorited.png");
                 CustomUI.Open(ConnectUI);
             });
@@ -185,7 +185,7 @@ namespace DVMultiplayer.Networking
             UI.transform.Find("Button Host").GetComponent<Button>().onClick.AddListener(() =>
             {
                 HostUI.transform.Find("TextField Port").GetComponentInChildren<TextMeshProUGUI>().text = "4296";
-                HostUI.transform.Find("TextField Username").GetComponentInChildren<TextMeshProUGUI>().text = "";
+                HostUI.transform.Find("TextField Username").GetComponentInChildren<TextMeshProUGUI>().text = Main.Settings.DefaultUsername;
                 CustomUI.Open(HostUI);
             });
 
