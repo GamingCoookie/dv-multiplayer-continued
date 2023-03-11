@@ -448,8 +448,11 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
         CustomUI.Close();
 
         // Create offline save
-        Main.Log($"[CLIENT] Creating offline save");
-        SingletonBehaviour<NetworkSaveGameManager>.Instance.CreateOfflineBackup();
+        if(!NetworkManager.IsTrueHost())
+        {
+            Main.Log($"[CLIENT] Creating offline save");
+            SingletonBehaviour<NetworkSaveGameManager>.Instance.CreateOfflineBackup();
+        }
 
         if (!NetworkManager.IsHost())
         {
