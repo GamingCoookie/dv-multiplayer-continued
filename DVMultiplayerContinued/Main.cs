@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using static UnityModManagerNet.UnityModManager;
 using DVMultiplayerContinued;
+using DVMultiplayerContinued.Patches.RemoteDispatch;
 using UnityModManagerNet;
 
 namespace DVMultiplayer
@@ -23,8 +24,10 @@ namespace DVMultiplayer
         private static bool enabled = true;
         private static readonly ModEntry CCLMod = FindMod("DVCustomCarLoader");
         private static readonly ModEntry HandbrakeMod = FindMod("HandBrake");
+        private static readonly ModEntry RemoteDispatchMod = FindMod("RemoteDispatch");
         internal static bool IsCCLEnabled => CCLMod != null && CCLMod.Enabled;
         internal static bool IsHandBrakeEnabled => HandbrakeMod != null && HandbrakeMod.Enabled;
+        private static bool IsRemoteDispatchMod => RemoteDispatchMod != null && RemoteDispatchMod.Enabled && RemoteDispatchMod.Version > Version.Parse("0.5.1");
 
 
         private static string[] ClientSideAllowedMods = new string[]
@@ -73,6 +76,8 @@ namespace DVMultiplayer
                 PassengerJobsModInitializer.Initialize(passengerJobsModEntry, harmony);
             if (IsCCLEnabled)
                 CustomCarLoaderInitializer.Initialize(CCLMod, harmony);
+            if (IsRemoteDispatchMod)
+                RemoteDispatchInitializer.Initialize(harmony);
             return true;
         }
 

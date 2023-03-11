@@ -3,7 +3,7 @@
     "DisplayName": "Derail Valley Multiplayer Continued",
     "Author": "Patrick van Halm & GamingCoookie",
     "Version": "1.5.0",
-    "LoadAfter": [ "PassengerJobs", "DVCustomCarLoader", "HandBrake" ],
+    "LoadAfter": [ "PassengerJobs", "DVCustomCarLoader", "HandBrake", "RemoteDispatch" ],
     "AssemblyName": "DVMultiplayerContinued.dll",
     "EntryMethod": "DVMultiplayer.Main.Load",
     "HomePage": "https://www.nexusmods.com/derailvalley/mods/406",
