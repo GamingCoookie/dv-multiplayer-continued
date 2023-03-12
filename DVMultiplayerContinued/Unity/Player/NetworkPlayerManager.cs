@@ -674,23 +674,23 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
                     localPlayers.Add(player.Id, playerObject);
                     serverPlayers.Add(player.Id, player);
                     if (!player.IsLoaded)
-                        WaitForPlayerLoaded();
+                        WaitForPlayerLoaded(player);
                 }
             }
         }
     }
 
-    private void WaitForPlayerLoaded()
+    private void WaitForPlayerLoaded(NPlayer player)
     {
         if (playersLoaded == null)
         {
-            playersLoaded = SingletonBehaviour<CoroutineManager>.Instance.Run(WaitForAllPlayersLoaded());
+            playersLoaded = SingletonBehaviour<CoroutineManager>.Instance.Run(WaitForAllPlayersLoaded(player));
         }
     }
 
-    private IEnumerator WaitForAllPlayersLoaded()
+    private IEnumerator WaitForAllPlayersLoaded(NPlayer player)
     {
-        CustomUI.OpenPopup("Incoming connection", "A new player is connecting");
+        CustomUI.OpenPopup("Incoming connection", $"{player.Username} is connecting");
         AppUtil.Instance.PauseGame();
         yield return new WaitUntil(() => localPlayers.All(p => p.Value.GetComponent<NetworkPlayerSync>().IsLoaded));
         AppUtil.Instance.UnpauseGame();
