@@ -6,6 +6,7 @@ using HarmonyLib;
 using System;
 using System.Linq;
 using System.Reflection;
+using DVMultiplayer.DTO.Player;
 using static UnityModManagerNet.UnityModManager;
 using DVMultiplayerContinued;
 using UnityModManagerNet;
@@ -76,9 +77,12 @@ namespace DVMultiplayer
             return true;
         }
 
-        public static string[] GetEnabledMods()
+        public static Mod[] GetEnabledMods()
         {
-            return modEntries.Where(m => m.Active && m.Loaded).Select(m => m.Info.Id).Except(ClientSideAllowedMods).ToArray();
+            return modEntries
+                .Where(m => m.Active && m.Loaded && !ClientSideAllowedMods.Contains(m.Info.Id))
+                .Select(m => new Mod(m.Info.Id, m.Info.Version))
+                .ToArray();
         }
 
         public static string[] GetCCLCars()

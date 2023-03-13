@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DVMultiplayer.DTO.Player;
+using UnityEngine;
 using UnityEngine.UI;
 
 internal class NetworkPlayerSync : MonoBehaviour
@@ -6,7 +7,7 @@ internal class NetworkPlayerSync : MonoBehaviour
     public TrainCar Train { get; set; }
     public bool IsLocal { get; set; } = false;
     public string Username { get; set; }
-    public string[] Mods { get; set; }
+    public Mod[] Mods { get; set; }
     public string[] CustomCars { get; set; }
     public uint Color { get; set; }
     internal ushort Id;

@@ -7,7 +7,7 @@ namespace DVMultiplayer.DTO.Player
         public ushort Id { get; set; }
         public string Username { get; set; }
         public Location Location { get; set; }
-        public string[] Mods { get; set; }
+        public Mod[] Mods { get; set; }
         public string[] CustomCars { get; set; }
         public bool IsLoaded { get; set; }
         public uint Color { get; set; }
@@ -31,7 +31,7 @@ namespace DVMultiplayer.DTO.Player
             Id = e.Reader.ReadUInt16();
             Username = e.Reader.ReadString();
             Location = e.Reader.ReadSerializable<Location>();
-            Mods = e.Reader.ReadStrings();
+            Mods = e.Reader.ReadSerializables<Mod>();
             CustomCars = e.Reader.ReadStrings();
             IsLoaded = e.Reader.ReadBoolean();
             Color = e.Reader.ReadUInt32();
