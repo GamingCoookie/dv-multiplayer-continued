@@ -195,8 +195,8 @@ namespace PlayerPlugin
             if (players.Count > 0)
             {
                 NPlayer host = players.Values.First();
-                string[] missingMods = host.Mods.Except(player.Mods).ToArray();
-                string[] extraMods = player.Mods.Except(host.Mods).ToArray();
+                Mod[] missingMods = host.Mods.Except(player.Mods).ToArray();
+                Mod[] extraMods = player.Mods.Except(host.Mods).ToArray();
                 string[] missingCars = host.CustomCars.Except(player.CustomCars).ToArray();
                 string[] extraCars = player.CustomCars.Except(host.CustomCars).ToArray();
                 if (missingMods.Length != 0 || extraMods.Length != 0)

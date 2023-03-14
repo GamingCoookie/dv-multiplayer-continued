@@ -19,6 +19,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Player\License.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\Location.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\NPlayer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Player\Mod.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\PlayerLoaded.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Player\SetSpawn.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Saving.cs" />

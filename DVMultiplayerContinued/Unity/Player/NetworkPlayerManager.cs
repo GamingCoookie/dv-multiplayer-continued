@@ -236,27 +236,35 @@ internal class NetworkPlayerManager : SingletonBehaviour<NetworkPlayerManager>
     {
         using (DarkRiftReader reader = message.GetReader())
         {
-            string what = reader.ReadBoolean() ? "mods" : "cars";
+            bool mods = reader.ReadBoolean();
+            string what = mods ? "mods" : "cars";
             Main.Log($"[CLIENT] Client disconnected due to {what} mismatch");
             while (reader.Position < reader.Length)
             {
-                string[] missing = reader.ReadStrings();
-                string[] extra = reader.ReadStrings();
+                string[] missing;
+                string[] extra;
+                if (mods)
+                {
+                    missing = reader.ReadSerializables<Mod>().Select(m => m.ToString()).ToArray();
+                    extra = reader.ReadSerializables<Mod>().Select(m => m.ToString()).ToArray();
+                }
+                else
+                {
+                    missing = reader.ReadStrings();
+                    extra = reader.ReadStrings();
+                }
 
-                List<string> mismatches = new List<string>();
-                mismatches.AddRange(missing);
+                List<string> mismatches = new List<string>(missing);
                 mismatches.AddRange(extra);
                 MenuScreen screen = CustomUI.ModMismatchScreen;
                 string text = $"Your {what} and the {what} of the host mismatched.\n";
-                for (int i = 0; i < Mathf.Min(mismatches.Count, 10); i++)
-                {
-                    text += "[MISMATCH] " + mismatches[i] + "\n";
-                }
+                for (int i = 0; i < Mathf.Min(mismatches.Count, 10); i++) 
+                    text += $"{(i < missing.Length ? "[HOST] " : "[YOU]")} {mismatches[i]}\n";
                 if (mismatches.Count > 10)
                     text += $"And {mismatches.Count - 10} more mismatches.";
 
                 screen.transform.Find("Label Mismatched").GetComponent<TextMeshProUGUI>().text = text;
-                
+
                 if (missing.Length > 0)
                     Main.mod.Logger.Error($"[MOD MISMATCH] You are missing the following {what}: {string.Join(", ", missing)}");
 
