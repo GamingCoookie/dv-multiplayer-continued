@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using DvMod.RemoteDispatch;
 using DVMultiplayer.Utils;
@@ -39,29 +40,30 @@ namespace DVMultiplayerContinued.Patches.RemoteDispatch
         {
             if (!SingletonBehaviour<NetworkPlayerManager>.Exists) return true;
             NetworkPlayerManager npm = SingletonBehaviour<NetworkPlayerManager>.Instance;
-            List<JObject> players = new List<JObject>(npm.localPlayers.Count + 1);
+            Dictionary<string, JObject> players = new Dictionary<string, JObject>(npm.localPlayers.Count + 1);
 
             // Local player
-            // This is first due to the 'Zoom to player' button in Remote Dispatch going to the first player in the array.
             NetworkPlayerSync localPlayer = npm.GetLocalPlayerSync();
-            players.Add(CreatePlayerObject($"{localPlayer.Id}", ColorUtility.ToHtmlStringRGBA(Main.Settings.Color), localPlayer.transform));
+            players.Add($"{localPlayer.Id}", CreatePlayerObject(ColorUtility.ToHtmlStringRGBA(Main.Settings.Color), localPlayer.transform));
 
             // Other players
             foreach (KeyValuePair<ushort, GameObject> e in npm.localPlayers)
             {
                 string hexRGBA = ColorUtility.ToHtmlStringRGBA(ColorTT.Unpack(npm.GetPlayerSyncById(e.Key).Color));
-                players.Add(CreatePlayerObject($"{e.Key}", hexRGBA, e.Value.transform));
+                players.Add($"{e.Key}", CreatePlayerObject(hexRGBA, e.Value.transform));
             }
 
-            __result = new JObject(new JProperty("players", new JArray(players)));
+            __result = new JObject(
+                players.Select(data => (object)new JProperty(data.Key, data.Value)).ToArray()
+            );
+
             return false;
         }
 
-        private static JObject CreatePlayerObject(string id, string rgba, Transform t)
+        private static JObject CreatePlayerObject(string rgba, Transform t)
         {
             World.Position pos = new World.Position(t.position - WorldMover.currentMove);
             return new JObject(
-                new JProperty("id", id),
                 new JProperty("color", $"#{rgba}"),
                 new JProperty("position", World.LatLon.From(pos).ToJson()),
                 new JProperty("rotation", Math.Round(t.eulerAngles.y, 2))

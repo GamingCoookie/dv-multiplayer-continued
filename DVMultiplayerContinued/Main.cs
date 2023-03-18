@@ -27,7 +27,7 @@ namespace DVMultiplayer
         private static readonly ModEntry RemoteDispatchMod = FindMod("RemoteDispatch");
         internal static bool IsCCLEnabled => CCLMod != null && CCLMod.Enabled;
         internal static bool IsHandBrakeEnabled => HandbrakeMod != null && HandbrakeMod.Enabled;
-        private static bool IsRemoteDispatchMod => RemoteDispatchMod != null && RemoteDispatchMod.Enabled && RemoteDispatchMod.Version > Version.Parse("0.5.1");
+        private static bool IsRemoteDispatchEnabled => RemoteDispatchMod != null && RemoteDispatchMod.Enabled && RemoteDispatchMod.Version > Version.Parse("0.5.1");
 
 
         private static string[] ClientSideAllowedMods = new string[]
@@ -76,7 +76,7 @@ namespace DVMultiplayer
                 PassengerJobsModInitializer.Initialize(passengerJobsModEntry, harmony);
             if (IsCCLEnabled)
                 CustomCarLoaderInitializer.Initialize(CCLMod, harmony);
-            if (IsRemoteDispatchMod)
+            if (IsRemoteDispatchEnabled)
                 RemoteDispatchInitializer.Initialize(harmony);
             return true;
         }
