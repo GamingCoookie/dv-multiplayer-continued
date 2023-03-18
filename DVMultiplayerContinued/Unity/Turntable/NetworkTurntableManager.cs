@@ -145,7 +145,7 @@ internal class NetworkTurntableManager : SingletonBehaviour<NetworkTurntableMana
 
 
             using (Message message = Message.Create((ushort)NetworkTags.TURNTABLE_AUTH_REQUEST, writer))
-                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Unreliable);
+                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
         }
     }
 
@@ -186,7 +186,7 @@ internal class NetworkTurntableManager : SingletonBehaviour<NetworkTurntableMana
             });
 
             using (Message message = Message.Create((ushort)NetworkTags.TURNTABLE_AUTH_RELEASE, writer))
-                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Unreliable);
+                SingletonBehaviour<UnityClient>.Instance.SendMessage(message, SendMode.Reliable);
         }
     }
 
